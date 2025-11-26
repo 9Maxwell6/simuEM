@@ -1,0 +1,6 @@
+# PETSc
+set(PETSC_DIR "/path/to/petsc")
+set(PETSC_ARCH "arch-linux-c-opt")
+
+# MPI
+set(MPI_ROOT "/path/to/mpi")
