@@ -7,6 +7,79 @@ set(PROJECT_GUI "${PROJECT_NAME}_gui")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Prohibit in-source builds
+if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+    message(FATAL_ERROR "In-source builds are prohibited.")
+endif ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+
+# Load local configurations
+if(EXISTS "${CMAKE_SOURCE_DIR}/LocalConfig.cmake")
+    message(STATUS "Loading local configuration from LocalConfig.cmake")
+    include("${CMAKE_SOURCE_DIR}/LocalConfig.cmake")
+endif()
+
+
+enable_language(C)
+enable_language(CXX)
+
+# ===============================================================================
+# import MFEM
+# ===============================================================================
+if(USE_MFEM)
+    if(MFEM_DIR)
+        find_package(mfem REQUIRED NAMES MFEM HINTS "${MFEM_DIR}" "${MFEM_DIR}/lib/cmake/mfem" NO_DEFAULT_PATH)
+    else()
+        find_package(mfem REQUIRED NAMES MFEM)
+    endif()
+    message(STATUS "Found mfem config in: ${MFEM_DIR} (version ${MFEM_VERSION})")
+    include_directories(${MFEM_INCLUDE_DIRS})
+
+endif()
+# -------------------------------------------------------------------------------
+
+
+
+
+# ===============================================================================
+# import Gmsh
+# ===============================================================================
+if(USE_GMSH)
+
+    find_library(GMSH_LIB NAMES gmsh PATHS ${GMSH_DIR}/lib)
+    add_library(gmsh SHARED IMPORTED)
+    set_target_properties(gmsh PROPERTIES
+        IMPORTED_LOCATION "${GMSH_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${GMSH_DIR}/include"
+    )
+    message(STATUS "Found Gmsh-sdk")
+    
+endif()
+# ===============================================================================
+
+
+
+
+
+# ===============================================================================
+# import PETSc
+# 
+#  * MFEM_DIR - absolute path to the MFEM build or install prefix.
+#
+#
+# ===============================================================================
+if(USE_PETSC)
+
+    if(PETSC_DIR AND PETSC_ARCH)
+        find_package(PkgConfig REQUIRED)
+        set(ENV{PKG_CONFIG_PATH} "$ENV{PETSC_DIR}/$ENV{PETSC_ARCH}/lib/pkgconfig")
+        pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc)
+    else()
+        FIND_PACKAGE(PETSc REQUIRED)
+    endif()
+    
+endif()
+# ===============================================================================
+
 # Build options
 option(BUILD_TESTS "Build test suite" ON)
 option(BUILD_EXAMPLES "Build example applications" ON)
@@ -17,46 +90,63 @@ add_subdirectory(solver)
 
 
 
-# Set target properties
-set_target_properties(${PROJECT_NAME} ${PROJECT_GUI} PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
 
 # Cross-platform linking
 if(UNIX)
-    # On Linux/macOS, link libdl and pthread if needed
-    #target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan dl pthread X11 Xxf86vm Xrandr Xi)
-    target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan)
 
-
-    # link gmsh
-    #set(gmsh "${CMAKE_SOURCE_DIR}/vendor/gmsh/lib/libgmsh.so")
-
-    #set_target_properties(gmsh PROPERTIES
-    #    IMPORTED_LOCATION "${GMSH_LIB}"
-    #    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/vendor/gmsh/include"
-    #)
-
-    #target_link_libraries(${PROJECT_NAME} PRIVATE gmsh)
-
-    set(GMSH_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/vendor/gmsh/include")
-    set(GMSH_LIB_DIR "${CMAKE_SOURCE_DIR}/vendor/gmsh/lib")
-    set(GMSH_LIB_PATH "${GMSH_LIB_DIR}/libgmsh.so.4.15.0")
-    add_library(gmsh SHARED IMPORTED)
-    set_target_properties(gmsh PROPERTIES
-        IMPORTED_LOCATION "${GMSH_LIB_PATH}"
-        INTERFACE_INCLUDE_DIRECTORIES "${GMSH_INCLUDE_DIR}"
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
     )
-    target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/vendor/gmsh/lib)   #/vendor/gmsh/lib/
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE gmsh)
+    
+
+    
+    
+    if(ENABLE_GUI)
+        set_target_properties(${PROJECT_NAME} ${PROJECT_GUI} PROPERTIES
+            CXX_STANDARD 17
+            CXX_STANDARD_REQUIRED ON
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        )
+        target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan)
+
+        set_target_properties(${PROJECT_GUI} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        )
+        #target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan dl pthread X11 Xxf86vm Xrandr Xi)
+    endif()
+
+
+    
+
+
+    if(USE_MFEM)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${MFEM_LIBRARIES})
+        option(HAVE_MFEM "MFEM enable" ON)
+    endif()
+
+    if(USE_GMSH)
+        target_link_libraries(${PROJECT_NAME} PRIVATE gmsh)
+        option(HAVE_GMSH "GMSH enable" ON)
+    endif()
+
+    if(USE_PETSC)
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PETSC)
+        option(HAVE_PETSC "PETSC enable" ON)
+    endif()
+
+
+
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/config/config.h 
+    )
+    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/config")
 
 
 
 elseif(WIN32)
-    # On Windows, these are not needed
+
 endif()
 
 
@@ -82,7 +172,6 @@ endif()
 
 # Optional: Add tests and examples
 if(BUILD_TESTS)
-    enable_testing()
     add_subdirectory(tests)
 endif()
 

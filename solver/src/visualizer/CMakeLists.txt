@@ -1,8 +1,10 @@
+if(ENABLE_GUI)
 
+    add_subdirectory(ui)
+    add_subdirectory(renderer)
 
-add_subdirectory(ui)
-add_subdirectory(renderer)
+    set(Visualizer app_window.cpp)
 
-set(Visualizer app_window.cpp)
+    target_sources(${PROJECT_GUI} PRIVATE ${Visualizer})
 
-target_sources(${PROJECT_GUI} PRIVATE ${Visualizer})
+endif()

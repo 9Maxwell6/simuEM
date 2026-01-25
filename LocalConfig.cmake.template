@@ -1,0 +1,42 @@
+# =============================================================================
+# Local Configuration Template for simuEM
+# =============================================================================
+# Copy this file to LocalConfig.cmake and customize paths for your system.
+# The LocalConfig.cmake file is gitignored and won't be committed.
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# MFEM Configuration
+#  - installation & build guide: https://mfem.org/building/
+#  - make sure to build with cmake
+#  - example: set(MFEM_DIR "/xxx/xxx/MFEM/mfem-4.9/build")
+# -----------------------------------------------------------------------------
+# set(USE_MFEM ON)
+# set(MFEM_DIR "/path/to/mfem/build")
+
+# -----------------------------------------------------------------------------
+# GMSH Configuration
+#  - please download the SDK version from https://gmsh.info/
+#  - To use Gmsh mesh with MFEM, note that newer versions of Gmsh output files 
+#    in version 4.1 of the Gmsh format, which is not compatible with MFEM. 
+#    Users should specify Mesh.MshFileVersion = 2.2; in their geometry file 
+#    or run Gmsh with -format msh22 from the command line.
+# -----------------------------------------------------------------------------
+# set(USE_GMSH ON)
+# set(GMSH_DIR "/path/to/gmsh-sdk")
+
+# -----------------------------------------------------------------------------
+# PETSc Configuration
+#  - if MPI version of MFEM is used, 
+#    then MPI version of PETSc must be built with openMPI 
+# -----------------------------------------------------------------------------
+# set(USE_PETSC ON)
+# set(PETSC_DIR "/path/to/petsc")
+# set(PETSC_ARCH "arch-linux-c-debug")  # e.g., arch-linux-c-opt
+
+
+# -----------------------------------------------------------------------------
+# build GUI
+# -----------------------------------------------------------------------------
+option(ENABLE_GUI "Build visualization executable" OFF)

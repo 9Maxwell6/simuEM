@@ -1,0 +1,6 @@
+#pragma once
+#cmakedefine HAVE_MFEM
+#cmakedefine HAVE_GMSH
+#cmakedefine HAVE_PETSC
+
+
