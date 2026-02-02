@@ -71,7 +71,7 @@ if(USE_PETSC)
 
     if(PETSC_DIR AND PETSC_ARCH)
         find_package(PkgConfig REQUIRED)
-        set(ENV{PKG_CONFIG_PATH} "$ENV{PETSC_DIR}/$ENV{PETSC_ARCH}/lib/pkgconfig")
+        set(ENV{PKG_CONFIG_PATH} "${PETSC_DIR}/${PETSC_ARCH}/lib/pkgconfig")
         pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc)
     else()
         FIND_PACKAGE(PETSc REQUIRED)
@@ -103,17 +103,15 @@ if(UNIX)
     
     
     if(ENABLE_GUI)
-        set_target_properties(${PROJECT_NAME} ${PROJECT_GUI} PROPERTIES
-            CXX_STANDARD 17
-            CXX_STANDARD_REQUIRED ON
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        set_target_properties( ${PROJECT_GUI} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         )
-        target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan)
+        #target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan)
 
         set_target_properties(${PROJECT_GUI} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         )
-        #target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan dl pthread X11 Xxf86vm Xrandr Xi)
+        target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan dl pthread X11 Xxf86vm Xrandr Xi)
     endif()
 
 
