@@ -1,3 +1,5 @@
+#pragma once
+
 #include <bitset>
 #include <stddef.h>
 #include <map>

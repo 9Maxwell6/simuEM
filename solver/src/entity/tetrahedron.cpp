@@ -1,7 +1,8 @@
 #include "entity/tetrahedron.h"
 
-Type Tetrahedron::get_Type(){
-    return Type::TETRAHEDRON;
+Geometry Tetrahedron::get_Geometry() const
+{
+    return Geometry::TETRAHEDRON;
 }
 
 Tetrahedron::Tetrahedron(const size_t *idx, size_t property_id)
@@ -36,6 +37,11 @@ void Tetrahedron::set_NodeIdx(size_t idx_1, size_t idx_2, size_t idx_3, size_t i
     node_idx_[1] = idx_2;
     node_idx_[2] = idx_3;
     node_idx_[3] = idx_4;
+}
+
+const size_t * Tetrahedron::get_NodeIdx() const
+{
+   return node_idx_;
 }
 
 

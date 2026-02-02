@@ -1,3 +1,5 @@
+#pragma once
+
 #include "element.h"
 
 /*-------------------------------------------------------------
@@ -30,11 +32,11 @@ public:
     Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t property_id=0);
 
 
-    ~Tetrahedron();
+    virtual ~Tetrahedron()=default;
 
-    Type get_Type();
+    Geometry get_Geometry() const override;
 
-    const size_t * get_NodeIdx();
+    const size_t * get_NodeIdx() const override;
 
 
     void set_NodeIdx(const size_t *idx);
