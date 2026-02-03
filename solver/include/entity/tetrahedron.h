@@ -34,7 +34,7 @@ public:
 
     virtual ~Tetrahedron()=default;
 
-    Geometry get_Geometry() const override;
+    Type get_Type() const override;
 
     const size_t * get_NodeIdx() const override;
 

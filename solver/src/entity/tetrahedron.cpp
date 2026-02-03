@@ -1,8 +1,8 @@
 #include "entity/tetrahedron.h"
 
-Geometry Tetrahedron::get_Geometry() const
+Type Tetrahedron::get_Type() const
 {
-    return Geometry::TETRAHEDRON;
+    return Type::TETRAHEDRON;
 }
 
 Tetrahedron::Tetrahedron(const size_t *idx, size_t property_id)

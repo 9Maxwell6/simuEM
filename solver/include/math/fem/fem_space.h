@@ -21,7 +21,7 @@ class FEM_Space
 {
 private: 
     int dim_;
-    int order_;
+    int p_;  // polynomial order
 
 
 public:
@@ -33,7 +33,7 @@ public:
 
     // Returns basis values at a point in the unit tetrahedron
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis(int id, double* basis) const = 0;
+    virtual void get_basis(int dof_id, double* basis) const = 0;
 
 
 
