@@ -1,10 +1,9 @@
 #pragma once
 
-// integration point of reference element
-struct Integration_Point {
-    double x_, y_, z_;
-    double weight;
-}
+#include "integration.h"
+
+#include <vector>
+#include <Eigen/Dense>
 
 enum class Space { 
     H1, 
@@ -33,9 +32,9 @@ public:
 
     // Returns basis values at a point in the unit tetrahedron
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis(int dof_id, double* basis) const = 0;
+    virtual void get_basis(Integration_Point p, const Eigen::Ref<Eigen::MatrixXd> basis) const = 0;
 
 
 
     virtual Space get_function_space() const = 0;
-}
+};

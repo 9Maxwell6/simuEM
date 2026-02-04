@@ -6,6 +6,22 @@
 #
 # =============================================================================
 
+
+
+
+# -----------------------------------------------------------------------------
+# Eigen template library
+#  - download from https://libeigen.gitlab.io/
+#  - one must set the path of Eigen, not optional
+#  - remark: Eigen by default use column major matrix, and PETSc use row major.
+#            Eigen matrix will be convert to row major when passing to PETSc.
+# -----------------------------------------------------------------------------
+set(EIGEN_DIR "/path/to/eigen")
+
+
+
+
+
 # -----------------------------------------------------------------------------
 # MFEM Configuration
 #  - installation & build guide: https://mfem.org/building/

@@ -32,7 +32,7 @@ public:
     Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t property_id=0);
 
 
-    virtual ~Tetrahedron()=default;
+    ~Tetrahedron(){};
 
     Type get_Type() const override;
 

@@ -22,6 +22,16 @@ endif()
 enable_language(C)
 enable_language(CXX)
 
+
+
+# ===============================================================================
+# check EIGEN_DIR
+# ===============================================================================
+if(NOT EXISTS "${EIGEN_DIR}/Eigen/Core")
+    message(FATAL_ERROR "EIGEN_DIR invalid: cannot find Eigen/Core in ${EIGEN_DIR}")
+endif()
+
+
 # ===============================================================================
 # import MFEM
 # ===============================================================================
@@ -140,6 +150,7 @@ if(UNIX)
         ${CMAKE_CURRENT_BINARY_DIR}/config/config.h 
     )
     target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/config")
+    target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_DIR})
 
 
 

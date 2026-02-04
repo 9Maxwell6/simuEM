@@ -23,6 +23,7 @@ class Element
 {
 protected:
     size_t property_id_;    // id for element info
+    int o_;                 // geometry order
 
 public:
 
