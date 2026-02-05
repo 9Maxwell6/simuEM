@@ -6,8 +6,8 @@
 
 #include "math/fem/integration.h"
 #include "math/fem/fem_space.h"
-#include "math/fem/H1_tetrahedron.h"
-#include "math/fem/Hcurl_tetrahedron.h"
+#include "math/fem/space_H1.h"
+#include "math/fem/space_Hcurl.h"
 
 
 #include <stdio.h>

@@ -13,8 +13,8 @@
 # Eigen template library
 #  - download from https://libeigen.gitlab.io/
 #  - one must set the path of Eigen, not optional
-#  - remark: Eigen by default use column major matrix, and PETSc use row major.
-#            Eigen matrix will be convert to row major when passing to PETSc.
+#  - remark: Eigen by default use column-major matrix, and PETSc use row-major.
+#            we will switch Eigen matrix to row-major.
 # -----------------------------------------------------------------------------
 set(EIGEN_DIR "/path/to/eigen")
 

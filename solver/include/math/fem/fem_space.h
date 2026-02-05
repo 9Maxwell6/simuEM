@@ -1,13 +1,14 @@
 #pragma once
 
 #include "integration.h"
+#include "../matrix.h"
 
 #include <vector>
 #include <Eigen/Dense>
 
 enum class Space { 
-    H1, 
-    HCurl 
+    H_1, 
+    H_curl 
 };
 
 enum class Geometry {
@@ -18,23 +19,31 @@ enum class Geometry {
 
 class FEM_Space
 {
-private: 
-    int dim_;
-    int p_;  // polynomial order
+protected: 
+    int dim_; // space dimension
+    int p_;   // polynomial order
 
 
 public:
+    FEM_Space(int p);
     virtual ~FEM_Space() {}
 
     // Returns the number of DOFs per element
     virtual int get_element_dof() const = 0;
-    virtual int get_order() const = 0;
+    virtual Space get_function_space() const = 0;
 
     // Returns basis values at a point in the unit tetrahedron
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis(Integration_Point p, const Eigen::Ref<Eigen::MatrixXd> basis) const = 0;
+    virtual void get_basis_v(Integration_Point p, Eigen::Ref<MatrixXd> basis) const = 0;
+    virtual void get_basis_s(Integration_Point p, Eigen::Ref<VectorXd> basis) const = 0;
+
+    // Return vector proxy of Exterior Derivative of basis of the corresponding form.
+    virtual void get_ED_basis_v(Integration_Point p, Eigen::Ref<MatrixXd> basis) const = 0;
+    virtual void get_ED_basis_s(Integration_Point p, Eigen::Ref<VectorXd> basis) const = 0;
 
 
+    
 
-    virtual Space get_function_space() const = 0;
+    int get_order() const { return p_;}
+    int get_dim() const { return dim_;}
 };
