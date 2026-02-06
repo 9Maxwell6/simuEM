@@ -10,7 +10,7 @@
  *                1 -> [0,      2     ]
  *                2 -> [0,      3     ]
  *                3 -> [1,      2     ]
- *                4 -> [3,      1     ]
+ *                4 -> [1,      3     ]
  *                5 -> [2,      3     ]
  * 
  *                      node_1, node_2 node_3
@@ -28,8 +28,8 @@ protected:
     
 public:
 
-    Tetrahedron(const size_t* node_idx, size_t property_id=0);
-    Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t property_id=0);
+    Tetrahedron(const size_t* node_idx, size_t property_id=0, int o=1);
+    Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t property_id=0, int o=1);
 
 
     ~Tetrahedron(){};

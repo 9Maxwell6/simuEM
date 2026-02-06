@@ -2,11 +2,13 @@
 
 #include <bitset>
 #include <stddef.h>
+#include <vector>
 #include <map>
 
 
 
-struct Element_Info {
+struct Property 
+{
     std::string name;
     std::vector<double> scalar_data;
     std::vector<double> vector_data_x; 
@@ -14,9 +16,15 @@ struct Element_Info {
     std::vector<double> vector_data_z; 
 };
 
+class Coefficient
+{
+    
+
+};
 
 
-class Info_handler
+
+class Property_handler
 {
 private:
     

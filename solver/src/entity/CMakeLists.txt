@@ -4,6 +4,3 @@ add_subdirectory(mesh)
 add_subdirectory(structure)
 
 
-target_sources(${PROJECT_NAME} PRIVATE 
-    element.cpp
-    tetrahedron.cpp)

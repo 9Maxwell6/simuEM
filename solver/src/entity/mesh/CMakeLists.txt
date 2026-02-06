@@ -1,7 +1,13 @@
 
-set(Mesh mesh.cpp)
+set(Mesh mesh.cpp
+         element.cpp
+         tetrahedron.cpp)
 target_sources(${PROJECT_NAME} PRIVATE ${Mesh})
+
+
 
 if(ENABLE_GUI)
     target_sources(${PROJECT_GUI} PRIVATE ${Mesh})
 endif()
+
+

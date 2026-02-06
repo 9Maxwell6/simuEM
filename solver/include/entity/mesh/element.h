@@ -1,8 +1,9 @@
 #pragma once
+#include "../property/property.h"
+
 
 #include <stddef.h>
 #include <vector>
-#include "info.h"
 
 
 enum Type { 
@@ -23,10 +24,10 @@ class Element
 {
 protected:
     size_t property_id_;    // id for element info
-    int o_;                 // geometry order
+    int o_;                 // geometry order of the actual element.
 
 public:
-
+    Element(size_t property_id, int o): property_id_(property_id), o_(o){};
     virtual ~Element() {}
 
     /// Returns element's type
