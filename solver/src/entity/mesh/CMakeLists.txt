@@ -1,7 +1,7 @@
 
 set(Mesh mesh.cpp
          element.cpp
-         tetrahedron.cpp)
+         e_tetrahedron.cpp)
 target_sources(${PROJECT_NAME} PRIVATE ${Mesh})
 
 

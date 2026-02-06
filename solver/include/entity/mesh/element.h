@@ -7,8 +7,8 @@
 
 
 enum Type { 
-    POINT, 
-    SEGMENT, 
+    NODE, 
+    EDGE, 
     TRIANGLE, 
     TETRAHEDRON
     // currently not support other shape

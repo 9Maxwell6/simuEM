@@ -1,1 +1,5 @@
-#include <gmsh.h>
+#pragma once
+
+#include "mesh.h"
+
+#include "gmsh.h"

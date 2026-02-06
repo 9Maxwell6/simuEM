@@ -135,6 +135,7 @@ if(UNIX)
 
     if(USE_GMSH)
         target_link_libraries(${PROJECT_NAME} PRIVATE gmsh)
+        #target_link_libraries(${PROJECT_NAME} PUBLIC gmsh)
         option(HAVE_GMSH "GMSH enable" ON)
     endif()
 
