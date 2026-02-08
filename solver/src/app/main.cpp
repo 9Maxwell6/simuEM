@@ -1,6 +1,6 @@
-#include "petsc.h"
+//#include "petsc.h"
 #include "gmsh.h"
-#include "mfem.hpp"
+//#include "mfem.hpp"
 
 #include <Eigen/Dense>
 
@@ -12,7 +12,11 @@
 
 #include <stdio.h>
 #include <config.h>
+#include "entity/mesh/mesh_parser.h"
+
 
 int main() {
+    Mesh_Parser mp;
+    Mesh mesh = mp.load_mesh("/home/maxwell/workSpace/simuEM/scripts/test_mesh_0.geo");
     return 0;
 }

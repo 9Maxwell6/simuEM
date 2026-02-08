@@ -1,5 +1,6 @@
 
 set(Mesh mesh.cpp
+         mesh_parser.cpp
          element.cpp
          e_tetrahedron.cpp)
 target_sources(${PROJECT_NAME} PRIVATE ${Mesh})

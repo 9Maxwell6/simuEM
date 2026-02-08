@@ -1,6 +1,6 @@
 #pragma once
 #include "element.h"
-
+#include "node.h"
 
 #include <vector>
 #include <string>
@@ -30,6 +30,7 @@ struct Key_Hash {
 
 class Mesh
 {
+    friend class Mesh_Parser;
 protected:
     int dim_; // space dimension
     size_t n_node    , n_edge    , n_face    ;  // actual number of node/edge/face in mesh.
@@ -41,6 +42,7 @@ protected:
 
     //std::vector<Element> elements;  // all elements.
     std::vector<Element *> elements;
+    std::vector<Node> nodes;
 
     // 
     std::set<size_t> exterior_boundary_node;
@@ -50,7 +52,7 @@ protected:
     // in 2D, the boundary is 1D Element
     std::vector<Element *> exterior_boundary_elements;  
     std::vector<Element *> interior_boundary_elements;
-
+    
 
     int key_positive_idx = 0;
     int key_negative_idx = 0;
@@ -97,33 +99,34 @@ public:
         // Determine which group of elements to search
         const std::vector<Element*>& search_pool = (search_key.id == 0) ? elements : element_group[search_key];
 
-        if (search_pool.empty()){
+        if (search_pool.empty())
+        {
             std::cerr << "Warning: search pool is empty for key {dim="<<search_key.dim<<", id=" << search_key.id << "}, return bad key.\n";
             return {dim, 0};
         }
 
-        if (dim < 0 || dim > 3) {
+        if (dim < 0 || dim > 3)
+        {
             std::cerr << "Warning: impossible dimension " << dim << ", return bad key.\n";
             return {dim, 0};
         }
 
         std::vector<Element*> group;
-        for (Element* e : search_pool) {
-            if (filter(e)) {
+        for (Element* e : search_pool)
+        {
+            if (filter(e))
+            {
                 group.push_back(e);
             }
         }
         
-
-        if (!group.empty()) {
-
+        if (!group.empty())
+        {
             dim_keys[dim].id++;
             Key new_key = dim_keys[dim];
-
             element_group[new_key] = std::move(group);
             group_description[new_key] = description;
             return new_key;
-
         }
 
         std::cerr << "Warning: no elements matched the filter, return bad key.\n";
