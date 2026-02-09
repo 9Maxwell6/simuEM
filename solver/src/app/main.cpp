@@ -16,7 +16,7 @@
 
 
 int main() {
-    Mesh_Parser mp;
-    Mesh mesh = mp.load_mesh("/home/maxwell/workSpace/simuEM/scripts/test_mesh_0.geo");
+    Mesh_Parser mp(Mesh_Format::GMSH);
+    Mesh mesh = mp.load_mesh("/home/maxwell/workSpace/simuEM/scripts/test_mesh_0.msh");
     return 0;
 }

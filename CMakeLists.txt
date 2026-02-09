@@ -130,18 +130,18 @@ if(UNIX)
 
     if(USE_MFEM)
         target_link_libraries(${PROJECT_NAME} PRIVATE ${MFEM_LIBRARIES})
-        option(HAVE_MFEM "MFEM enable" ON)
+        option(LOAD_MFEM "MFEM enable" ON)
     endif()
 
     if(USE_GMSH)
         target_link_libraries(${PROJECT_NAME} PRIVATE gmsh)
         #target_link_libraries(${PROJECT_NAME} PUBLIC gmsh)
-        option(HAVE_GMSH "GMSH enable" ON)
+        option(LOAD_GMSH "GMSH enable" ON)
     endif()
 
     if(USE_PETSC)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PETSC)
-        option(HAVE_PETSC "PETSC enable" ON)
+        option(LOAD_PETSC "PETSC enable" ON)
     endif()
 
 

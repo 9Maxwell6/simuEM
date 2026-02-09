@@ -45,6 +45,8 @@ protected:
     std::vector<Node> nodes;
 
     // 
+    Key key_exterior_boundary;
+    Key key_interior_boundary;
     std::set<size_t> exterior_boundary_node;
     std::set<size_t> interior_boundary_node;
     

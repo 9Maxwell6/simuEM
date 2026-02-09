@@ -1,16 +1,35 @@
 #include "entity/mesh/mesh_parser.h"
+#include "entity/mesh/e_tetrahedron.h"
 
 #include <map>
 #include <algorithm>
+#include <filesystem>
 
-#include "gmsh.h"
-#include "entity/mesh/e_tetrahedron.h"
-// #include "Triangle.h"
-// #include "Edge.h"
-// #include "NodeElement.h"
 
-std::vector<size_t> Mesh_Parser::build_tag_to_index_map(
-    const std::vector<size_t>& node_tags)
+
+Mesh_Parser::Mesh_Parser(Mesh_Format format):format_(format)
+{
+
+}
+
+Mesh Mesh_Parser::load_mesh(const std::string& filename)
+{
+    std::string ext = std::filesystem::path(filename).extension().string();
+    switch (format_) {
+        case Mesh_Format::GMSH:
+            if (ext == ".msh" || ext == ".geo")
+            {
+                return load_gmsh(filename);
+            } else {
+                throw std::runtime_error("Error: Gmsh does not support " + ext + " format for file: " + filename);
+            }
+        default:
+            throw std::runtime_error("Mesh format " + ext + " is not supported yet.");;
+    }
+}
+
+
+std::vector<size_t> Mesh_Parser::build_tag_to_index_map(const std::vector<size_t>& node_tags)
 {
     size_t max_tag = 0;
     for (auto t : node_tags)
@@ -37,7 +56,9 @@ Element* Mesh_Parser::create_element(int gmsh_type,
 }
 
 
-Mesh Mesh_Parser::load_mesh(const std::string& filename) {
+Mesh Mesh_Parser::load_gmsh(const std::string& filename)
+{
+#ifdef LOAD_GMSH
     gmsh::initialize();
     gmsh::option::setNumber("General.Verbosity", 1);
     gmsh::open(filename);
@@ -49,21 +70,22 @@ Mesh Mesh_Parser::load_mesh(const std::string& filename) {
     std::vector<size_t> node_tags;
     std::vector<double> coords;
     std::vector<double> parametric; // unused
+
+    gmsh::model::mesh::generate(mesh.dim_);
     gmsh::model::mesh::getNodes(node_tags, coords, parametric);
     mesh.n_node = node_tags.size();
-    // TODO: store coords into mesh node storage
 
-    auto tag_to_idx = build_tag_to_index_map(node_tags);
+    //auto tag_to_idx = build_tag_to_index_map(node_tags);
 
     // Store node coordinates indexed by 0-based index.
     // Gmsh returns nodes in node_tags order, which may not be contiguous,
     // so we use the tag_to_idx mapping.
     mesh.nodes.resize(mesh.n_node);
     for (size_t i = 0; i < node_tags.size(); ++i) {
-        size_t idx = tag_to_idx[node_tags[i]];
-        mesh.nodes[idx].x = coords[3 * i];
-        mesh.nodes[idx].y = coords[3 * i + 1];
-        mesh.nodes[idx].z = coords[3 * i + 2];
+        //size_t idx = tag_to_idx[node_tags[i]];
+        mesh.nodes[node_tags[i]-1].x = coords[3 * i];
+        mesh.nodes[node_tags[i]-1].y = coords[3 * i + 1];
+        mesh.nodes[node_tags[i]-1].z = coords[3 * i + 2];
     }
 
     // ---- Build entity -> physical tag mapping ----
@@ -142,7 +164,8 @@ Mesh Mesh_Parser::load_mesh(const std::string& filename) {
             for (size_t i = 0; i < num_elems; ++i) {
                 std::vector<size_t> idx(nodes_per_elem);
                 for (size_t j = 0; j < nodes_per_elem; ++j) {
-                    idx[j] = tag_to_idx[node_tags_vec[t][i * nodes_per_elem + j]];
+                    //idx[j] = tag_to_idx[node_tags_vec[t][i * nodes_per_elem + j]];
+                    idx[j] = node_tags_vec[t][i * nodes_per_elem + j] -1;
                 }
 
                 size_t property_id = static_cast<size_t>(key.id);
@@ -167,4 +190,7 @@ Mesh Mesh_Parser::load_mesh(const std::string& filename) {
     gmsh::finalize();
     std::cout<<mesh.n_element<<std::endl;
     return mesh;
+#else
+    throw std::runtime_error("Gmsh support not compiled!");
+#endif
 }
