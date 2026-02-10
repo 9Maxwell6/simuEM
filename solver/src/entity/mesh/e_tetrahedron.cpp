@@ -5,12 +5,21 @@ Type Tetrahedron::get_Type() const
     return Type::TETRAHEDRON;
 }
 
-Tetrahedron::Tetrahedron(const size_t *idx, size_t property_id, int o) : Element(property_id, o)
+Tetrahedron::Tetrahedron(const size_t *node_idx, size_t property_id, int o) : Element(property_id, o)
 {
    property_id_ = property_id;
    for (int i = 0; i < 4; i++)
    {
-      node_idx_[i] = idx[i];
+      node_idx_[i] = node_idx[i];
+   }
+}
+
+Tetrahedron::Tetrahedron(std::vector<std::size_t> node_idx, size_t property_id, int o) : Element(property_id, o)
+{
+   property_id_ = property_id;
+   for (int i = 0; i < 4; i++)
+   {
+      node_idx_[i] = node_idx[i];
    }
 }
 

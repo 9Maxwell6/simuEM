@@ -34,13 +34,14 @@ void Logger::log(Level level, const std::string& message) {
 }
 
 
-void Logger::mesh_entity(int dim, int tag, int key_id, const std::string& name) {
+void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, const std::string& name) {
     std::string key_str = "{" + std::to_string(dim) + ", " + std::to_string(key_id) + "}";
     
-    std::cout << utils::terminal::GREEN << "Dim: "      << utils::terminal::RESET << std::left << std::setw(4) << dim 
-              << utils::terminal::GREEN << "gmsh id: "  << utils::terminal::RESET << std::left << std::setw(6) << tag 
-              << utils::terminal::GREEN << "Key: "      << utils::terminal::RESET << std::left << std::setw(12) << key_str
-              << utils::terminal::GREEN << "Name: "     << utils::terminal::RESET << "\"" << name << "\"" 
+    std::cout << utils::terminal::GREEN << "Dim: "       << utils::terminal::RESET << std::left << std::setw(4)  << dim 
+              << utils::terminal::GREEN << "gmsh id: "   << utils::terminal::RESET << std::left << std::setw(6)  << tag 
+              << utils::terminal::GREEN << "Key: "       << utils::terminal::RESET << std::left << std::setw(12) << key_str
+              << utils::terminal::GREEN << "#elements: " << utils::terminal::RESET << std::left << std::setw(6)  << n_elements
+              << utils::terminal::GREEN << "Name: "      << utils::terminal::RESET << "\"" << name << "\"" 
               << std::endl;
     
     buffer << "ENTITY | " 

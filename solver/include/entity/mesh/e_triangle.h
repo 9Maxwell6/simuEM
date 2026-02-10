@@ -24,6 +24,7 @@ protected:
 public:
 
     Triangle(const size_t* node_idx, size_t property_id=0, int o=1);
+    Triangle(std::vector<std::size_t> node_idx, size_t property_id=0, int o=1);
     Triangle(size_t idx_1, size_t idx_2, size_t idx_3, size_t property_id=0, int o=1);
 
 

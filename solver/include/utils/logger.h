@@ -33,7 +33,7 @@ public:
     static void warning(const std::string& msg)   { log(Level::WARNING, msg); }
 
     // Specialized table row for your Mesh entities
-    static void mesh_entity(int dim, int tag, int key_id, const std::string& name);
+    static void mesh_entity(int dim, int tag, int key_id, int n_elements, const std::string& name);
 
     // Save all collected logs to a file at once
     static void export_to_file(const std::string& filename);
