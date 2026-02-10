@@ -3,10 +3,10 @@ $MeshFormat
 $EndMeshFormat
 $PhysicalNames
 4
-2 10 "Interface"
-2 20 "OuterBoundary"
-3 1 "Conductor"
-3 2 "Space"
+2 10 "Conductor boundary"
+2 20 "true boundary"
+3 1 "Conductor 1"
+3 2 "Insulating region"
 $EndPhysicalNames
 $Entities
 16 24 12 2

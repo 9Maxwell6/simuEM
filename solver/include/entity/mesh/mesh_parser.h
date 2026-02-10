@@ -1,12 +1,15 @@
 #pragma once
 
-#include <string>
 #include "mesh.h"
 #include "config.h"
+#include "utils/logger.h"
 
 #ifdef LOAD_GMSH
   #include "gmsh.h"
 #endif
+
+#include <string>
+
 
 enum class Mesh_Format
 {

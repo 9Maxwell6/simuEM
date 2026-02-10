@@ -143,16 +143,16 @@ Volume(2) = {2, 1};  // {outer surface loop, inner surface loop as hole}
 // Physical Groups (for FEM solver)
 // ============================================================
 // Interior region - conductor
-Physical Volume("Conductor", 1) = {1};
+Physical Volume("Conductor 1", 1) = {1};
 
 // Exterior region - surrounding space
-Physical Volume("Space", 2) = {2};
+Physical Volume("Insulating region", 2) = {2};
 
 // Interface surface between conductor and space
-Physical Surface("Interface", 10) = {1, 2, 3, 4, 5, 6};
+Physical Surface("Conductor boundary", 10) = {1, 2, 3, 4, 5, 6};
 
 // Outer boundary (for boundary conditions)
-Physical Surface("OuterBoundary", 20) = {7, 8, 9, 10, 11, 12};
+Physical Surface("true boundary", 20) = {7, 8, 9, 10, 11, 12};
 
 
 Mesh.MshFileVersion = 4.5;

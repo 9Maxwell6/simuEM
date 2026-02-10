@@ -12,7 +12,7 @@
 
 struct Key 
 {
-    int dim;
+    uint32_t dim;
     uint32_t id; 
 
     bool operator==(const Key& k) const {
@@ -31,6 +31,7 @@ struct Key_Hash {
 class Mesh
 {
     friend class Mesh_Parser;
+
 protected:
     int dim_; // space dimension
     size_t n_node    , n_edge    , n_face    ;  // actual number of node/edge/face in mesh.
@@ -66,8 +67,9 @@ protected:
     Key dim2_key {2,0};  // key to find face group    (e.g., triangle).
     Key dim3_key {3,0};  // key to find volume group  (e.g., tetrahedron).
     Key dim_keys[4] = {dim0_key, dim1_key, dim2_key, dim3_key};
+
     std::unordered_map<Key, std::vector<Element *>, Key_Hash> element_group;
-    std::unordered_map<Key, std::string, Key_Hash> group_description;
+    std::unordered_map<Key, std::string, Key_Hash>            element_group_description;
     
 
 
@@ -126,8 +128,9 @@ public:
         {
             dim_keys[dim].id++;
             Key new_key = dim_keys[dim];
-            element_group[new_key] = std::move(group);
-            group_description[new_key] = description;
+            
+            element_group[new_key]             = std::move(group);
+            element_group_description[new_key] = description;
             return new_key;
         }
 

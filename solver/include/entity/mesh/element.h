@@ -6,7 +6,7 @@
 #include <vector>
 
 
-enum Type { 
+enum class Type { 
     NODE, 
     EDGE, 
     TRIANGLE, 
