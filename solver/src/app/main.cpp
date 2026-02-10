@@ -11,12 +11,12 @@
 
 
 #include <stdio.h>
-#include <config.h>
+//#include <config.h>
 #include "entity/mesh/mesh_parser.h"
 
 
 int main() {
     Mesh_Parser mp(Mesh_Format::GMSH);
-    Mesh mesh = mp.load_mesh("/home/maxwell/workSpace/simuEM/scripts/test_mesh_0.msh");
+    Mesh mesh = mp.load_mesh(SCRIPT_PATH "test_mesh_0.msh");
     return 0;
 }

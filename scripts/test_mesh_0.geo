@@ -84,57 +84,57 @@ Volume(1) = {1};
 ho = outer_size / 2;
 
 // Outer cube vertices
-Point(11) = {outer_x - ho, outer_y - ho, outer_z - ho, lc_outer};
-Point(12) = {outer_x + ho, outer_y - ho, outer_z - ho, lc_outer};
-Point(13) = {outer_x + ho, outer_y + ho, outer_z - ho, lc_outer};
-Point(14) = {outer_x - ho, outer_y + ho, outer_z - ho, lc_outer};
-Point(15) = {outer_x - ho, outer_y - ho, outer_z + ho, lc_outer};
-Point(16) = {outer_x + ho, outer_y - ho, outer_z + ho, lc_outer};
-Point(17) = {outer_x + ho, outer_y + ho, outer_z + ho, lc_outer};
-Point(18) = {outer_x - ho, outer_y + ho, outer_z + ho, lc_outer};
+Point(9 ) = {outer_x - ho, outer_y - ho, outer_z - ho, lc_outer};
+Point(10) = {outer_x + ho, outer_y - ho, outer_z - ho, lc_outer};
+Point(11) = {outer_x + ho, outer_y + ho, outer_z - ho, lc_outer};
+Point(12) = {outer_x - ho, outer_y + ho, outer_z - ho, lc_outer};
+Point(13) = {outer_x - ho, outer_y - ho, outer_z + ho, lc_outer};
+Point(14) = {outer_x + ho, outer_y - ho, outer_z + ho, lc_outer};
+Point(15) = {outer_x + ho, outer_y + ho, outer_z + ho, lc_outer};
+Point(16) = {outer_x - ho, outer_y + ho, outer_z + ho, lc_outer};
 
 // Outer cube edges - bottom face
-Line(21) = {11, 12};
-Line(22) = {12, 13};
-Line(23) = {13, 14};
-Line(24) = {14, 11};
+Line(13) = {9 , 10};
+Line(14) = {10, 11};
+Line(15) = {11, 12};
+Line(16) = {12,  9};
 
 // Outer cube edges - top face
-Line(25) = {15, 16};
-Line(26) = {16, 17};
-Line(27) = {17, 18};
-Line(28) = {18, 15};
+Line(17) = {13, 14};
+Line(18) = {14, 15};
+Line(19) = {15, 16};
+Line(20) = {16, 13};
 
 // Outer cube edges - vertical
-Line(29) = {11, 15};
-Line(30) = {12, 16};
-Line(31) = {13, 17};
-Line(32) = {14, 18};
+Line(21) = {9 , 13};
+Line(22) = {10, 14};
+Line(23) = {11, 15};
+Line(24) = {12, 16};
 
 // Outer cube faces
-Curve Loop(11) = {21, 22, 23, 24};    // Bottom (-z)
+Curve Loop(7) = {13, 14, 15, 16};    // Bottom (-z)
+Plane Surface(7) = {7};
+
+Curve Loop(8) = {17, 18, 19, 20};    // Top (+z)
+Plane Surface(8) = {8};
+
+Curve Loop(9) = {13, 22, -17, -21};  // Front (-y)
+Plane Surface(9) = {9};
+
+Curve Loop(10) = {15, 24, -19, -23};  // Back (+y)
+Plane Surface(10) = {10};
+
+Curve Loop(11) = {14, 23, -18, -22};  // Right (+x)
 Plane Surface(11) = {11};
 
-Curve Loop(12) = {25, 26, 27, 28};    // Top (+z)
+Curve Loop(12) = {16, 21, -20, -24};  // Left (-x)
 Plane Surface(12) = {12};
-
-Curve Loop(13) = {21, 30, -25, -29};  // Front (-y)
-Plane Surface(13) = {13};
-
-Curve Loop(14) = {23, 32, -27, -31};  // Back (+y)
-Plane Surface(14) = {14};
-
-Curve Loop(15) = {22, 31, -26, -30};  // Right (+x)
-Plane Surface(15) = {15};
-
-Curve Loop(16) = {24, 29, -28, -32};  // Left (-x)
-Plane Surface(16) = {16};
 
 // ============================================================
 // Exterior Volume (Space between inner and outer cubes)
 // ============================================================
 // Surface loop for outer boundary
-Surface Loop(2) = {11, 12, 13, 14, 15, 16};
+Surface Loop(2) = {7, 8, 9, 10, 11, 12};
 
 // Exterior volume: outer shell minus inner cube (hole)
 Volume(2) = {2, 1};  // {outer surface loop, inner surface loop as hole}

@@ -5,7 +5,7 @@
 #include "config.h"
 
 #ifdef LOAD_GMSH
-  #include <gmsh.h>
+  #include "gmsh.h"
 #endif
 
 enum class Mesh_Format

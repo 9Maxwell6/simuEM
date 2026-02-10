@@ -137,6 +137,9 @@ if(UNIX)
         target_link_libraries(${PROJECT_NAME} PRIVATE gmsh)
         #target_link_libraries(${PROJECT_NAME} PUBLIC gmsh)
         option(LOAD_GMSH "GMSH enable" ON)
+        if(ENABLE_GUI)
+            target_link_libraries(${PROJECT_GUI} PRIVATE gmsh)
+        endif()
     endif()
 
     if(USE_PETSC)
@@ -152,6 +155,15 @@ if(UNIX)
     )
     target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/config")
     target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_DIR})
+
+    if(ENABLE_GUI)
+        target_include_directories(${PROJECT_GUI} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/config")
+        target_include_directories(${PROJECT_GUI} PRIVATE ${EIGEN_DIR})
+    endif()
+
+    target_compile_definitions(${PROJECT_NAME} PRIVATE 
+        SCRIPT_PATH="${CMAKE_SOURCE_DIR}/scripts/"
+    )
 
 
 
