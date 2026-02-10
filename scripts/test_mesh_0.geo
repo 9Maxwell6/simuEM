@@ -152,7 +152,7 @@ Physical Volume("Space", 2) = {2};
 Physical Surface("Interface", 10) = {1, 2, 3, 4, 5, 6};
 
 // Outer boundary (for boundary conditions)
-Physical Surface("OuterBoundary", 20) = {11, 12, 13, 14, 15, 16};
+Physical Surface("OuterBoundary", 20) = {7, 8, 9, 10, 11, 12};
 
 
 Mesh.MshFileVersion = 4.5;
