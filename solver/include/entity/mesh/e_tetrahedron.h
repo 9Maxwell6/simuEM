@@ -27,10 +27,10 @@ protected:
 
     
 public:
-
-    Tetrahedron(const size_t* node_idx, size_t property_id=0, int o=1);
-    Tetrahedron(std::vector<std::size_t> node_idx, size_t property_id=0, int o=1);
-    Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t property_id=0, int o=1);
+    Tetrahedron() = default;
+    Tetrahedron(const size_t* node_idx, size_t id, size_t property_id=0, int o=1);
+    Tetrahedron(std::vector<std::size_t> node_idx, size_t id, size_t property_id=0, int o=1);
+    Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t id, size_t property_id=0, int o=1);
 
 
     ~Tetrahedron(){};

@@ -34,6 +34,7 @@ set(EIGEN_DIR "/path/to/eigen")
 # -----------------------------------------------------------------------------
 # GMSH Configuration
 #  - please download the SDK version from https://gmsh.info/
+#  - if program crash with sdk version, please build gmsh from source.
 #  - To use Gmsh mesh with MFEM, note that newer versions of Gmsh output files 
 #    in version 4.1 of the Gmsh format, which is not compatible with MFEM. 
 #    Users should specify Mesh.MshFileVersion = 2.2; in their geometry file 

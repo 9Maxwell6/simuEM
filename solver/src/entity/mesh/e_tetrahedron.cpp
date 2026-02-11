@@ -5,7 +5,7 @@ Type Tetrahedron::get_Type() const
     return Type::TETRAHEDRON;
 }
 
-Tetrahedron::Tetrahedron(const size_t *node_idx, size_t property_id, int o) : Element(property_id, o)
+Tetrahedron::Tetrahedron(const size_t *node_idx, size_t id, size_t property_id, int o) : Element(id, property_id, o)
 {
    property_id_ = property_id;
    for (int i = 0; i < 4; i++)
@@ -14,7 +14,7 @@ Tetrahedron::Tetrahedron(const size_t *node_idx, size_t property_id, int o) : El
    }
 }
 
-Tetrahedron::Tetrahedron(std::vector<std::size_t> node_idx, size_t property_id, int o) : Element(property_id, o)
+Tetrahedron::Tetrahedron(std::vector<std::size_t> node_idx, size_t id, size_t property_id, int o) : Element(id, property_id, o)
 {
    property_id_ = property_id;
    for (int i = 0; i < 4; i++)
@@ -23,7 +23,7 @@ Tetrahedron::Tetrahedron(std::vector<std::size_t> node_idx, size_t property_id, 
    }
 }
 
-Tetrahedron::Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t property_id, int o) : Element(property_id, o)
+Tetrahedron::Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4, size_t id, size_t property_id, int o) : Element(id, property_id, o)
 {
     property_id_  = property_id;
     node_idx_[0] = idx_1;

@@ -1,6 +1,9 @@
 #pragma once
 #include "element.h"
 #include "node.h"
+#include "entity/mesh/e_tetrahedron.h"
+#include "entity/mesh/e_triangle.h"
+#include "entity/mesh/e_edge.h"
 
 #include <vector>
 #include <string>
@@ -40,11 +43,23 @@ protected:
 
     size_t n_exterior_boundary_node; // true boundary of simulation domain.
     size_t n_interior_boundary_node;
+    
+
+    std::vector<Node> nodes;       // 0d element: contain pure 3d coordinates, node index is its index in this vector.
+    std::vector<Edge> elements_edge;
+    std::vector<Triangle> elements_triangle;
+    //std::vector<Quadrilateral> elements_quadrilateral;  // not implemented.
+    std::vector<Tetrahedron> elements_tetrahedron;
+
+    // For higher order elements, indices of extra nodes other than vertices will stored here.
+    // not implemented.
 
     //std::vector<Element> elements;  // all elements.
     std::vector<Element *> elements;
-    std::vector<Node> nodes;
-
+    
+    std::vector<Element*> curve;    // 1d element: contain pointers to 2d elements. e.g. in std::vector<Edge>
+    std::vector<Element*> surface;  // 2d element: contain pointers to 2d elements. e.g. in std::vector<Triangle>, std::vector<Quadrilateral>
+    std::vector<Element*> volume;   // 3d element: contain index to nodes
     // 
     Key key_exterior_boundary;
     Key key_interior_boundary;
@@ -62,11 +77,18 @@ protected:
     
     // whenever distribute a key, key.id++.  
     // id=0 means bad key.
-    Key dim0_key {0,0};  // key to find node group.   
-    Key dim1_key {1,0};  // key to find edge group.
-    Key dim2_key {2,0};  // key to find face group    (e.g., triangle).
-    Key dim3_key {3,0};  // key to find volume group  (e.g., tetrahedron).
-    Key dim_keys[4] = {dim0_key, dim1_key, dim2_key, dim3_key};
+    //Key dim0_key {0,0};  // key to find node group.   
+    //Key dim1_key {1,0};  // key to find edge group.
+    //Key dim2_key {2,0};  // key to find face group    (e.g., triangle).
+    //Key dim3_key {3,0};  // key to find volume group  (e.g., tetrahedron).
+    //Key dim_keys[4] = {dim0_key, dim1_key, dim2_key, dim3_key};
+
+    // id=0 means bad key.
+    // usage: whenever distribute a key, key.id++.  
+    Key dim_keys[4] = {{0,0},    // key to find node group.  
+                       {1,0},    // key to find curve group.
+                       {2,0},    // key to find surface group    (e.g., triangle).
+                       {3,0}};   // key to find volume group     (e.g., tetrahedron).
 
     std::unordered_map<Key, std::vector<Element *>, Key_Hash> element_group;
     std::unordered_map<Key, std::string, Key_Hash>            element_group_description;

@@ -23,11 +23,13 @@ enum class Type {
 class Element
 {
 protected:
-    size_t property_id_;    // id for element info
+    size_t id_;             // element id.
+    size_t property_id_;    // id for element info.
     int o_;                 // geometry order of the actual element.
 
 public:
-    Element(size_t property_id, int o): property_id_(property_id), o_(o){};
+    Element() = default;
+    Element(size_t id, size_t property_id, int o): id_(id), property_id_(property_id), o_(o){};
     virtual ~Element() {}
 
     /// Returns element's type
