@@ -47,7 +47,7 @@ std::tuple<Type, int, int> Mesh_Parser::convert_Type(int gmsh_type) {
 
 
 
-void Mesh_Parser::create_element(Element*& element_pointer, Mesh& mesh, Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o)
+void Mesh_Parser::create_mesh_element(Element*& element_pointer, Mesh& mesh, Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o)
 {
     try {
         switch (element_type) 
@@ -73,11 +73,25 @@ void Mesh_Parser::create_element(Element*& element_pointer, Mesh& mesh, Type ele
                 counter_tetrahedron++;
                 break;
             }
-            default: Logger::warning("Mesh_Parser::create_element - failed: element_type not available");
+            default: Logger::warning("Mesh_Parser::create_mesh_element - failed: element_type not available");
         }
     } catch (const std::out_of_range& e) {
-        Logger::error(std::string("Mesh_Parser::create_element - failed: ")+e.what());
+        Logger::error(std::string("Mesh_Parser::create_mesh_element - failed: ")+e.what());
     }
+}
+
+Element * Mesh_Parser::create_element(Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o)
+{
+    switch (element_type) 
+    {
+        case Type::EDGE: return new Edge(node_idx, element_id, property_id, 1);
+        case Type::TRIANGLE: return new Triangle(node_idx, element_id, property_id, 1);
+        case Type::TETRAHEDRON: return new Tetrahedron(node_idx, element_id, property_id, 1);
+        default: 
+            Logger::warning("Mesh_Parser::create_element - failed: element_type not available, return nullptr");
+            return nullptr;
+    }
+
 }
 
 void Mesh_Parser::count_element_gmsh()
@@ -134,22 +148,31 @@ void Mesh_Parser::initialize_mesh(Mesh& mesh, int dim)
 {
     switch (dim) 
     {
-        case 0: mesh.nodes.resize(total_node);
-        case 1: mesh.elements_edge.resize(total_edge);
-        case 2: mesh.elements_triangle.resize(total_triangle);
-        case 3: mesh.elements_tetrahedron.resize(total_tetrahedron);
-        default:
-            mesh.nodes.resize(total_node);
+        case 0: mesh.nodes.resize(total_node); 
+        case 1: 
+        {
             mesh.elements_edge.resize(total_edge);
+            mesh.curve.reserve(total_edge);
+            break;
+        }
+        case 2: 
+        {
             mesh.elements_triangle.resize(total_triangle);
+            mesh.surface.reserve(total_triangle);
+            break;
+        }
+        case 3: 
+        {
             mesh.elements_tetrahedron.resize(total_tetrahedron);
+            mesh.volume.reserve(total_tetrahedron); // total_tetrahedron + total_hexahedron
+            break;
+        }
+        default:
+            Logger::warning("Mesh_Parser::initialize_mesh - failed: please chose dim=0/1/2/3");
     }
 }
 
-void Mesh_Parser::store_all_elements_gmsh(int dim)
-{
 
-}
 
 
 
@@ -163,10 +186,12 @@ Mesh Mesh_Parser::load_mesh(const std::string& filename)
             {
                 return load_gmsh(filename);
             } else {
+                Logger::error("Mesh_Parser::load_mesh - failed: Gmsh does not support " + ext + " format for file: " + filename);
                 throw std::runtime_error("Error: Gmsh does not support " + ext + " format for file: " + filename);
             }
         default:
-            throw std::runtime_error("Mesh format " + ext + " is not supported yet.");;
+            Logger::error("Mesh format " + ext + " is not supported yet.");
+            throw std::runtime_error("Mesh format " + ext + " is not supported yet.");
     }
 }
 
@@ -187,7 +212,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
 
     // initialize element counter
     count_element_gmsh();
-    initialize_mesh(mesh);
+    initialize_mesh(mesh, mesh.dim_);
 
     // ---- Nodes ----
     std::vector<size_t> node_tags;
@@ -212,74 +237,45 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     }
 
 
-    // test: all 0d elements
-    std::vector<int> element_types_0d;
-    std::vector<std::vector<size_t>> element_tags_0d;
-    std::vector<std::vector<size_t>> node_tags_0d;
-    // element_types and element_tags should have same size
-    gmsh::model::mesh::getElements(element_types_0d, element_tags_0d, node_tags_0d, 0, -1);
-    std::vector<size_t> id_0d;
-    std::vector<size_t> nodes_0d;
-    //element_tags.size() is number of different shapes/order
-    for (size_t i = 0; i < element_tags_0d.size(); ++i) 
-    {   
-        auto [type, order, n_node] = convert_Type(element_types_0d[i]);
-
-        size_t n_elements = element_tags_0d[i].size();
-        for (size_t j=0; j<n_elements; ++j)
-        {   
-            size_t element_id = element_tags_0d[i][j];
-            id_0d.push_back(element_id);
-            // TODO encode element_id into Element class
-            // create vector<Element> of all elements,
-            // then element group only reference from their?
-            //   -> avoid using pointer soup!
-            auto startIt = node_tags_0d[i].begin() + (j * n_node);
-            auto endIt   = startIt + n_node;
-            
-            
-            std::vector<size_t> element_node_tags(startIt, endIt);
-            for(auto e: element_node_tags)
-                nodes_0d.push_back(e);
-
-        }
-    }
-
-    
-
 
     // Store curve elements into mesh.curve
-    std::vector<int> element_types_1d;
-    std::vector<std::vector<size_t>> element_tags_1d;
-    std::vector<std::vector<size_t>> node_tags_1d;
-    // element_types and element_tags should have same size
-    gmsh::model::mesh::getElements(element_types_1d, element_tags_1d, node_tags_1d, 1, -1);
-    //element_tags.size() is number of different shapes/order
-    for (size_t i = 0; i < element_tags_1d.size(); ++i) 
-    {   
-        auto [type, order, n_node] = convert_Type(element_types_1d[i]);
+    
 
-        size_t n_elements = element_tags_1d[i].size();
+    // Store surface elements into mesh.surface
+
+
+    // Store volume elements into mesh.volume
+    std::vector<int> element_types_mesh_3d;
+    std::vector<std::vector<size_t>> element_tags_mesh_3d;
+    std::vector<std::vector<size_t>> node_tags_mesh_3d;
+    // element_types and element_tags should have same size
+    gmsh::model::mesh::getElements(element_types_mesh_3d, element_tags_mesh_3d, node_tags_mesh_3d, 3, -1);
+    //element_tags.size() is number of different shapes/order
+    for (size_t i = 0; i < element_tags_mesh_3d.size(); ++i) 
+    {   
+        auto [type, order, n_node] = convert_Type(element_types_mesh_3d[i]);
+
+        size_t n_elements = element_tags_mesh_3d[i].size();
         for (size_t j=0; j<n_elements; ++j)
         {   
-            size_t element_id = element_tags_1d[i][j];
-            auto startIt = node_tags_0d[i].begin() + (j * n_node);
+            size_t element_id = element_tags_mesh_3d[i][j];
+            auto startIt = node_tags_mesh_3d[i].begin() + (j * n_node);
             auto endIt   = startIt + n_node;
             std::vector<size_t> element_node_tags(startIt, endIt);
             //Element * element = create_element(type, element_node_tags, 0, order);
 
             Element * element;
-            create_element(element, mesh, type, element_node_tags, element_id, 0, order);
-
-            mesh.curve.push_back(element);
+            create_mesh_element(element, mesh, type, element_node_tags, element_id, 0, order);
+            
+            mesh.volume.push_back(element);
         }
     }
+
+    std::unordered_map<size_t, Element*> element_map_3d;
+    for (Element* el : mesh.volume) {
+        element_map_3d[el->get_Id()] = el; 
+    }
     
-
-    // Store surface elements into mesh.surface
-
-    // Store volume elements into mesh.volume
-
 
 
     // create key of element groups generated by gmsh file
@@ -291,10 +287,9 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
 
 
     Logger::info("Physical groups: Load elements...");
-    for(std::pair<int,int> &dim_tag : physicalGroups_dim_tag)
+    // get all physical tags in dimension 0/1/2/3
+    for(auto& [dim, tag] : physicalGroups_dim_tag)
     {
-        uint32_t dim = static_cast<uint32_t>(dim_tag.first);   // dimension 0/1/2/3
-        int tag = dim_tag.second;                              // physical tag in gmsh
         std::string name;                                      // discription in gmsh
         gmsh::model::getPhysicalName(dim, tag, name);
 
@@ -311,8 +306,9 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
         std::vector<int> entity_tags;
         gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entity_tags);
 
+        auto& group = mesh.element_group[gmsh_key];
+
         // get all elements from entity
-        
         for (int entity_tag : entity_tags)
         {   
             std::vector<int> element_types;
@@ -327,25 +323,31 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
                 auto [type, order, n_node] = convert_Type(element_types[i]);
 
                 size_t n_elements = element_tags[i].size();
-                for (size_t j=0; j<n_elements; ++j)
-                {   
-                    size_t element_id = element_tags[i][j];
-                    // TODO encode element_id into Element class
-                    // create vector<Element> of all elements,
-                    // then element group only reference from their?
-                    //   -> avoid using pointer soup!
-                    auto startIt = node_tags[i].begin() + (j * n_node);
-                    auto endIt   = startIt + n_node;
-                    
-                    std::vector<size_t> element_node_tags(startIt, endIt);
+                group.reserve(group.size() + n_elements);
 
-                    //Element * element = create_element(type, element_node_tags, gmsh_key.id, order);
-                    //mesh.element_group[gmsh_key].push_back(element);
+                // we pre-store all elements in vector for 3d elements
+                if (dim == 3) {
+                    for (size_t j = 0; j < n_elements; ++j)
+                    {
+                        auto it = element_map_3d.find(element_tags[i][j]);  // element id = element_tags[i][j]
+                        if (it != element_map_3d.end()) {
+                            group.push_back(it->second);
+                        } else {
+                            Logger::error("3D elements not found in mesh.volume");
+                        }
+                    }
+                }else{
+                    for (size_t j = 0; j < n_elements; ++j)
+                    {
+                        auto startIt = node_tags[i].begin() + (j * n_node);
+                        std::vector<size_t> element_node_tags(startIt, startIt + n_node);
+                        group.push_back(create_element(type, element_node_tags, element_tags[i][j], gmsh_key.id, order));
+                    }
                 }
             }
         }
 
-        
+        std::vector<Element *> eles = mesh.element_group[gmsh_key];
 
         Logger::mesh_entity(dim, tag, mesh.dim_keys[dim].id, mesh.element_group[gmsh_key].size(), name);
     }

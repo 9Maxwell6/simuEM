@@ -38,6 +38,7 @@ public:
     virtual const size_t * get_NodeIdx() const= 0;
     virtual void set_NodeIdx(const size_t *ind) = 0;
 
+    inline size_t get_Id() const {return id_;}
     inline size_t get_propertyId() const {return property_id_;}
     inline void   set_propertyId(size_t property_id) {property_id_ = property_id;}
 

@@ -42,13 +42,12 @@ private:
 
     std::tuple<Type, int, int> convert_Type(int gmsh_type);
 
-    void create_element(Element *& element_pointer, Mesh& mesh, Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id=0, int o=1);
+    void create_mesh_element(Element *& element_pointer, Mesh& mesh, Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id=0, int o=1);
+    Element * create_element(Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id=0, int o=1);
 
 
     void count_element_gmsh();
 
-    // store all elements of given dimension
-    void store_all_elements_gmsh(int dim);
 
     // initialize vector size of mesh
     void initialize_mesh(Mesh& mesh, int dim=-1);
