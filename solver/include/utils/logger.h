@@ -1,6 +1,7 @@
 #pragma once
 
 #include "terminal.h"
+#include "config.h"
 
 #include <string>
 #include <sstream>
@@ -29,8 +30,12 @@ public:
     // Convenience wrappers
     static void info(const std::string& msg)      { log(Level::INFO,    msg); }
     static void success(const std::string& msg)   { log(Level::SUCCESS, msg); }
-    static void error(const std::string& msg)     { log(Level::ERROR,   msg); }
     static void warning(const std::string& msg)   { log(Level::WARNING, msg); }
+    static void error(const std::string& msg)     
+    { 
+        log(Level::ERROR,   msg); 
+        export_to_file(std::string(PROJECT_NAME)+".log");
+    }
 
     // Specialized table row for your Mesh entities
     static void mesh_entity(int dim, int tag, int key_id, int n_elements, const std::string& name);

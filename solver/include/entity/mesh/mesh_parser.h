@@ -3,6 +3,7 @@
 #include "mesh.h"
 #include "config.h"
 #include "utils/logger.h"
+#include "utils/string_utils.h"
 
 #ifdef LOAD_GMSH
   #include "gmsh.h"
@@ -50,7 +51,7 @@ private:
 
 
     // initialize vector size of mesh
-    void initialize_mesh(Mesh& mesh, int dim=-1);
+    void initialize_mesh(Mesh& mesh);
 
 public:
     Mesh_Parser(Mesh_Format format);

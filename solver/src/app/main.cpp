@@ -14,11 +14,14 @@
 #include <stdio.h>
 //#include <config.h>
 #include "entity/mesh/mesh_parser.h"
+#include "physics/electromagnetism/formulation/T_Omega.h"
 
 
 int main() {
     Mesh_Parser mp(Mesh_Format::GMSH);
     Mesh mesh = mp.load_mesh(SCRIPT_PATH "test_mesh_0.msh");
+
+    T_Omega t_o(mesh);
 
     Logger::export_to_file("simuEM.log");
     return 0;

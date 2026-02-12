@@ -1,0 +1,59 @@
+#include "physics/electromagnetism/formulation/T_Omega.h"
+
+T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh)
+{
+
+    dim_ = mesh.get_mesh_dimension();
+
+    for(const Key& mesh_key : mesh_.get_keys_true_boundary())
+    {
+        std::string description = mesh.get_group_description(mesh_key);
+        key_true_boundary.push_back(mesh_key);
+        Logger::info("T_Omega - Found simulation boundary: " + description);
+    }
+
+    for(const Key& mesh_key : mesh_.get_keys_internal_surface())
+    {
+        std::string description = mesh.get_group_description(mesh_key);
+        if(utils::a_contains_b(description, {{"Conductor", "Boundary"}, {"Conducting", "Boundary"}})){
+            key_conductor_interface.push_back(mesh_key);
+            Logger::info("T_Omega - Found conductor boundary: " + description);
+        }
+    }
+    
+    for(const Key& mesh_key : mesh_.get_keys_domain())
+    {
+        std::string description = mesh.get_group_description(mesh_key);
+        if(utils::a_contains_b(description, {{"Source, Current"}}))
+        {
+            key_source.push_back(mesh_key);
+            Logger::info("T_Omega - Found source current: " + description);
+        }
+        else if(utils::a_contains_b(description, {{"Insulator"}, {"Insulating"}}))
+        {
+            key_insulator.push_back(mesh_key);
+            Logger::info("T_Omega - Found insulating region: " + description);
+        }
+        else if(utils::a_contains_b(description, {{"Conductor"}, {"Conducting"}}))
+        {
+            key_conductor.push_back(mesh_key);
+            Logger::info("T_Omega - Found conductor: " + description);
+        }
+    }
+
+    Logger::info("T_Omega - Creating conductor boundary layer groups.");
+
+    // mark all elements in conductors' boundary. (in 3D mesh, they are the 3D elements at boundary layer inside conductor)
+    for(Key& key : key_conductor)
+    {
+        std::string description = mesh.get_group_description(key);
+        Key new_key =  mesh.mark_elements(conductor_interface_layer_filter(), dim_, key, "Conductor Outerlayer for "+description);
+
+        std::string new_description = mesh.get_group_description(new_key);
+        Logger::info("T_Omega - Found conductor interface layer, marked as: " + new_description + ", #element = " + std::to_string(mesh_.get_group(new_key).size()));
+    }
+    
+        
+};
+
+

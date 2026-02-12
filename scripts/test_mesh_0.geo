@@ -149,10 +149,10 @@ Physical Volume("Conductor 1", 1) = {1};
 Physical Volume("Insulating region", 2) = {2};
 
 // Interface surface between conductor and space
-Physical Surface("Conductor boundary", 10) = {1, 2, 3, 4, 5, 6};
+Physical Surface("Conductor Boundary", 10) = {1, 2, 3, 4, 5, 6};
 
 // Outer boundary (for boundary conditions)
-Physical Surface("true boundary", 20) = {7, 8, 9, 10, 11, 12};
+Physical Surface("True Boundary", 20) = {7, 8, 9, 10, 11, 12};
 
 
 Mesh.MshFileVersion = 4.5;

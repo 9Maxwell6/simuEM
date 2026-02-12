@@ -35,8 +35,9 @@ public:
     /// Returns element's type
     virtual Type get_Type() const = 0;
 
-    virtual const size_t * get_NodeIdx() const= 0;
-    virtual void set_NodeIdx(const size_t *ind) = 0;
+    virtual const size_t * get_nodeIdx() const = 0;
+    virtual int get_nodeNum() const = 0;
+    virtual void set_nodeIdx(const size_t *ind) = 0;
 
     inline size_t get_Id() const {return id_;}
     inline size_t get_propertyId() const {return property_id_;}

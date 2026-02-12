@@ -4,6 +4,8 @@
 #include "entity/mesh/e_tetrahedron.h"
 #include "entity/mesh/e_triangle.h"
 #include "entity/mesh/e_edge.h"
+#include "utils/logger.h"
+
 
 #include <vector>
 #include <string>
@@ -54,22 +56,17 @@ protected:
     // For higher order elements, indices of extra nodes other than vertices will stored here.
     // not implemented.
 
-    //std::vector<Element> elements;  // all elements.
-    std::vector<Element *> elements;
     
-    std::vector<Element*> curve;    // 1d element: contain pointers to 2d elements. e.g. in std::vector<Edge>
-    std::vector<Element*> surface;  // 2d element: contain pointers to 2d elements. e.g. in std::vector<Triangle>, std::vector<Quadrilateral>
-    std::vector<Element*> volume;   // 3d element: contain index to nodes
-    // 
-    Key key_exterior_boundary;
-    Key key_interior_boundary;
-    std::set<size_t> exterior_boundary_node;
-    std::set<size_t> interior_boundary_node;
+    //std::vector<Element*> curve;    // 1d element: contain pointers to 2d elements. e.g. in std::vector<Edge>
+    //std::vector<Element*> surface;  // 2d element: contain pointers to 2d elements. e.g. in std::vector<Triangle>, std::vector<Quadrilateral>
+    //std::vector<Element*> volume;   // 3d element: contain index to nodes
+
+    // all elements with the same dimension of mesh
+    std::vector<Element*> elements;
     
-    // in 3D, the boundary is 2D Element
-    // in 2D, the boundary is 1D Element
-    std::vector<Element *> exterior_boundary_elements;  
-    std::vector<Element *> interior_boundary_elements;
+
+
+
     
 
     int key_positive_idx = 0;
@@ -91,11 +88,30 @@ protected:
                        {3,0}};   // key to find volume group     (e.g., tetrahedron).
 
     std::unordered_map<Key, std::vector<Element *>, Key_Hash> element_group;
-    std::unordered_map<Key, std::string, Key_Hash>            element_group_description;
+    std::unordered_map<Key, std::string,            Key_Hash> element_group_description;
+
+
+
+    std::vector<Key> key_true_boundary;
+    std::vector<Key> key_internal_surface; 
+    std::vector<Key> key_domain;
+    std::vector<Key> key_others;
     
 
 
 public:
+
+    int get_mesh_dimension() const {return dim_; }
+
+    const std::vector<Element *>& get_group(Key mesh_key) const;
+    const std::string get_group_description(Key mesh_key) const;
+
+    const std::vector<Key>& get_keys_true_boundary() const { return key_true_boundary; }
+    const std::vector<Key>& get_keys_internal_surface() const { return key_internal_surface; }
+    const std::vector<Key>& get_keys_domain() const { return key_domain; }
+    const std::vector<Key>& get_keys_others() const { return key_others; }
+
+
 
     /**
      * @brief Creates a new named group of elements based on the Filter function.
@@ -122,20 +138,28 @@ public:
     template <typename Filter>
     Key mark_elements(Filter&& filter, int dim, Key search_key = {0,0}, const std::string& description = "None")
     {
-        // Determine which group of elements to search
-        const std::vector<Element*>& search_pool = (search_key.id == 0) ? elements : element_group[search_key];
-
-        if (search_pool.empty())
-        {
-            std::cerr << "Warning: search pool is empty for key {dim="<<search_key.dim<<", id=" << search_key.id << "}, return bad key.\n";
-            return {dim, 0};
-        }
 
         if (dim < 0 || dim > 3)
         {
-            std::cerr << "Warning: impossible dimension " << dim << ", return bad key.\n";
-            return {dim, 0};
+            Logger::error("Mesh::mark_elements - failed: impossible dimension "+std::to_string(dim) + ", return bad key.\n");
+            return {static_cast<uint32_t>(dim), 0};
         }
+
+
+        auto it = element_group.find(search_key);
+        if (it == element_group.end()) Logger::info("Mesh::mark_elements - search_key not found: search from all elements with the same dimension of mesh.");
+
+        // Determine which group of elements to search
+        const std::vector<Element*>& search_pool = (it != element_group.end()) ? it->second : elements;
+        
+        //const std::vector<Element*>& search_pool; = (search_key.id == 0) ? elements : element_group[search_key];
+
+        if (search_pool.empty())
+        {
+            Logger::error("Mesh::mark_elements - failed: search pool is empty for key {dim="+ std::to_string(search_key.dim)+", id=" +std::to_string(search_key.id) + "}, return bad key.\n");
+            return {static_cast<uint32_t>(dim), 0};
+        }
+
 
         std::vector<Element*> group;
         for (Element* e : search_pool)
@@ -151,13 +175,15 @@ public:
             dim_keys[dim].id++;
             Key new_key = dim_keys[dim];
             
-            element_group[new_key]             = std::move(group);
+            element_group[new_key] = std::move(group);
+
             element_group_description[new_key] = description;
+
             return new_key;
         }
 
-        std::cerr << "Warning: no elements matched the filter, return bad key.\n";
-        return {dim, 0};
+        Logger::error("Mesh::mark_elements - failed: no elements matched the filter, return bad key.\n");
+        return {static_cast<uint32_t>(dim), 0};
     }
 
 

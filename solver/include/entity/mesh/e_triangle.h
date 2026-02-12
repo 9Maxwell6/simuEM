@@ -32,11 +32,12 @@ public:
 
     Type get_Type() const override;
 
-    const size_t * get_NodeIdx() const override;
+    const size_t * get_nodeIdx() const override;
+    int get_nodeNum() const override{ return 3; }
 
 
-    void set_NodeIdx(const size_t *idx);
-    void set_NodeIdx(size_t idx_1, size_t idx_2, size_t idx_3);
+    void set_nodeIdx(const size_t *idx);
+    void set_nodeIdx(size_t idx_1, size_t idx_2, size_t idx_3);
     
     
     
