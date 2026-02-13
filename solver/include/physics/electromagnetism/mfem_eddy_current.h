@@ -1,6 +1,8 @@
 #pragma once
 
 #include "config.h"
+#include "utils/logger.h"
+
 
 #ifdef LOAD_MFEM
   #include "mfem.hpp"

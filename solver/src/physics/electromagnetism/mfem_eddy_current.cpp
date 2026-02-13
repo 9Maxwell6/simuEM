@@ -31,4 +31,6 @@ MFEM_Eddy_Current::MFEM_Eddy_Current(const char * mesh_file,
 
     int Vsize_nd = HCurl_space->GetVSize();
     int Vsize_h1 = HGrad_space->GetVSize();
+
+    
 }

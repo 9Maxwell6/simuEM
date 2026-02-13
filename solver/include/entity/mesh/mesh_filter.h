@@ -1,5 +1,7 @@
 #include "mesh.h"
 
+namespace simu {
+
 namespace filter
 {
 
@@ -32,3 +34,5 @@ mark_elements(filter_by_volume(0.1, 1.0));
 mark_elements(filter_on_boundary(this));
 
 */
+
+}
