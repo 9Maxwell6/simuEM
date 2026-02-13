@@ -49,6 +49,14 @@ private:
                     const size_t * ie_ids = ie->get_nodeIdx();
                     int ie_size = ie->get_nodeNum();
 
+                    for (size_t i = 0; i < ie_size; ++i) 
+                    {
+                        for (size_t j = 0; j < e_size; ++j) 
+                        {
+                            if (ie_ids[i] == e_ids[j]) { return true; }
+                        }
+                    }
+                    /*
                     bool match = true;
                     for (size_t i = 0; i < ie_size; ++i) 
                     {
@@ -60,6 +68,7 @@ private:
                         if (!found) { match = false; break; }
                     }
                     if (match) return true;
+                    */
                 }
             }
             return false;
