@@ -2,6 +2,10 @@
 
 #include "fem_space.h"
 
+
+namespace simu {
+
+
 /**
  * Reference tetrahedron:
  * 
@@ -32,3 +36,6 @@ public:
     Space get_function_space() const override {return Space::H_1;};
     
 };
+
+
+}

@@ -1,5 +1,7 @@
 #include "entity/mesh/e_triangle.h"
 
+using namespace simu;
+
 Type Triangle::get_Type() const
 {
     return Type::TRIANGLE;

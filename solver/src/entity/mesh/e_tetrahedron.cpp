@@ -1,5 +1,7 @@
 #include "entity/mesh/e_tetrahedron.h"
 
+using namespace simu;
+
 Type Tetrahedron::get_Type() const
 {
     return Type::TETRAHEDRON;

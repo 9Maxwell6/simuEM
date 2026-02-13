@@ -7,7 +7,7 @@
 
 #include <functional>
 
-
+namespace simu {
 
 
 class T_Omega
@@ -72,3 +72,6 @@ public:
     T_Omega(Mesh& mesh);
 
 };
+
+
+}

@@ -1,5 +1,7 @@
 #include "physics/electromagnetism/formulation/T_Omega.h"
 
+using namespace simu;
+
 T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh)
 {
 

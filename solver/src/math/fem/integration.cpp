@@ -3,6 +3,8 @@
 #include <stdexcept>
 
 
+using namespace simu;
+
 namespace Integration{
 
     const std::vector<Integration_Point>& get_integrationPoints_triangle(int order);

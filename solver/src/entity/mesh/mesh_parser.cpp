@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <filesystem>
 
-
+using namespace simu;
 
 Mesh_Parser::Mesh_Parser(Mesh_Format format):format_(format)
 {

@@ -2,6 +2,10 @@
 
 #include <stdexcept>
 
+
+using namespace simu;
+
+
 Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : FEM_Space(p)
 {
     dim_ = 3;

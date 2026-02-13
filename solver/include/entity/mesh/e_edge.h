@@ -1,6 +1,7 @@
 #pragma once
 
 #include "element.h"
+namespace simu {
 
 /*-------------------------------------------------------------
  * local node id: 0, 1
@@ -37,3 +38,6 @@ public:
     
 
 };
+
+
+}

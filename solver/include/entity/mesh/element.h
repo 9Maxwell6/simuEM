@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <vector>
 
+namespace simu {
+
 
 enum class Type { 
     NODE, 
@@ -46,3 +48,5 @@ public:
 
 
 };
+
+}

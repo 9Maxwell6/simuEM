@@ -11,6 +11,7 @@
 
 #include <string>
 
+namespace simu {
 
 enum class Mesh_Format
 {
@@ -63,3 +64,5 @@ public:
 
 
 };
+
+}

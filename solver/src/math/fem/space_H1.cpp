@@ -3,6 +3,9 @@
 #include <stdexcept>
 
 
+using namespace simu;
+
+
 H1_tetrahedron::H1_tetrahedron(int p) : FEM_Space(p)
 {
     dim_ = 3;

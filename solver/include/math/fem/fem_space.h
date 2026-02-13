@@ -6,6 +6,8 @@
 #include <vector>
 #include <Eigen/Dense>
 
+namespace simu {
+
 enum class Space { 
     H_1, 
     H_curl 
@@ -47,3 +49,5 @@ public:
     int get_order() const { return p_;}
     int get_dim() const { return dim_;}
 };
+
+}

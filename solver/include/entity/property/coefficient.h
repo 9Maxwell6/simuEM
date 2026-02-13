@@ -1,3 +1,7 @@
+#pragma once
+
+namespace simu {
+
 class Coefficient
 {
 protected:
@@ -6,3 +10,5 @@ protected:
 public:
     
 };
+
+}

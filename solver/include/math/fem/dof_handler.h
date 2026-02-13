@@ -1,9 +1,13 @@
 #pragma once
 
+namespace simu {
 
-class DoF_Handler{
-    Mesh *mesh;
-    const FiniteElementCollection *fec;
 
-    size_t n_dof;
+
+class DoF_Handler
+{
+   
+};
+
+
 }

@@ -2,6 +2,8 @@
 
 #include <vector>
 
+namespace simu {
+
 // integration point on reference element
 struct Integration_Point {
     double x, y, z;
@@ -17,5 +19,7 @@ namespace Integration{
     const std::vector<Integration_Point>& get_integrationPoints_tetrahedron(int order);
 
 };
+
+}
 
 

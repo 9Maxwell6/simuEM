@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-
+namespace simu {
 
 struct Property 
 {
@@ -33,3 +33,5 @@ private:
 
     //
 };
+
+}

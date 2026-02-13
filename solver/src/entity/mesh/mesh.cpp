@@ -1,6 +1,6 @@
 #include "entity/mesh/mesh.h"
 
-
+using namespace simu;
 
 const std::vector<Element *>& Mesh::get_group(Key mesh_key) const
 {

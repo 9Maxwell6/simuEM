@@ -14,6 +14,7 @@
 #include <functional>
 #include <iostream>
 
+namespace simu {
 
 struct Key 
 {
@@ -191,3 +192,7 @@ public:
 
 
 };
+
+
+
+}

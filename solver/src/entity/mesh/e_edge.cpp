@@ -1,5 +1,7 @@
 #include "entity/mesh/e_edge.h"
 
+using namespace simu;
+
 Type Edge::get_Type() const
 {
     return Type::EDGE;

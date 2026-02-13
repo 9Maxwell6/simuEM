@@ -2,6 +2,8 @@
 
 #include <Eigen/Dense>
 
+namespace simu {
+
 template <int R>
 using Vector = Eigen::Matrix<double, R, 1>;
 
@@ -14,3 +16,6 @@ using Matrix = Eigen::Matrix<double, R, C, Eigen::RowMajor>;
 
 
 using MatrixXd = Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
+
+
+}

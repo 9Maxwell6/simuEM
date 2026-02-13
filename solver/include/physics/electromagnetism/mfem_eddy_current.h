@@ -6,7 +6,6 @@
   #include "mfem.hpp"
 #endif
 
-using namespace mfem;
 class MFEM_Eddy_Current
 {
 
