@@ -1,7 +1,6 @@
 #include "visualizer/app_window.h"
 
 
-using namespace simu;
 
 int main() {
     APP_Window app;
