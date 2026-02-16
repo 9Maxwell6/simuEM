@@ -2,7 +2,7 @@
 
 #include "entity/mesh/mesh.h"
 #include "math/fem/fem_space.h"
-#include "utils/string_utils.h"
+#include "utils/util_string.h"
 
 
 #include <functional>
@@ -19,6 +19,7 @@ private:
     int dim_;
 
     std::vector<Key> key_true_boundary;              // key to 1D/2D true boundary element groups
+    std::vector<Key> key_Omega_field_boundary;       // key to 1D/2D omega field boundary element groups
     std::vector<Key> key_conductor_interface;        // key to 1D/2D conductor boundary element groups
     std::vector<Key> key_source;                     // key to 2D/3D source element groups
     std::vector<Key> key_insulator;                  // key to 2D/3D insulating region element groups
@@ -28,14 +29,15 @@ private:
 
 
     /**
-     * @brief Filter function used for Mesh::mark_elements, it will checks if 
+     * @brief Wapper of lambda filter function used for Mesh::mark_elements, it will checks if 
      * at least one element in the conductor_interface group is covered by the target element
      *
-     * element A is considered "covered" by element B if all A's vertices is contained in B's vertices
+     * element A is considered "covered" by element B if there is at least one A's vertices
+     * contained in B's vertices.
      *
-     * @param e Pointer to the target element.
-     * @return true  If at least one element in conductor_interface is covered by the target element.
-     * @return false Otherwise
+     * @param e (lambda function parameter) pointer to the target element.
+     * @return (lambda function return) true  If at least one element in conductor_interface is covered by the target element,
+     * otherwise return false.
      */
     std::function<bool(Element*)> conductor_interface_layer_filter() {
         return [this](Element* e) -> bool {
@@ -56,22 +58,51 @@ private:
                             if (ie_ids[i] == e_ids[j]) { return true; }
                         }
                     }
-                    /*
-                    bool match = true;
-                    for (size_t i = 0; i < ie_size; ++i) 
-                    {
-                        bool found = false;
-                        for (size_t j = 0; j < e_size; ++j) 
-                        {
-                            if (ie_ids[i] == e_ids[j]) { found = true; break; }
-                        }
-                        if (!found) { match = false; break; }
-                    }
-                    if (match) return true;
-                    */
                 }
             }
             return false;
+        };
+    }
+
+
+    /**
+     * @brief Wapper of lambda filter function used for Mesh::mark_elements, it will help to mark the
+     * inner boundary elements for Omega field (scalar filed). Omega field covers the
+     * insulating region and the outer layer of conducting region, the inner boundary 
+     * elements correspond to the boundary of outer conducting layers inside the conductor.
+     *
+     *
+     * @param e (lambda function return) pointer to the target element.
+     * @return (lambda function return) pointer to the surface element if exist, otherwise return nullptr.
+     */
+    std::function<Element*(Element*)> scalar_field_Omega_inner_boundary_filter() {
+        return [this](Element* e) -> Element* {
+            const size_t * e_ids = e->get_nodeIdx();
+            int e_size = e->get_nodeNum();
+
+            for(Key& key: this->key_conductor_interface)
+            {    
+                for (Element* ie : this->mesh_.get_group(key))
+                {
+                    const size_t * ie_ids = ie->get_nodeIdx();
+                    int ie_size = ie->get_nodeNum();
+
+                    std::vector<size_t> exclude_ids;
+
+                    for (size_t i = 0; i < ie_size; ++i) 
+                    {
+                        for (size_t j = 0; j < e_size; ++j) 
+                        {
+                            if (ie_ids[i] == e_ids[j]) { exclude_ids.push_back(ie_ids[i]); }
+
+                        }
+                    }
+                    std::vector<Element *> new_element = this->mesh_.create_sub_element(e, exclude_ids, dim_-1);
+
+                    if(new_element.size()==1) return new_element[0];
+                }
+            }
+            return nullptr;
         };
     }
 

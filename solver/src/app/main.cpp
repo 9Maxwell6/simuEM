@@ -20,12 +20,18 @@
 using namespace simu;
 
 int main() {
+
+    Logger::start_timer("Loading mesh");
     Mesh_Parser mp(Mesh_Format::GMSH);
     Mesh mesh = mp.load_mesh(SCRIPT_PATH "test_mesh_0_v2.2.msh");
+    Logger::stop_timer("Loading mesh");
 
+
+    Logger::start_timer("Initialize T-Omega solver");
     T_Omega t_o(mesh);
+    Logger::stop_timer("Initialize T-Omega solver");
 
-    MFEM_Eddy_Current(SCRIPT_PATH "test_mesh_0_v2.2.msh");
+    //MFEM_Eddy_Current(SCRIPT_PATH "test_mesh_0_v2.2.msh");
 
     Logger::export_to_file("simuEM.log");
     return 0;

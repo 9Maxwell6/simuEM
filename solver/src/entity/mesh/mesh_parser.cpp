@@ -54,22 +54,22 @@ void Mesh_Parser::create_mesh_element(Element*& element_pointer, Mesh& mesh, Typ
         {
             case Type::EDGE:
             {
-                mesh.elements_edge.at(counter_edge) = Edge(node_idx, element_id, property_id, 1);
-                element_pointer = &mesh.elements_edge[counter_edge];
+                mesh.elements_edge_.at(counter_edge) = Edge(node_idx, element_id, property_id, 1);
+                element_pointer = &mesh.elements_edge_[counter_edge];
                 counter_edge++;
                 break;
             }
             case Type::TRIANGLE: 
             {    
-                mesh.elements_triangle.at(counter_triangle) = Triangle(node_idx, element_id, property_id, 1);
-                element_pointer = &mesh.elements_triangle[counter_triangle];
+                mesh.elements_triangle_.at(counter_triangle) = Triangle(node_idx, element_id, property_id, 1);
+                element_pointer = &mesh.elements_triangle_[counter_triangle];
                 counter_triangle++;
                 break;
             }
             case Type::TETRAHEDRON:
             {
-                mesh.elements_tetrahedron.at(counter_tetrahedron) = Tetrahedron(node_idx, element_id, property_id, 1);
-                element_pointer = &mesh.elements_tetrahedron[counter_tetrahedron];
+                mesh.elements_tetrahedron_.at(counter_tetrahedron) = Tetrahedron(node_idx, element_id, property_id, 1);
+                element_pointer = &mesh.elements_tetrahedron_[counter_tetrahedron];
                 counter_tetrahedron++;
                 break;
             }
@@ -84,9 +84,9 @@ Element * Mesh_Parser::create_element(Type element_type, std::vector<std::size_t
 {
     switch (element_type) 
     {
-        case Type::EDGE: return new Edge(node_idx, element_id, property_id, 1);
-        case Type::TRIANGLE: return new Triangle(node_idx, element_id, property_id, 1);
-        case Type::TETRAHEDRON: return new Tetrahedron(node_idx, element_id, property_id, 1);
+        case Type::EDGE: return new Edge(node_idx, element_id, property_id, o);
+        case Type::TRIANGLE: return new Triangle(node_idx, element_id, property_id, o);
+        case Type::TETRAHEDRON: return new Tetrahedron(node_idx, element_id, property_id, o);
         default: 
             Logger::warning("Mesh_Parser::create_element - failed: element_type not available, return nullptr");
             return nullptr;
@@ -148,23 +148,23 @@ void Mesh_Parser::initialize_mesh(Mesh& mesh)
 {
     switch (mesh.dim_) 
     {
-        case 0: mesh.nodes.resize(total_node); 
+        case 0: mesh.nodes_.resize(total_node); 
         case 1: 
         {
-            mesh.elements_edge.resize(total_edge);
-            mesh.elements.reserve(total_edge);
+            mesh.elements_edge_.resize(total_edge);
+            mesh.elements_.reserve(total_edge);
             break;
         }
         case 2: 
         {
-            mesh.elements_triangle.resize(total_triangle);
-            mesh.elements.reserve(total_triangle);
+            mesh.elements_triangle_.resize(total_triangle);
+            mesh.elements_.reserve(total_triangle);
             break;
         }
         case 3: 
         {
-            mesh.elements_tetrahedron.resize(total_tetrahedron);
-            mesh.elements.reserve(total_tetrahedron); // total_tetrahedron + total_hexahedron
+            mesh.elements_tetrahedron_.resize(total_tetrahedron);
+            mesh.elements_.reserve(total_tetrahedron); // total_tetrahedron + total_hexahedron
             break;
         }
         default:
@@ -227,13 +227,13 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     // Store node coordinates indexed by 0-based index.
     // Gmsh returns nodes in node_tags order, which may not be contiguous,
     // so we use the tag_to_idx mapping.
-    mesh.nodes.resize(mesh.n_node);
+    mesh.nodes_.resize(mesh.n_node);
     for (size_t i = 0; i < node_tags.size(); ++i) 
     {
         //size_t idx = tag_to_idx[node_tags[i]];
-        mesh.nodes[node_tags[i]-1].x = coords[3 * i];
-        mesh.nodes[node_tags[i]-1].y = coords[3 * i + 1];
-        mesh.nodes[node_tags[i]-1].z = coords[3 * i + 2];
+        mesh.nodes_[node_tags[i]-1].x = coords[3 * i];
+        mesh.nodes_[node_tags[i]-1].y = coords[3 * i + 1];
+        mesh.nodes_[node_tags[i]-1].z = coords[3 * i + 2];
     }
 
 
@@ -272,11 +272,11 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
             Element * element;
             create_mesh_element(element, mesh, type, element_node_tags, element_id, 0, order);
             
-            mesh.elements.push_back(element);
+            mesh.elements_.push_back(element);
         }
     }
 
-    for (Element* el : mesh.elements) {
+    for (Element* el : mesh.elements_) {
         element_map_md[el->get_Id()] = el; 
     }
     
@@ -314,7 +314,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
         if(dim == mesh.dim_){
             mesh.key_domain.push_back(gmsh_key);
         }else if (dim == mesh.dim_-1){
-            if(utils::a_contains_b(name, {{"True", "Boundary"}})){
+            if(util::a_contains_b(name, {{"True", "Boundary"}})){
                 mesh.key_true_boundary.push_back(gmsh_key);
             }else{
                 mesh.key_internal_surface.push_back(gmsh_key); 

@@ -3,7 +3,7 @@
 #include <vector>
 
 
-namespace utils 
+namespace util
 {
 
 
@@ -28,7 +28,7 @@ namespace utils
  * @param b A vector of groups, where each group is a vector of strings.
  * @return true  If all strings in at least one group are found in `a`.
  */
-static bool a_contains_b(const std::string& a, const std::vector<std::vector<std::string>>& b) 
+inline bool a_contains_b(const std::string& a, const std::vector<std::vector<std::string>>& b) 
 {
     for (const auto& group : b) {
         bool all_found = true;

@@ -16,10 +16,10 @@ namespace simu {
  *                5 -> [2,      3     ]
  * 
  *                      node_1, node_2, node_3
- * local face id: 0 -> [1,      3,      2     ]
- *                1 -> [2,      3,      0     ]
- *                2 -> [1,      3,      0     ]
- *                3 -> [0,      1,      2     ]
+ * local face id: 0 -> [1,      2,      3     ]
+ *                1 -> [0,      3,      2     ]
+ *                2 -> [0,      1,      3     ]
+ *                3 -> [0,      2,      1     ]
  */
 
 class Tetrahedron : public Element

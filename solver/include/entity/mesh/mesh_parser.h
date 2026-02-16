@@ -3,7 +3,7 @@
 #include "mesh.h"
 #include "config.h"
 #include "utils/logger.h"
-#include "utils/string_utils.h"
+#include "utils/util_string.h"
 
 #ifdef LOAD_GMSH
   #include "gmsh.h"

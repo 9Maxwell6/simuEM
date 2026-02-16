@@ -8,11 +8,15 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <unordered_map>
+#include <chrono>
 
 class Logger 
 {
 private:
     static std::stringstream buffer;
+    static inline std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> timers_;
+
 
 public:
     enum class Level 
@@ -30,6 +34,7 @@ public:
     // Convenience wrappers
     static void info(const std::string& msg)      { log(Level::INFO,    msg); }
     static void success(const std::string& msg)   { log(Level::SUCCESS, msg); }
+    static void debug(const std::string& msg)     { log(Level::DEBUG,   msg); }
     static void warning(const std::string& msg)   { log(Level::WARNING, msg); }
     static void error(const std::string& msg)     
     { 
@@ -39,6 +44,11 @@ public:
 
     // Specialized table row for your Mesh entities
     static void mesh_entity(int dim, int tag, int key_id, int n_elements, const std::string& name);
+
+
+    static void start_timer(const std::string& label);
+
+    static void stop_timer(const std::string& label);
 
     // Save all collected logs to a file at once
     static void export_to_file(const std::string& filename);

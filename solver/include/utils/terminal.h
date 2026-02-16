@@ -4,7 +4,7 @@
 #include <string>
 #include <iomanip>
 
-namespace utils {
+namespace util {
 
 // Terminal control codes
 namespace terminal {

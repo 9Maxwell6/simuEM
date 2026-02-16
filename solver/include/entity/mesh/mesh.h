@@ -5,6 +5,8 @@
 #include "entity/mesh/e_triangle.h"
 #include "entity/mesh/e_edge.h"
 #include "utils/logger.h"
+#include "utils/util_math.h"
+
 
 
 #include <vector>
@@ -48,11 +50,11 @@ protected:
     size_t n_interior_boundary_node;
     
 
-    std::vector<Node> nodes;       // 0d element: contain pure 3d coordinates, node index is its index in this vector.
-    std::vector<Edge> elements_edge;
-    std::vector<Triangle> elements_triangle;
+    std::vector<Node> nodes_;       // 0d element: contain pure 3d coordinates, node index is its index in this vector.
+    std::vector<Edge> elements_edge_;
+    std::vector<Triangle> elements_triangle_;
     //std::vector<Quadrilateral> elements_quadrilateral;  // not implemented.
-    std::vector<Tetrahedron> elements_tetrahedron;
+    std::vector<Tetrahedron> elements_tetrahedron_;
 
     // For higher order elements, indices of extra nodes other than vertices will stored here.
     // not implemented.
@@ -63,7 +65,7 @@ protected:
     //std::vector<Element*> volume;   // 3d element: contain index to nodes
 
     // all elements with the same dimension of mesh
-    std::vector<Element*> elements;
+    std::vector<Element*> elements_;
     
 
 
@@ -112,6 +114,13 @@ public:
     const std::vector<Key>& get_keys_domain() const { return key_domain; }
     const std::vector<Key>& get_keys_others() const { return key_others; }
 
+    Element * create_element(Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o);
+
+
+    std::vector<Element *> create_sub_element(Element * e, std::vector<size_t>& exclude_ids, int dim);
+
+
+    ~Mesh();
 
 
     /**
@@ -119,14 +128,88 @@ public:
      * 
      * Iterates over a pool of elements and applies a filter function to each.
      * Elements that pass the filter are collected into a new group, stored in
-     * element_group with an auto-incremented key for the given dimension.
+     * element_group with an auto-incremented key.
+     * 
+     * The dimension of the new element group must be same with the element group 
+     * provided by search_key.
      * 
      * @tparam Filter  Callable with signature bool(const Element*).
-     *                 Can be a lambda, function pointer, or functor.
+     *                 Can be a lambda (recommand) or function pointer.
      *                 Lambdas may capture the Mesh via [this] for access to mesh data.
      * 
      * @param filter       The filter function to apply to each element.
-     * @param dim          Dimension of the new group (0=node, 1=edge, 2=triangle, 3=tet).
+     * @param search_key   Key of an existing group to search within.
+     *                     Default {0,0} searches all elements.
+     * @param description  A label for the new group. Default "None".
+     * 
+     * @return Key of the newly created group, or {dim, 0} if:
+     *         - the search pool is empty,
+     *         - no elements matched the filter.
+     */
+    template <typename Filter>
+    Key mark_elements(Filter&& filter, Key search_key = {0,0}, const std::string& description = "None")
+    {
+        auto it = element_group.find(search_key);
+        if (it == element_group.end()) Logger::info("Mesh::mark_elements - search_key not found: search from all elements with the same dimension of mesh.");
+
+        // Determine which group of elements to search
+        const std::vector<Element*>& search_pool = (it != element_group.end()) ? it->second : elements_;
+        
+        //const std::vector<Element*>& search_pool; = (search_key.id == 0) ? elements : element_group[search_key];
+
+        if (search_pool.empty())
+        {
+            Logger::error("Mesh::mark_elements - failed: search pool is empty for key {dim="+ std::to_string(search_key.dim)+", id=" +std::to_string(search_key.id) + "}, return bad key.\n");
+            return {static_cast<uint32_t>(search_key.dim), 0};
+        }
+
+
+        std::vector<Element*> group;
+        for (Element* e : search_pool)
+        {
+            if (filter(e))
+            {
+                group.push_back(e);
+            }
+        }
+        
+        if (!group.empty())
+        {
+            dim_keys[search_key.dim].id++;
+            Key new_key = dim_keys[search_key.dim];
+            
+            element_group[new_key] = std::move(group);
+
+            element_group_description[new_key] = description;
+
+            return new_key;
+        }
+
+        Logger::error("Mesh::mark_elements - failed: no elements matched the filter, return bad key.\n");
+        return {static_cast<uint32_t>(search_key.dim), 0};
+    }
+
+
+
+    /**
+     * @brief Creates a new named group of elements based on the Filter function,
+     * these marked elements are previously not contained in any group, thus they
+     * are newly created within this function.
+     * 
+     * e.g., marking certain faces of tetrahedron, which previously not initialized 
+     * during mesh loading phase. 
+     * 
+     * Iterates over a pool of elements and applies a filter function to each.
+     * 
+     * The surface/edge elements of the that pass the filter are collected into a new group, stored in
+     * element_group with an auto-incremented key for the given dimension.
+     * 
+     * @tparam Filter  Callable with signature Element*(const Element*).
+     *                 Can be a lambda (recommand) or function pointer.
+     *                 Lambdas may capture the Mesh via [this] for access to mesh data.
+     * 
+     * @param filter       The filter function to apply to each element.
+     * @param dim          Dimension of the new group
      * @param search_key   Key of an existing group to search within.
      *                     Default {0,0} searches all elements.
      * @param description  A label for the new group. Default "None".
@@ -137,10 +220,10 @@ public:
      *         - no elements matched the filter.
      */
     template <typename Filter>
-    Key mark_elements(Filter&& filter, int dim, Key search_key = {0,0}, const std::string& description = "None")
+    Key mark_new_elements(Filter&& filter, int dim, Key search_key = {0,0}, const std::string& description = "None")
     {
 
-        if (dim < 0 || dim > 3)
+        if (dim < 0 || dim > dim_)
         {
             Logger::error("Mesh::mark_elements - failed: impossible dimension "+std::to_string(dim) + ", return bad key.\n");
             return {static_cast<uint32_t>(dim), 0};
@@ -151,7 +234,7 @@ public:
         if (it == element_group.end()) Logger::info("Mesh::mark_elements - search_key not found: search from all elements with the same dimension of mesh.");
 
         // Determine which group of elements to search
-        const std::vector<Element*>& search_pool = (it != element_group.end()) ? it->second : elements;
+        const std::vector<Element*>& search_pool = (it != element_group.end()) ? it->second : elements_;
         
         //const std::vector<Element*>& search_pool; = (search_key.id == 0) ? elements : element_group[search_key];
 
@@ -165,9 +248,11 @@ public:
         std::vector<Element*> group;
         for (Element* e : search_pool)
         {
-            if (filter(e))
+            Element* new_e = filter(e);
+            if (new_e != nullptr)
             {
-                group.push_back(e);
+                // TODO: check if new element is duplicate
+                group.push_back(new_e);
             }
         }
         
@@ -186,9 +271,6 @@ public:
         Logger::error("Mesh::mark_elements - failed: no elements matched the filter, return bad key.\n");
         return {static_cast<uint32_t>(dim), 0};
     }
-
-
-
 
 
 };
