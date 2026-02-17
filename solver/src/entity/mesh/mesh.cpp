@@ -14,24 +14,47 @@ Mesh::~Mesh()
     }
 }
 
-const std::vector<Element *>& Mesh::get_group(Key mesh_key) const
+const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
 {
     auto it = element_group.find(mesh_key);
     if (it != element_group.end())
         return it->second;
-    Logger::error("Mesh::get_group - failed: key not found in mesh, return empty vector<Element *>.");
+    Logger::error("Mesh::get_element_group - failed: key not found in mesh, return reference to empty vector<Element *>.");
     static const std::vector<Element*> empty;
     return empty;
 }
 
 
-const std::string Mesh::get_group_description(Key mesh_key) const
+/**
+ * @brief Get all nodal indices of elements in group with given mesh_key.
+ *
+ * @param mesh_key (lambda function parameter) pointer to the target element.
+ * @return (lambda function return) true  If at least one element in conductor_interface is covered by the target element,
+ * otherwise return false.
+ */
+const std::set<size_t>& Mesh::get_node_group(Key mesh_key) const
+{
+    auto it = element_group.find(mesh_key);
+    if (it != element_group.end()){
+        for(Element * e : it->second){
+
+        }
+    }
+
+    Logger::error("Mesh::get_node_group - failed: key not found in mesh, return reference to empty vector<size_t>.");
+    static const std::set<size_t> empty;
+    return empty;
+}
+
+
+const std::string& Mesh::get_group_description(Key mesh_key) const
 { 
     auto it = element_group_description.find(mesh_key);
     if (it != element_group_description.end())
         return it->second;
-    Logger::error("Mesh::get_group_description - failed: key not found in mesh, return empty description.");
-    return "";
+    Logger::error("Mesh::get_group_description - failed: key not found in mesh, return reference to empty description.");
+    static const std::string empty = "";
+    return empty;
 }
 
 

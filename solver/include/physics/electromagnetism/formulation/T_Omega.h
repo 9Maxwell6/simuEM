@@ -46,7 +46,7 @@ private:
             //std::cout<<e_ids[0]<<" "<< e_ids[1]<<" " << e_ids[2]<<" "<< e_ids[3]<<" " <<std::endl;
             for(Key& key: this->key_conductor_interface)
             {    
-                for (Element* ie : this->mesh_.get_group(key))
+                for (Element* ie : this->mesh_.get_element_group(key))
                 {
                     const size_t * ie_ids = ie->get_nodeIdx();
                     int ie_size = ie->get_nodeNum();
@@ -82,7 +82,7 @@ private:
 
             for(Key& key: this->key_conductor_interface)
             {    
-                for (Element* ie : this->mesh_.get_group(key))
+                for (Element* ie : this->mesh_.get_element_group(key))
                 {
                     const size_t * ie_ids = ie->get_nodeIdx();
                     int ie_size = ie->get_nodeNum();

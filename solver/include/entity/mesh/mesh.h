@@ -92,6 +92,7 @@ protected:
 
     std::unordered_map<Key, std::vector<Element *>, Key_Hash> element_group;
     std::unordered_map<Key, std::string,            Key_Hash> element_group_description;
+    std::unordered_map<Key, std::set<size_t>,    Key_Hash> node_group;
 
 
 
@@ -106,8 +107,10 @@ public:
 
     int get_mesh_dimension() const {return dim_; }
 
-    const std::vector<Element *>& get_group(Key mesh_key) const;
-    const std::string get_group_description(Key mesh_key) const;
+    const std::vector<Element *>& get_element_group(Key mesh_key) const;
+    const std::set<size_t>& get_node_group(Key mesh_key) const;
+    const std::string& get_group_description(Key mesh_key) const;
+
 
     const std::vector<Key>& get_keys_true_boundary() const { return key_true_boundary; }
     const std::vector<Key>& get_keys_internal_surface() const { return key_internal_surface; }
