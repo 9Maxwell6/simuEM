@@ -75,34 +75,28 @@ private:
      * @param e (lambda function return) pointer to the target element.
      * @return (lambda function return) pointer to the surface element if exist, otherwise return nullptr.
      */
-    std::function<Element*(Element*)> scalar_field_Omega_inner_boundary_filter() {
-        return [this](Element* e) -> Element* {
+    std::function<std::vector<Element *>(Element*)> scalar_field_Omega_inner_boundary_filter() {
+        return [this](Element* e) -> std::vector<Element *> {
             const size_t * e_ids = e->get_nodeIdx();
             int e_size = e->get_nodeNum();
 
             for(Key& key: this->key_conductor_interface)
             {    
-                for (Element* ie : this->mesh_.get_element_group(key))
+                std::vector<size_t> exclude_ids;
+                // get all node index on conductor interface
+                for (size_t id : this->mesh_.get_node_group(key))
                 {
-                    const size_t * ie_ids = ie->get_nodeIdx();
-                    int ie_size = ie->get_nodeNum();
-
-                    std::vector<size_t> exclude_ids;
-
-                    for (size_t i = 0; i < ie_size; ++i) 
-                    {
-                        for (size_t j = 0; j < e_size; ++j) 
-                        {
-                            if (ie_ids[i] == e_ids[j]) { exclude_ids.push_back(ie_ids[i]); }
-
-                        }
+                    for (size_t i = 0; i < e_size; ++i) 
+                    {      
+                        if (id == e_ids[i]) { exclude_ids.push_back(id); }                 
                     }
+                }
+                if(exclude_ids.size()!=0) {
                     std::vector<Element *> new_element = this->mesh_.create_sub_element(e, exclude_ids, dim_-1);
-
-                    if(new_element.size()==1) return new_element[0];
+                    if(new_element.size()!=0) return new_element;
                 }
             }
-            return nullptr;
+            return {};
         };
     }
 

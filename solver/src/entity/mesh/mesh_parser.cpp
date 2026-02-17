@@ -307,8 +307,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
         mesh.dim_keys[dim].id++;
         Key gmsh_key = mesh.dim_keys[dim];
         
-        mesh.element_group[gmsh_key];
-        mesh.element_group_description[gmsh_key] = name;
+
 
         // store key
         if(dim == mesh.dim_){
@@ -329,6 +328,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
         gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entity_tags);
 
         auto& group = mesh.element_group[gmsh_key];
+        mesh.element_group_description[gmsh_key] = name;
 
         // get all elements from entity
         for (int entity_tag : entity_tags)

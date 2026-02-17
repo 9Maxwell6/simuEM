@@ -108,7 +108,7 @@ public:
     int get_mesh_dimension() const {return dim_; }
 
     const std::vector<Element *>& get_element_group(Key mesh_key) const;
-    const std::set<size_t>& get_node_group(Key mesh_key) const;
+    const std::set<size_t>& get_node_group(Key mesh_key);
     const std::string& get_group_description(Key mesh_key) const;
 
 
@@ -251,12 +251,13 @@ public:
         std::vector<Element*> group;
         for (Element* e : search_pool)
         {
-            Element* new_e = filter(e);
-            if (new_e != nullptr)
-            {
-                // TODO: check if new element is duplicate
+            std::vector<Element *> new_es = filter(e);
+            for(Element * new_e : new_es){
+                // TODO: check if new element is duplicate ?
                 group.push_back(new_e);
+                const size_t * e_ids = new_e->get_nodeIdx();
             }
+
         }
         
         if (!group.empty())

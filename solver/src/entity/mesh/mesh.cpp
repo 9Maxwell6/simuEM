@@ -32,13 +32,28 @@ const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
  * @return (lambda function return) true  If at least one element in conductor_interface is covered by the target element,
  * otherwise return false.
  */
-const std::set<size_t>& Mesh::get_node_group(Key mesh_key) const
+const std::set<size_t>& Mesh::get_node_group(Key mesh_key)
 {
-    auto it = element_group.find(mesh_key);
-    if (it != element_group.end()){
-        for(Element * e : it->second){
+    auto node_it = node_group.find(mesh_key);
+    if (node_it != node_group.end()) {
+        return node_it->second;
+    }
+
+    auto& group = node_group[mesh_key];
+
+    auto element_it = element_group.find(mesh_key);
+    if (element_it != element_group.end()){
+        for(Element * e : element_it->second)
+        {
+            const size_t * node_ids =  e->get_nodeIdx();
+            int nodes_size = e->get_nodeNum();
+            for (size_t i = 0; i < nodes_size; ++i) 
+            {
+                group.insert(node_ids[i]);
+            }
 
         }
+        return group;
     }
 
     Logger::error("Mesh::get_node_group - failed: key not found in mesh, return reference to empty vector<size_t>.");
