@@ -380,6 +380,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     //std::cout<<mesh.n_element<<std::endl;
     return mesh;
 #else
+    Logger::error("Mesh_Parser::load_gmsh - Gmsh support not compiled!");
     throw std::runtime_error("Gmsh support not compiled!");
 #endif
 }

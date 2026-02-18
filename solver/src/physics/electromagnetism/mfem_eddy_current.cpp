@@ -11,6 +11,7 @@ MFEM_Eddy_Current::MFEM_Eddy_Current(const char * mesh_file,
                                      visualization_(visualization)
       
 {
+#ifdef LOAD_MFEM
     mfem::Device device(device_config);
     mfem::Mesh *mesh = new mfem::Mesh(mesh_file, 1, 1);
     int dim = mesh->Dimension();
@@ -261,6 +262,9 @@ MFEM_Eddy_Current::MFEM_Eddy_Current(const char * mesh_file,
 
     */
 
-
+#else
+    Logger::error("MFEM_Eddy_Current - MFEM support not compiled!");
+    throw std::runtime_error("MFEM support not compiled!");
+#endif
         
 }

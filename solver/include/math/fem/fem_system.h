@@ -23,10 +23,10 @@ public:
     FEM_System(Mesh& mesh);
 
     // assign functional space to all elements in mesh.
-    void construct_dof(Space fs);
+    void construct_dof(Space fs, int p_order=1);
 
     // assign functional space to specific group of elements.
-    void construct_group_dof(Space fs, const Key group_key={0,0});
+    void construct_group_dof(Space fs, const Key group_key={0,0}, int p_order=1);
 
 
 };

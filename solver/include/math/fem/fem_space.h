@@ -14,7 +14,7 @@ enum class Space {
 };
 
 enum class Geometry {
-    Tetrahedron, 
+    TETRAHEDRON, 
     // currently not support other element geometry
 };
 
@@ -25,6 +25,11 @@ protected:
     int dim_; // space dimension
     int p_;   // polynomial order
 
+    int n_dof_;
+    int n_dof_node_offset_;
+    int n_dof_edge_offset_;
+    int n_dof_face_offset_;
+    int n_dof_volume_offset_;
 
 public:
     FEM_Space(int p);
