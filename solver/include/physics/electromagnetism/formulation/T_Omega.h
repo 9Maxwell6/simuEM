@@ -2,6 +2,7 @@
 
 #include "entity/mesh/mesh.h"
 #include "math/fem/fem_space.h"
+#include "math/fem/fem_system.h"
 #include "utils/util_string.h"
 
 

@@ -1,9 +1,5 @@
 #pragma once
-#include "element.h"
-#include "node.h"
-#include "entity/mesh/e_tetrahedron.h"
-#include "entity/mesh/e_triangle.h"
-#include "entity/mesh/e_edge.h"
+#include "entity/mesh/e_collection.h"
 #include "utils/logger.h"
 #include "utils/util_math.h"
 
@@ -91,8 +87,8 @@ protected:
                        {3,0}};   // key to find volume group     (e.g., tetrahedron).
 
     std::unordered_map<Key, std::vector<Element *>, Key_Hash> element_group;
+    std::unordered_map<Key, std::set<size_t>,       Key_Hash> node_group;
     std::unordered_map<Key, std::string,            Key_Hash> element_group_description;
-    std::unordered_map<Key, std::set<size_t>,    Key_Hash> node_group;
 
 
 
