@@ -22,8 +22,8 @@ private:
 
     std::vector<size_t> elements_dof_lookup_list;  // [dofs of element 1, dofs of element 2, ...]
 
-    std::vector<FEM_Space *> global_space;
-    std::unordered_map<Key, FEM_Space *, Key_Hash> group_space;
+    std::vector<Space> global_space;
+    std::unordered_map<Key, Space, Key_Hash> group_space;
 
 
     //std::vector<size_t> elements_dof_lookup_list;
@@ -38,6 +38,8 @@ public:
 
     // assign functional space to specific group of elements.
     void assign_group_FE_space(Space fs, const Key group_key={0,0}, int p_order=1);
+
+
 
 
 };
