@@ -29,7 +29,7 @@ const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
  * @brief Get all nodal indices of elements in group with given mesh_key.
  *
  * @param mesh_key (lambda function parameter) pointer to the target element.
- * @return (lambda function return) true  If at least one element in conductor_interface is covered by the target element,
+ * @return (lambda function return) true if at least one element in conductor_interface is covered by the target element,
  * otherwise return false.
  */
 const std::set<size_t>& Mesh::get_node_group(Key mesh_key)

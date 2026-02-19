@@ -6,10 +6,22 @@
 using namespace simu;
 
 
-H1_tetrahedron::H1_tetrahedron(int p) : FEM_Space(p)
-{
-    dim_ = 3;
+H1_Space::H1_Space(int dim, int p) : FEM_Space(dim, p){}
 
+
+H1_tetrahedron::H1_tetrahedron(int p) : H1_Space(3, p)
+{
+    n_node_   = 4;
+    n_edge_   = 6;
+    n_face_   = 4;
+    n_volume_ = 1;
+
+
+    n_dof_            = (p+1)*(p+2)*(p+3)/6;
+    n_dof_per_node_   = 1;
+    n_dof_per_edge_   = (p-1);
+    n_dof_per_face_   = (p-1)*(p-2)/2;
+    n_dof_per_volume_ = (p-1)*(p-2)*(p-3)/6;
 }
 
 
