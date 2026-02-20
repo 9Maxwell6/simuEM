@@ -1,5 +1,9 @@
 #include "math/fem/fem_system.h"
 
+using namespace simu;
+
+
+
 FEM_System::FEM_System(Mesh& mesh):mesh_(mesh){};
 
 
@@ -13,5 +17,6 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh){};
 void FEM_System::assign_FE_space(Space fs, int p_order)
 {
     // TODO: should use vector<Space>, what if we assign duplicate Space?
-    global_space.push_back(fs);
+    // use vector<FEM_Space *>,
+    //global_space.push_back(fs);
 }
