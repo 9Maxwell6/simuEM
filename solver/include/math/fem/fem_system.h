@@ -13,6 +13,8 @@ class FEM_System
 {
 
 private:
+    int dim_;
+
     Mesh& mesh_;
     DoF_Handler dof_handler_;
 
@@ -22,13 +24,15 @@ private:
 
     std::vector<size_t> elements_dof_lookup_list;  // [dofs of element 1, dofs of element 2, ...]
 
-    std::vector<FEM_Space *> global_space;
-    std::unordered_map<Key, FEM_Space *, Key_Hash> group_space;
+    std::vector<Space> global_space;
+    std::unordered_map<Key, Space, Key_Hash> group_space;
 
 
     //std::vector<size_t> elements_dof_lookup_list;
 
     void assign_dof(Element * e);
+
+    std::vector<FEM_Space *> create_FE_space(Space fs);
 
 public:
     FEM_System(Mesh& mesh);

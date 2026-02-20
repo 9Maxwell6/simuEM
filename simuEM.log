@@ -1,0 +1,15 @@
+[INFO] Load mesh: /home/maxwell/workSpace/ETHz/2025_Hs/Master_Thesis/simuEM/scripts/test_mesh_0_v2.2.msh
+[INFO] Node number: 361
+[INFO] Physical groups: Load elements...
+ENTITY | Dim: 2    | ID: 10     | Key: {2, 1}       | Name: Conductor Boundary
+ENTITY | Dim: 2    | ID: 20     | Key: {2, 2}       | Name: True Boundary
+ENTITY | Dim: 3    | ID: 1      | Key: {3, 1}       | Name: Conductor 1
+ENTITY | Dim: 3    | ID: 2      | Key: {3, 2}       | Name: Insulating region
+[INFO] [Loading mesh] elapsed: 0.010876s.
+[INFO] T_Omega - Found simulation boundary: True Boundary
+[DEBUG] T_Omega - Found conductor boundary: Conductor Boundary
+[DEBUG] T_Omega - Found conductor: Conductor 1
+[DEBUG] T_Omega - Found insulating region: Insulating region
+[INFO] T_Omega - Create conductor interface layer, marked as: Conductor Outerlayer | Conductor 1, #element = 367
+[INFO] T_Omega - Create Omega field inner boundary, marked as: Omega field inner boundary | Conductor 1, #element = 18
+[INFO] [Initialize T-Omega solver] elapsed: 0.003226s.
