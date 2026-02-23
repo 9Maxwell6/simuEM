@@ -2,10 +2,7 @@
 
 using namespace simu;
 
-Type Tetrahedron::get_Type() const
-{
-    return Type::TETRAHEDRON;
-}
+Geometry Tetrahedron::get_geometry() const { return Geometry::TETRAHEDRON; }
 
 Tetrahedron::Tetrahedron(const size_t *node_idx, size_t id, size_t property_id, int o) : Element(id, property_id, o)
 {

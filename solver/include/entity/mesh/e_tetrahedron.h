@@ -37,7 +37,7 @@ public:
 
     ~Tetrahedron(){};
 
-    Type get_Type() const override;
+    Geometry get_geometry() const override;
 
     const size_t * get_nodeIdx() const override;
     int get_nodeNum() const override{ return 4; }

@@ -43,7 +43,7 @@ public:
     }
 
     // Specialized table row for your Mesh entities
-    static void mesh_entity(int dim, int tag, int key_id, int n_elements, const std::string& name);
+    static void mesh_entity(int dim, int tag, int key_id, int n_elements, int n_types, std::array<size_t, 4> e_size, const std::string& name);
 
 
     static void start_timer(const std::string& label);

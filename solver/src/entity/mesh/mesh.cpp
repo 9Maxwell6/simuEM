@@ -14,13 +14,37 @@ Mesh::~Mesh()
     }
 }
 
+const std::vector<Element *>& Mesh::get_mesh_elements() const { return elements_; }
+const std::set<Geometry>& Mesh::get_mesh_element_geometries() const { return types_; }
+
+
 const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
 {
     auto it = element_group.find(mesh_key);
-    if (it != element_group.end())
-        return it->second;
+    if (it != element_group.end()) return it->second;
+
     Logger::error("Mesh::get_element_group - failed: key not found in mesh, return reference to empty vector<Element *>.");
     static const std::vector<Element*> empty;
+    return empty;
+}
+
+const std::set<Geometry>& Mesh::get_element_geometry_group(Key mesh_key) const
+{
+    auto it = element_geometry_group.find(mesh_key);
+    if (it != element_geometry_group.end()) return it->second;
+
+    Logger::error("Mesh::get_element_geometry_group - failed: key not found in mesh, return reference to empty std::set<Geometry>.");
+    static const std::set<Geometry> empty;
+    return empty;
+}
+
+const std::array<size_t, 4>& Mesh::get_element_size_group(Key mesh_key) const
+{
+    auto it = element_size_group.find(mesh_key);
+    if (it != element_size_group.end()) return it->second;
+
+    Logger::error("Mesh::get_element_size_group - failed: key not found in mesh, return reference to empty std::array<size_t, 4>.");
+    static const std::array<size_t, 4> empty = {0,0,0,0};
     return empty;
 }
 
@@ -73,19 +97,91 @@ const std::string& Mesh::get_group_description(Key mesh_key) const
 }
 
 
-Element * Mesh::create_element(Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o)
+Element * Mesh::create_element(Geometry element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o)
 {
     switch (element_type) 
     {
-        case Type::EDGE: return new Edge(node_idx, element_id, property_id, o);
-        case Type::TRIANGLE: return new Triangle(node_idx, element_id, property_id, o);
-        case Type::TETRAHEDRON: return new Tetrahedron(node_idx, element_id, property_id, o);
+        case Geometry::EDGE: return new Edge(node_idx, element_id, property_id, o);
+        case Geometry::TRIANGLE: return new Triangle(node_idx, element_id, property_id, o);
+        case Geometry::TETRAHEDRON: return new Tetrahedron(node_idx, element_id, property_id, o);
         default: 
             Logger::warning("Mesh_Parser::create_element - failed: element_type not available, return nullptr");
             return nullptr;
     }
 
 }
+
+
+
+/**
+ * @brief Count unique topological entities in a mesh.
+ *
+ * Traverses all elements and counts unique nodes, edges, faces, and volumes
+ * without double-counting shared entities between adjacent elements.
+ * Deduplication is based on sorted corner node indices, so curved/high-order
+ * elements are handled correctly (mid-edge nodes are ignored).
+ *
+ * @param elements List of mesh elements.
+ * @return std::array<size_t, 4> where:
+ *         [0] = number of unique nodes
+ *         [1] = number of unique edges
+ *         [2] = number of unique faces
+ *         [3] = number of volumes
+ */
+std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Element*>& elements) {
+    std::set<size_t>              unique_nodes;
+    std::set<std::vector<size_t>> unique_edges;
+    std::set<std::vector<size_t>> unique_faces;
+    size_t                     num_volumes = 0;
+
+    auto makeKey = [](std::initializer_list<size_t> list) {
+        std::vector<size_t> v(list);
+        std::sort(v.begin(), v.end());
+        return v;
+    };
+
+    for (auto* e : elements) {
+        const size_t* idx  = e->get_nodeIdx();
+        int n = e->get_nodeNum();
+
+        auto g = e->get_geometry();
+
+        for (int i = 0; i < n; ++i) unique_nodes.insert(idx[i]);
+
+        switch (g) {
+            case Geometry::EDGE:
+                unique_edges.insert(makeKey({idx[0], idx[1]}));
+                break;
+
+            case Geometry::TRIANGLE:
+                unique_edges.insert(makeKey({idx[0], idx[1]}));
+                unique_edges.insert(makeKey({idx[1], idx[2]}));
+                unique_edges.insert(makeKey({idx[0], idx[2]}));
+                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
+                break;
+
+            case Geometry::TETRAHEDRON:
+                unique_edges.insert(makeKey({idx[0], idx[1]}));
+                unique_edges.insert(makeKey({idx[0], idx[2]}));
+                unique_edges.insert(makeKey({idx[0], idx[3]}));
+                unique_edges.insert(makeKey({idx[1], idx[2]}));
+                unique_edges.insert(makeKey({idx[1], idx[3]}));
+                unique_edges.insert(makeKey({idx[2], idx[3]}));
+                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
+                unique_faces.insert(makeKey({idx[0], idx[1], idx[3]}));
+                unique_faces.insert(makeKey({idx[0], idx[2], idx[3]}));
+                unique_faces.insert(makeKey({idx[1], idx[2], idx[3]}));
+                num_volumes++;
+                break;
+
+
+            default: break;
+        }
+    }
+
+    return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
+}
+
 
 
 /**
@@ -112,14 +208,14 @@ std::vector<Element *> Mesh::create_sub_element(Element * e, std::vector<size_t>
 
     std::vector<Element *> new_sub_elements;
     
-    switch (e->get_Type()) 
+    switch (e->get_geometry()) 
     {
-        case Type::EDGE: 
+        case Geometry::EDGE: 
         {
-            Logger::warning("No need to create sub-elements for Type::EDGE element, return empty vector.");
+            Logger::warning("No need to create sub-elements for Geometry::EDGE element, return empty vector.");
             return {};
         }
-        case Type::TRIANGLE: 
+        case Geometry::TRIANGLE: 
         {
             // sub-element -> edges
             if(dim==1){
@@ -137,10 +233,10 @@ std::vector<Element *> Mesh::create_sub_element(Element * e, std::vector<size_t>
                 return new_sub_elements;
             }
 
-            Logger::warning("No need to create sub-elements of dimension-"+std::to_string(dim)+" for Type::TRIANGLE element, return empty vector.");
+            Logger::warning("No need to create sub-elements of dimension-"+std::to_string(dim)+" for Geometry::TRIANGLE element, return empty vector.");
             return {};
         }
-        case Type::TETRAHEDRON: 
+        case Geometry::TETRAHEDRON: 
         {
             size_t n0 = node_ids[0];
             size_t n1 = node_ids[1]; 
@@ -180,7 +276,7 @@ std::vector<Element *> Mesh::create_sub_element(Element * e, std::vector<size_t>
                 return new_sub_elements;
             }
 
-            Logger::warning("No need to create sub-elements of dimension-"+std::to_string(dim)+" for Type::TETRAHEDRON element, return empty vector.");
+            Logger::warning("No need to create sub-elements of dimension-"+std::to_string(dim)+" for Geometry::TETRAHEDRON element, return empty vector.");
             return {};
             //return new Tetrahedron(node_idx, element_id, property_id, order);
         }

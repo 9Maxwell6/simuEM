@@ -54,13 +54,22 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh)
         std::string new_description_conductor_interface_layer = mesh_.get_group_description(new_key_conductor_interface_layer);
         key_conductor_interface_layer.push_back(new_key_conductor_interface_layer);
         Logger::info("T_Omega - Create conductor interface layer, marked as: " + new_description_conductor_interface_layer + ", #element = " + std::to_string(mesh_.get_element_group(new_key_conductor_interface_layer).size()));
-
+        Logger::mesh_entity(new_key_conductor_interface_layer.dim, -1, new_key_conductor_interface_layer.id, 
+                                                                       mesh.get_element_group(new_key_conductor_interface_layer).size(), 
+                                                                       mesh.get_element_geometry_group(new_key_conductor_interface_layer).size(),
+                                                                       mesh.get_element_size_group(new_key_conductor_interface_layer),
+                                                                       mesh.get_group_description(new_key_conductor_interface_layer));
 
         Key new_key_Omega_field_inner_boundary =  mesh_.mark_new_elements(scalar_field_Omega_inner_boundary_filter(), dim_-1, new_key_conductor_interface_layer, "Omega field inner boundary | "+description);
         
         std::string new_description_Omega_field_inner_boundary = mesh_.get_group_description(new_key_Omega_field_inner_boundary);
         key_Omega_field_boundary.push_back(new_key_Omega_field_inner_boundary);
         Logger::info("T_Omega - Create Omega field inner boundary, marked as: " + new_description_Omega_field_inner_boundary + ", #element = " + std::to_string(mesh_.get_element_group(new_key_Omega_field_inner_boundary).size()));
+        Logger::mesh_entity(new_key_Omega_field_inner_boundary.dim, -1, new_key_Omega_field_inner_boundary.id, 
+                                                                        mesh.get_element_group(new_key_Omega_field_inner_boundary).size(), 
+                                                                        mesh.get_element_geometry_group(new_key_Omega_field_inner_boundary).size(),
+                                                                        mesh.get_element_size_group(new_key_Omega_field_inner_boundary),
+                                                                        mesh.get_group_description(new_key_Omega_field_inner_boundary));
     }
     
         

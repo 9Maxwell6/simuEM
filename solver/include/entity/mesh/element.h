@@ -8,7 +8,7 @@
 namespace simu {
 
 
-enum class Type { 
+enum class Geometry { 
     NODE, 
     EDGE, 
     TRIANGLE, 
@@ -35,7 +35,7 @@ public:
     virtual ~Element() {}
 
     /// Returns element's type
-    virtual Type get_Type() const = 0;
+    virtual Geometry get_geometry() const = 0;
 
     virtual const size_t * get_nodeIdx() const = 0;
     virtual int get_nodeNum() const = 0;

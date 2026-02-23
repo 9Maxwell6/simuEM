@@ -9,16 +9,40 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh){
 
 };
 
+Basis_Shape FEM_System::to_basis_shape(Geometry t)
+{
+    switch (t) {
+        case Geometry::TETRAHEDRON: return Basis_Shape::TETRAHEDRON;
+        default:
+        {
+            Logger::error("FEM_System::to_basis_geometry - type not supported yet.");
+            throw std::invalid_argument("geometry not supported yet.");
+        }
+    }
+}
+
+Geometry FEM_System::to_element_geometry(Basis_Shape g)
+{
+    switch (g) {
+        case Basis_Shape::TETRAHEDRON: return Geometry::TETRAHEDRON;
+        default:
+        {
+            Logger::error("FEM_System::to_basis_geometry - geometry not supported yet.");
+            throw std::invalid_argument("geometry not supported yet.");
+        }
+    }
+}
 
 
-std::vector<FEM_Space *> FEM_System::create_FE_space(Space fs, int p_order){
+/*
+bool FEM_System::create_FE_space(FEM_Space * fe_space){
 
     std::vector<FEM_Space *> new_fem_space;
 
     switch (dim_)
     {
     case 3:
-        if(mesh_.)
+        //if(mesh_.)
         break;
     case 2:
         break;
@@ -29,6 +53,7 @@ std::vector<FEM_Space *> FEM_System::create_FE_space(Space fs, int p_order){
         
     }
 }
+    */
 
 
 /**
@@ -37,10 +62,30 @@ std::vector<FEM_Space *> FEM_System::create_FE_space(Space fs, int p_order){
  * @param fs finite element space.
  * @param p_order order of basis function.
  */
-void FEM_System::assign_FE_space(Space fs, int p_order)
+bool FEM_System::initialize_FE_space(FEM_Space& fe_space)
 {
     // TODO: should use vector<Space>, what if we assign duplicate Space?
     // use vector<FEM_Space *>,
     //global_space.push_back(fs);
     
+}
+
+
+/**
+ * @brief Assign space to all elements in mesh
+ *
+ * @param fs finite element space.
+ */
+bool FEM_System::assign_FE_space(FEM_Space& fe_space)
+{
+    for(Geometry type : mesh_.get_mesh_element_geometries())
+    {
+        fe_space.add_basis_shape(to_basis_shape(type));
+    }
+    
+    // initialize dof
+    for(Element* e : mesh_.get_mesh_elements())
+    {
+        e->get_geometry();
+    }
 }

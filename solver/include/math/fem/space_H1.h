@@ -9,9 +9,12 @@ namespace simu {
 class H1_Space : public FEM_Space 
 {
 private:
-    
+    std::vector<std::unique_ptr<H1_Space>> shape_H1_;
+
 public:
     H1_Space(int dim, int p = 1);
+
+    bool add_basis_shape(Basis_Shape g) override;
 
     // Returns the number of DOFs per element
     virtual int get_element_dof() const = 0;
@@ -39,14 +42,14 @@ public:
  */
 class H1_tetrahedron : public H1_Space 
 {
+    friend class H1_Space;
 private:
     std::vector<std::vector<double>> basis_cache;
 
-public:
     H1_tetrahedron(int p = 1);
-
     ~H1_tetrahedron(){};
 
+public:
     //void get_basis_s(Integration_Point p, const Eigen::Ref<VectorXd> basis) const override {
     //   const double * ss = basis.data();
     //};

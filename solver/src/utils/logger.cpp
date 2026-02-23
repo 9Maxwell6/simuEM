@@ -34,20 +34,32 @@ void Logger::log(Level level, const std::string& message) {
 }
 
 
-void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, const std::string& name) {
+void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, int n_types, std::array<size_t, 4> e_size, const std::string& name) {
     std::string key_str = "{" + std::to_string(dim) + ", " + std::to_string(key_id) + "}";
     
-    std::cout << util::terminal::GREEN << "Dim: "       << util::terminal::RESET << std::left << std::setw(4)  << dim 
-              << util::terminal::GREEN << "gmsh id: "   << util::terminal::RESET << std::left << std::setw(6)  << tag 
-              << util::terminal::GREEN << "Key: "       << util::terminal::RESET << std::left << std::setw(12) << key_str
-              << util::terminal::GREEN << "#elements: " << util::terminal::RESET << std::left << std::setw(6)  << n_elements
+    std::cout << util::terminal::GREEN << "Dim: "       << util::terminal::RESET << std::left << std::setw(4)  << dim         << " | "
+              << util::terminal::GREEN << "gmsh id: "   << util::terminal::RESET << std::left << std::setw(3)  << tag         << " | "
+              << util::terminal::GREEN << "Key: "       << util::terminal::RESET << std::left << std::setw(6) << key_str     << " | "
+              << util::terminal::GREEN << "#elements: " << util::terminal::RESET << std::left << std::setw(4)  << n_elements  << " | "
+              << util::terminal::GREEN << "#e-types: "  << util::terminal::RESET << std::left << std::setw(3)  << n_types     << " | "
+              << util::terminal::GREEN << "#[node/edge/face/volume]: "   
+                    << util::terminal::RESET << std::left << std::setw(16) << (std::to_string(e_size[0]) + "\\" 
+                                                                             + std::to_string(e_size[1]) + "\\" 
+                                                                             + std::to_string(e_size[2]) + "\\" 
+                                                                             + std::to_string(e_size[3]))                     << " | "
               << util::terminal::GREEN << "Name: "      << util::terminal::RESET << "\"" << name << "\"" 
               << std::endl;
     
     buffer << "ENTITY | " 
-           << "Dim: "  << std::left << std::setw(4) << dim     << " | "
-           << "ID: "   << std::left << std::setw(6) << tag     << " | "
-           << "Key: "  << std::left << std::setw(12) << key_str << " | "
+           << "Dim: "  << std::left << std::setw(4) << dim      << " | "
+           << "ID: "   << std::left << std::setw(3) << tag      << " | "
+           << "Key: "  << std::left << std::setw(6) << key_str << " | "
+           << "#elements: " << std::left << std::setw(4)  << n_elements  << " | "
+           << "#e-types: "  << std::left << std::setw(3)  << n_types     << " | "
+           << "#[node/edge/face/volume]: " << std::left << std::setw(16) << (std::to_string(e_size[0]) + "\\" 
+                                                                           + std::to_string(e_size[1]) + "\\" 
+                                                                           + std::to_string(e_size[2]) + "\\" 
+                                                                           + std::to_string(e_size[3]))  << " | "
            << "Name: " << name << "\n";
 }
 

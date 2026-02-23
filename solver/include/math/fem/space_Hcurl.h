@@ -10,9 +10,12 @@ namespace simu {
 class Hcurl_Space : public FEM_Space 
 {
 private:
+    std::vector<std::unique_ptr<Hcurl_Space>> shape_Hcurl_;
     
 public:
     Hcurl_Space(int dim, int p = 1);
+
+    bool add_basis_shape(Basis_Shape g) override;
 
     // Returns the number of DOFs per element
     virtual int get_element_dof() const = 0;
@@ -38,14 +41,14 @@ public:
  * 
  */
 class Hcurl_tetrahedron : public Hcurl_Space {
+    friend class Hcurl_Space;
 private:
     std::vector<std::vector<double>> basis_cache;
 
-public:
     Hcurl_tetrahedron(int p = 1);
-
     ~Hcurl_tetrahedron(){};
 
+public:
     //void get_basis_v(Integration_Point p, const Eigen::Ref<MatrixXd> basis) const override {
     //    const double * ss = basis.data();
     //};

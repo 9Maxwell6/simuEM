@@ -1,19 +1,38 @@
 #pragma once
 
-#include "integration.h"
-#include "../matrix.h"
+#include "math/fem/integration.h"
+#include "math/fem/integrator.h"
+#include "utils/logger.h"
+
+
+#include "math/matrix.h"
 
 #include <vector>
 #include <Eigen/Dense>
 
 namespace simu {
 
+/*
+enum class Function_Space
+{
+    H_1,
+    H_curl
+}
+
+struct Space 
+{
+    Function_Space space;
+    int p_order;
+    int s_id;
+};
+*/
+
 enum class Space { 
     H_1, 
     H_curl 
 };
 
-enum class Geometry {
+enum class Basis_Shape {
     TETRAHEDRON, 
     // currently not support other element geometry
 };
@@ -47,6 +66,9 @@ public:
 
     const int dim_; // space dimension
     const int p_;   // polynomial order
+
+
+    virtual bool add_basis_shape(Basis_Shape g) = 0;
 
     
 

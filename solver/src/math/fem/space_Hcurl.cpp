@@ -9,6 +9,31 @@ using namespace simu;
 Hcurl_Space::Hcurl_Space(int dim, int p) : FEM_Space(dim, p){}
 
 
+bool Hcurl_Space::add_basis_shape(Basis_Shape g)
+{
+    std::unique_ptr<Hcurl_Space> shape_;
+    switch (g) {
+        case Basis_Shape::TETRAHEDRON: shape_ = std::unique_ptr<Hcurl_Space>(new Hcurl_tetrahedron(p_)); break;
+        default: 
+        {
+            Logger::warning("Hcurl_Space::add_basis_shape - shape not available: return false");
+            return false;
+        }
+    }
+
+    // uniqueness check
+    for (auto& existing : shape_Hcurl_)
+    {
+        if (typeid(*existing) == typeid(*shape_)) return false;
+    }
+
+    shape_Hcurl_.push_back(std::move(shape_));
+
+    return true;
+
+}
+
+
 Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)
 {
     n_node_   = 4;

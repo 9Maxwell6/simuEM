@@ -42,10 +42,10 @@ private:
 
     Mesh_Format format_;
 
-    std::tuple<Type, int, int> convert_Type(int gmsh_type);
+    std::tuple<Geometry, int, int> convert_geometry_gmsh(int gmsh_type);
 
-    void create_mesh_element(Element *& element_pointer, Mesh& mesh, Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id=0, int o=1);
-    Element * create_element(Type element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id=0, int o=1);
+    void create_mesh_element(Element *& element_pointer, Mesh& mesh, Geometry element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id=0, int o=1);
+    Element * create_element(Geometry element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id=0, int o=1);
 
 
     void count_element_gmsh();

@@ -2,10 +2,7 @@
 
 using namespace simu;
 
-Type Triangle::get_Type() const
-{
-    return Type::TRIANGLE;
-}
+Geometry Triangle::get_geometry() const { return Geometry::TRIANGLE; }
 
 Triangle::Triangle(const size_t *node_idx, size_t id, size_t property_id, int o) : Element(id, property_id, o)
 {
