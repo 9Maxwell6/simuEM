@@ -24,14 +24,27 @@ bool Hcurl_Space::add_basis_shape(Basis_Shape g)
     // uniqueness check
     for (auto& existing : shape_Hcurl_)
     {
-        if (typeid(*existing) == typeid(*shape_)) return false;
+        if (typeid(*existing.second) == typeid(*shape_)) return false;
     }
 
-    shape_Hcurl_.push_back(std::move(shape_));
+    //shape_Hcurl_.push_back(std::move(shape_));
+    shape_Hcurl_[g] = std::move(shape_);
 
     return true;
 
 }
+
+
+
+FEM_Space * Hcurl_Space::get_basis_space(Basis_Shape s) const
+{
+    auto it = shape_Hcurl_.find(s);
+    if (it != shape_Hcurl_.end()) return it->second.get();
+
+    Logger::error("Hcurl_tetrahedron::get_basis_space - failed: key not found, return nullptr.");
+    return nullptr;
+}
+
 
 
 Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)

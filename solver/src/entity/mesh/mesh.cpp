@@ -15,7 +15,7 @@ Mesh::~Mesh()
 }
 
 const std::vector<Element *>& Mesh::get_mesh_elements() const { return elements_; }
-const std::set<Geometry>& Mesh::get_mesh_element_geometries() const { return types_; }
+const std::map<Geometry, size_t>& Mesh::get_mesh_element_geometry_size() const { return geometry_size_; }
 
 
 const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
@@ -28,13 +28,13 @@ const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
     return empty;
 }
 
-const std::set<Geometry>& Mesh::get_element_geometry_group(Key mesh_key) const
+const std::map<Geometry, size_t>& Mesh::get_element_geometry_size_group(Key mesh_key) const
 {
-    auto it = element_geometry_group.find(mesh_key);
-    if (it != element_geometry_group.end()) return it->second;
+    auto it = element_geometry_size_group.find(mesh_key);
+    if (it != element_geometry_size_group.end()) return it->second;
 
-    Logger::error("Mesh::get_element_geometry_group - failed: key not found in mesh, return reference to empty std::set<Geometry>.");
-    static const std::set<Geometry> empty;
+    Logger::error("Mesh::get_element_geometry_size_group - failed: key not found in mesh, return reference to empty std::set<Geometry>.");
+    static const std::map<Geometry, size_t> empty;
     return empty;
 }
 

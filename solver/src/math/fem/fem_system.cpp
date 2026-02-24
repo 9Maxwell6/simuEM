@@ -4,10 +4,33 @@ using namespace simu;
 
 
 
-FEM_System::FEM_System(Mesh& mesh):mesh_(mesh){
+FEM_System::FEM_System(Mesh& mesh):mesh_(mesh)
+{
     dim_ = mesh_.get_mesh_dimension();
-
+    dof_offset_ = 0;
 };
+
+
+
+
+bool FEM_System::initialize_space_dof()
+{
+
+}
+
+
+
+size_t FEM_System::assign_element_dof(FEM_Space& fe_space, Element& e)
+{
+    size_t current_offset = dof_offset_;
+    FEM_Space * basis_space = fe_space.get_basis_space(to_basis_shape(e.get_geometry()));
+    
+
+    return current_offset;
+}
+
+
+
 
 Basis_Shape FEM_System::to_basis_shape(Geometry t)
 {
@@ -62,13 +85,13 @@ bool FEM_System::create_FE_space(FEM_Space * fe_space){
  * @param fs finite element space.
  * @param p_order order of basis function.
  */
-bool FEM_System::initialize_FE_space(FEM_Space& fe_space)
-{
+//bool FEM_System::initialize_FE_space(FEM_Space& fe_space)
+//{
     // TODO: should use vector<Space>, what if we assign duplicate Space?
     // use vector<FEM_Space *>,
     //global_space.push_back(fs);
     
-}
+//}
 
 
 /**
@@ -78,7 +101,7 @@ bool FEM_System::initialize_FE_space(FEM_Space& fe_space)
  */
 bool FEM_System::assign_FE_space(FEM_Space& fe_space)
 {
-    for(Geometry type : mesh_.get_mesh_element_geometries())
+    for(const auto& [type, size] : mesh_.get_mesh_element_geometry_size())
     {
         fe_space.add_basis_shape(to_basis_shape(type));
     }
@@ -86,6 +109,6 @@ bool FEM_System::assign_FE_space(FEM_Space& fe_space)
     // initialize dof
     for(Element* e : mesh_.get_mesh_elements())
     {
-        e->get_geometry();
+        
     }
 }

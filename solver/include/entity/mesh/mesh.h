@@ -65,9 +65,12 @@ protected:
 
     // all elements with the same dimension of mesh
     std::vector<Element*> elements_;
-    // all geometry types of the elements
-    std::set<Geometry> types_;
-    
+    // all geometry types of the elements, and number of elements per type
+    std::map<Geometry, size_t> geometry_size_;
+
+    // count size of faces for each different number of vertices, used for constructing dof structure.
+    //  map<#vertices, #faces>
+    std::map<size_t, size_t> face_size_;
 
 
 
@@ -91,13 +94,22 @@ protected:
                        {2,0},    // key to find surface group    (e.g., triangle).
                        {3,0}};   // key to find volume group     (e.g., tetrahedron).
 
-    std::unordered_map<Key, std::vector<Element *>, Key_Hash> element_group;             // group of elements
-    std::unordered_map<Key, std::set<Geometry>,     Key_Hash> element_geometry_group;    // element geometry from the group
-    std::unordered_map<Key, std::array<size_t, 4>,  Key_Hash> element_size_group;        // total number of node/edge/face/volume of the group
-    std::unordered_map<Key, std::set<size_t>,       Key_Hash> node_group;                // all nodes from the group
-    std::unordered_map<Key, std::string,            Key_Hash> element_group_description; // description of the group
 
 
+    // caution !!!
+    //      for d-dimensional mesh, the element group of dimension < d
+    //      can have duplicate elements, this is due to the perpose of keeping info related to its parent element. 
+    //      (e.g. surface of triangle has normal pointing outward from tetrahedron).
+    //      
+    //      hence for element_geometry_size_group, the size of each geometry can double count elements,
+    //      if the dimension of this group < dimension of the mesh.
+    std::unordered_map<Key, std::vector<Element *>,      Key_Hash> element_group;                // group of elements
+    std::unordered_map<Key, std::map<Geometry, size_t>,  Key_Hash> element_geometry_size_group;  // element geometry from the group, and number of elements per type
+    std::unordered_map<Key, std::set<size_t>,            Key_Hash> node_group;                   // all nodes from the group
+    std::unordered_map<Key, std::string,                 Key_Hash> element_group_description;    // description of the group
+
+    std::unordered_map<Key, std::array<size_t, 4>,       Key_Hash> element_size_group;           // total number of node/edge/face/volume of the group
+    std::unordered_map<Key, std::map<size_t, size_t>,    Key_Hash> element_face_size_group;      // total number of of faces for each different number of vertices of the group
 
     std::vector<Key> key_true_boundary;
     std::vector<Key> key_internal_surface; 
@@ -114,14 +126,14 @@ public:
     int get_mesh_dimension() const {return dim_; }
 
     const std::vector<Element *>& get_mesh_elements() const;
-    const std::set<Geometry>& get_mesh_element_geometries() const;
+    const std::map<Geometry, size_t>& get_mesh_element_geometry_size() const;
 
 
-    const std::vector<Element *>& get_element_group(Key mesh_key) const;
-    const std::set<Geometry>&     get_element_geometry_group(Key mesh_key) const;
-    const std::array<size_t, 4>&  get_element_size_group(Key mesh_key) const;
-    const std::set<size_t>&       get_node_group(Key mesh_key);
-    const std::string&            get_group_description(Key mesh_key) const;
+    const std::vector<Element *>&     get_element_group(Key mesh_key) const;
+    const std::map<Geometry, size_t>& get_element_geometry_size_group(Key mesh_key) const;
+    const std::array<size_t, 4>&      get_element_size_group(Key mesh_key) const;
+    const std::set<size_t>&           get_node_group(Key mesh_key);
+    const std::string&                get_group_description(Key mesh_key) const;
 
 
     const std::vector<Key>& get_keys_true_boundary() const { return key_true_boundary; }
@@ -180,14 +192,14 @@ public:
 
 
         std::vector<Element*> e_group;
-        std::set<Geometry> g_group;
+        std::map<Geometry, size_t> g_group;
 
         for (Element* e : search_pool)
         {
             if (filter(e))
             {
                 e_group.push_back(e);
-                g_group.insert(e->get_geometry());
+                g_group[e->get_geometry()]++;
             }
         }
         
@@ -198,7 +210,7 @@ public:
             
             element_group[new_key] = std::move(e_group);
 
-            element_geometry_group[new_key] = std::move(g_group);
+            element_geometry_size_group[new_key] = std::move(g_group);
 
             element_size_group[new_key] = count_node_edge_face_volume(element_group[new_key]);
 
@@ -268,7 +280,7 @@ public:
 
 
         std::vector<Element*> e_group;
-        std::set<Geometry> g_group;
+        std::map<Geometry, size_t> g_group;
 
         for (Element* e : search_pool)
         {
@@ -276,7 +288,7 @@ public:
             for(Element * new_e : new_es){
                 // TODO: check if new element is duplicate ?  (probobly not, element contains exterior normal info)
                 e_group.push_back(new_e);
-                g_group.insert(new_e->get_geometry());
+                g_group[new_e->get_geometry()]++;
                 const size_t * e_ids = new_e->get_nodeIdx();
             }
 
@@ -289,7 +301,7 @@ public:
             
             element_group[new_key] = std::move(e_group);
 
-            element_geometry_group[new_key] = std::move(g_group);
+            element_geometry_size_group[new_key] = std::move(g_group);
 
             element_size_group[new_key] = count_node_edge_face_volume(element_group[new_key]);
 

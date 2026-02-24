@@ -24,13 +24,22 @@ bool H1_Space::add_basis_shape(Basis_Shape g)
     // uniqueness check
     for (auto& existing : shape_H1_)
     {
-        if (typeid(*existing) == typeid(*shape_)) return false;
+        if (typeid(*existing.second) == typeid(*shape_)) return false;
     }
 
-    shape_H1_.push_back(std::move(shape_));
-
+    //shape_H1_.push_back(std::move(shape_));
+    shape_H1_[g] = std::move(shape_);
     return true;
+}
 
+
+FEM_Space * H1_Space::get_basis_space(Basis_Shape s) const
+{
+    auto it = shape_H1_.find(s);
+    if (it != shape_H1_.end()) return it->second.get();
+
+    Logger::error("H1_tetrahedron::get_basis_space - failed: key not found, return nullptr.");
+    return nullptr;
 }
 
 

@@ -260,9 +260,10 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     for (size_t i = 0; i < element_tags_mesh_md.size(); ++i) 
     {   
         auto [type, order, n_node] = convert_geometry_gmsh(element_types_mesh_md[i]);
-        mesh.types_.insert(type);
         
         size_t n_elements = element_tags_mesh_md[i].size();
+        mesh.geometry_size_[type] = n_elements;
+
         for (size_t j=0; j<n_elements; ++j)
         {   
             size_t element_id = element_tags_mesh_md[i][j];
@@ -341,7 +342,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
         gmsh::model::getEntitiesForPhysicalGroup(dim, tag, entity_tags);
 
         auto& e_group = mesh.element_group[gmsh_key];
-        auto& t_group = mesh.element_geometry_group[gmsh_key];
+        auto& t_group = mesh.element_geometry_size_group[gmsh_key];
         mesh.element_group_description[gmsh_key] = name;
 
         // get all elements from entity
@@ -357,9 +358,10 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
             for (size_t i = 0; i < element_tags.size(); ++i) 
             {   
                 auto [type, order, n_node] = convert_geometry_gmsh(element_types[i]);
-                t_group.insert(type);
 
                 size_t n_elements = element_tags[i].size();
+
+                t_group[type] = n_elements;
                 e_group.reserve(e_group.size() + n_elements);
 
                 // we pre-store all elements in vector for 3d elements
@@ -390,7 +392,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
 
         Logger::mesh_entity(dim, tag, mesh.dim_keys[dim].id, 
                                       mesh.element_group[gmsh_key].size(), 
-                                      mesh.element_geometry_group[gmsh_key].size(),
+                                      mesh.element_geometry_size_group[gmsh_key].size(),
                                       mesh.element_size_group[gmsh_key],
                                       name);
     }

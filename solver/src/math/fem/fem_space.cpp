@@ -4,7 +4,10 @@
 using namespace simu;
 
 
-FEM_Space::FEM_Space(int dim, int p): dim_(dim), p_(p){}
+FEM_Space::FEM_Space(int dim, int p): dim_(dim), p_(p)
+{
+    
+}
 
 
 /*

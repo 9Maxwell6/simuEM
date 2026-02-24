@@ -10,12 +10,14 @@ namespace simu {
 class Hcurl_Space : public FEM_Space 
 {
 private:
-    std::vector<std::unique_ptr<Hcurl_Space>> shape_Hcurl_;
+    //std::vector<std::unique_ptr<Hcurl_Space>> shape_Hcurl_;
+    std::unordered_map<Basis_Shape, std::unique_ptr<Hcurl_Space>,  Shape_Hash> shape_Hcurl_;
     
 public:
     Hcurl_Space(int dim, int p = 1);
 
     bool add_basis_shape(Basis_Shape g) override;
+    FEM_Space * get_basis_space(Basis_Shape s) const override;
 
     // Returns the number of DOFs per element
     virtual int get_element_dof() const = 0;

@@ -43,9 +43,9 @@ void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, int n_typ
               << util::terminal::GREEN << "#elements: " << util::terminal::RESET << std::left << std::setw(4)  << n_elements  << " | "
               << util::terminal::GREEN << "#e-types: "  << util::terminal::RESET << std::left << std::setw(3)  << n_types     << " | "
               << util::terminal::GREEN << "#[node/edge/face/volume]: "   
-                    << util::terminal::RESET << std::left << std::setw(16) << (std::to_string(e_size[0]) + "\\" 
-                                                                             + std::to_string(e_size[1]) + "\\" 
-                                                                             + std::to_string(e_size[2]) + "\\" 
+                    << util::terminal::RESET << std::left << std::setw(16) << (std::to_string(e_size[0]) + "/" 
+                                                                             + std::to_string(e_size[1]) + "/" 
+                                                                             + std::to_string(e_size[2]) + "/" 
                                                                              + std::to_string(e_size[3]))                     << " | "
               << util::terminal::GREEN << "Name: "      << util::terminal::RESET << "\"" << name << "\"" 
               << std::endl;
@@ -56,9 +56,9 @@ void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, int n_typ
            << "Key: "  << std::left << std::setw(6) << key_str << " | "
            << "#elements: " << std::left << std::setw(4)  << n_elements  << " | "
            << "#e-types: "  << std::left << std::setw(3)  << n_types     << " | "
-           << "#[node/edge/face/volume]: " << std::left << std::setw(16) << (std::to_string(e_size[0]) + "\\" 
-                                                                           + std::to_string(e_size[1]) + "\\" 
-                                                                           + std::to_string(e_size[2]) + "\\" 
+           << "#[node/edge/face/volume]: " << std::left << std::setw(16) << (std::to_string(e_size[0]) + "/" 
+                                                                           + std::to_string(e_size[1]) + "/" 
+                                                                           + std::to_string(e_size[2]) + "/" 
                                                                            + std::to_string(e_size[3]))  << " | "
            << "Name: " << name << "\n";
 }
