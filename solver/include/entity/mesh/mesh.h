@@ -22,14 +22,18 @@ struct Key
     bool operator==(const Key& k) const {
         return dim == k.dim && id == k.id;
     }
+
+    struct Hash 
+    {
+        size_t operator()(const Key& k) const 
+        {
+            return (static_cast<size_t>(k.dim) << 32) | k.id;
+        }
+    };
+
 };
 
 
-struct Key_Hash {
-    size_t operator()(const Key& k) const {
-        return (static_cast<size_t>(k.dim) << 32) | k.id;
-    }
-};
 
 
 class Mesh
@@ -103,13 +107,13 @@ protected:
     //      
     //      hence for element_geometry_size_group, the size of each geometry can double count elements,
     //      if the dimension of this group < dimension of the mesh.
-    std::unordered_map<Key, std::vector<Element *>,      Key_Hash> element_group;                // group of elements
-    std::unordered_map<Key, std::map<Geometry, size_t>,  Key_Hash> element_geometry_size_group;  // element geometry from the group, and number of elements per type
-    std::unordered_map<Key, std::set<size_t>,            Key_Hash> node_group;                   // all nodes from the group
-    std::unordered_map<Key, std::string,                 Key_Hash> element_group_description;    // description of the group
+    std::unordered_map<Key, std::vector<Element *>,      Key::Hash> element_group;                // group of elements
+    std::unordered_map<Key, std::map<Geometry, size_t>,  Key::Hash> element_geometry_size_group;  // element geometry from the group, and number of elements per type
+    std::unordered_map<Key, std::set<size_t>,            Key::Hash> node_group;                   // all nodes from the group
+    std::unordered_map<Key, std::string,                 Key::Hash> element_group_description;    // description of the group
 
-    std::unordered_map<Key, std::array<size_t, 4>,       Key_Hash> element_size_group;           // total number of node/edge/face/volume of the group
-    std::unordered_map<Key, std::map<size_t, size_t>,    Key_Hash> element_face_size_group;      // total number of of faces for each different number of vertices of the group
+    std::unordered_map<Key, std::array<size_t, 4>,       Key::Hash> element_size_group;           // total number of node/edge/face/volume of the group
+    std::unordered_map<Key, std::map<size_t, size_t>,    Key::Hash> element_face_size_group;      // total number of of faces for each different number of vertices of the group
 
     std::vector<Key> key_true_boundary;
     std::vector<Key> key_internal_surface; 

@@ -29,6 +29,7 @@ bool H1_Space::add_basis_shape(Basis_Shape g)
 
     //shape_H1_.push_back(std::move(shape_));
     shape_H1_[g] = std::move(shape_);
+    basis_shapes_.push_back(g);
     return true;
 }
 
@@ -40,6 +41,12 @@ FEM_Space * H1_Space::get_basis_space(Basis_Shape s) const
 
     Logger::error("H1_tetrahedron::get_basis_space - failed: key not found, return nullptr.");
     return nullptr;
+}
+
+
+const std::vector<Basis_Shape>& H1_Space::get_basis_space() const
+{
+    return basis_shapes_;
 }
 
 

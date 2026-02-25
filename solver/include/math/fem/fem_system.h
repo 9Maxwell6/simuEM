@@ -9,6 +9,30 @@
 
 namespace simu {
 
+
+struct Block 
+{
+    uint32_t id; 
+    size_t row_offset;
+    size_t col_offset;
+    size_t row_size;
+    size_t col_size;
+
+    bool operator==(const Block& other) const 
+    {
+        return id == other.id;
+    }
+
+    struct Hash 
+    {
+        size_t operator()(const Block& b) const 
+        {
+            return std::hash<uint32_t>{}(b.id);
+        }
+    };
+};
+
+
 class FEM_System
 {
 
@@ -19,20 +43,32 @@ private:
     DoF_Handler dof_handler_;
 
     std::vector<size_t> dof_list_;     // entry -> index in global dof
-    size_t dof_offset_;
+    size_t dof_offset_;                // for creating next dof
 
-    std::vector<size_t> dof_space_offset_;   // used for block matrix assemble.
+    std::vector<size_t> dof_space_list_;   // used for block matrix assemble. (starting indices in the global dof list)
+    size_t dof_space_offset_;              // for creating next dof for the block matrix
 
     std::vector<size_t> elements_dof_lookup_list;  // [dofs of element 1, dofs of element 2, ...]
 
-    std::vector<FEM_Space * > global_space;
-    std::unordered_map<Key, std::vector<FEM_Space * >, Key_Hash> group_space;
+
+    std::vector<FEM_Space * > global_space_;
+
+
+    std::unordered_map<Key, std::vector<FEM_Space * >, Key::Hash> group_space_;
+
+    
+    uint32_t block_id_;
+    std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
+    std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
+    std::unordered_map<Block, std::vector<size_t>, Block::Hash> fe_block_dof_;
+
+
 
 
     // multiple fe_space will result in block matrices configuration; 
     // hence, we adopt a convention for block positions:
     //  
-    //   dof_space_offset_ = [ 0,               ...,  global_n,        group_1,        ...,  group_m         ]
+    //     dof_space_list_ = [ 0,               ...,  global_n,        group_1,        ...,  group_m         ]
     //                         |                 |    |                |                |    |
     //                         |                 |    |                |                |    |
     //                         ↓                 |    |                |                |    |
@@ -46,7 +82,7 @@ private:
     //
     //
     // for each block space, dof is ordered from:
-    //      node -> edge -> face -> volume
+    //     node -> edge -> face -> volume
     // i.e.:
     //
     //
@@ -55,7 +91,7 @@ private:
     //      [    .       .    [faces]     .     ]
     //      [    .       .       .    [volumes] ]
     //
-    //
+    // the mapping between 
 
 
 
@@ -63,6 +99,8 @@ private:
     //std::vector<size_t> elements_dof_lookup_list;
 
     //void assign_dof(Element * e);
+
+    void generate_space_dof_table(FEM_Space& fe_space, const Key group_key={0,0});
 
     bool initialize_space_dof();
 
@@ -80,11 +118,10 @@ private:
 public:
     FEM_System(Mesh& mesh);
 
-    // assign functional space to all elements in mesh.
-    bool assign_FE_space(FEM_Space& fe_space);
 
-    // assign functional space to specific group of elements.
-    bool assign_group_FE_space(FEM_Space& fe_space, const Key group_key={0,0});
+    // assign functional space to specific group of elements, 
+    // if using default key, assign space to global domain.
+    Block register_FE_space(FEM_Space& fe_space, const Key group_key={0,0});
 
 
 

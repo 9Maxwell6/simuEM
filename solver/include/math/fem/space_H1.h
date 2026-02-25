@@ -11,12 +11,14 @@ class H1_Space : public FEM_Space
 private:
     //std::vector<std::unique_ptr<H1_Space>> shape_H1_;
     std::unordered_map<Basis_Shape, std::unique_ptr<H1_Space>,  Shape_Hash> shape_H1_;
+    std::vector<Basis_Shape> basis_shapes_;
 
 public:
     H1_Space(int dim, int p = 1);
 
     bool add_basis_shape(Basis_Shape g) override;
     FEM_Space * get_basis_space(Basis_Shape s) const override;
+    const std::vector<Basis_Shape>& get_basis_space() const override;
 
     // Returns the number of DOFs per element
     virtual int get_element_dof() const = 0;

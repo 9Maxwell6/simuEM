@@ -7,8 +7,77 @@ using namespace simu;
 FEM_System::FEM_System(Mesh& mesh):mesh_(mesh)
 {
     dim_ = mesh_.get_mesh_dimension();
+
+    block_id_ = 0;
+
     dof_offset_ = 0;
+    dof_space_offset_ = 0;
+    
+
 };
+
+
+
+void FEM_System::generate_space_dof_table(FEM_Space& fe_space,  const Key group_key)
+{
+
+    const std::vector<Element*>& elements = (group_key.dim == 0 && group_key.id==0) ? mesh_.get_mesh_elements() : mesh_.get_element_group(group_key);
+    
+    
+    /*
+    std::set<size_t>              unique_nodes;
+    std::set<std::vector<size_t>> unique_edges;
+    std::set<std::vector<size_t>> unique_faces;
+    size_t                     num_volumes = 0;
+
+    auto makeKey = [](std::initializer_list<size_t> list) {
+        std::vector<size_t> v(list);
+        std::sort(v.begin(), v.end());
+        return v;
+    };
+
+    for (auto* e : elements) {
+        const size_t* idx  = e->get_nodeIdx();
+        int n = e->get_nodeNum();
+
+        auto g = e->get_geometry();
+
+        for (int i = 0; i < n; ++i) unique_nodes.insert(idx[i]);
+
+        switch (g) {
+            case Geometry::EDGE:
+                unique_edges.insert(makeKey({idx[0], idx[1]}));
+                break;
+
+            case Geometry::TRIANGLE:
+                unique_edges.insert(makeKey({idx[0], idx[1]}));
+                unique_edges.insert(makeKey({idx[1], idx[2]}));
+                unique_edges.insert(makeKey({idx[0], idx[2]}));
+                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
+                break;
+
+            case Geometry::TETRAHEDRON:
+                unique_edges.insert(makeKey({idx[0], idx[1]}));
+                unique_edges.insert(makeKey({idx[0], idx[2]}));
+                unique_edges.insert(makeKey({idx[0], idx[3]}));
+                unique_edges.insert(makeKey({idx[1], idx[2]}));
+                unique_edges.insert(makeKey({idx[1], idx[3]}));
+                unique_edges.insert(makeKey({idx[2], idx[3]}));
+                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
+                unique_faces.insert(makeKey({idx[0], idx[1], idx[3]}));
+                unique_faces.insert(makeKey({idx[0], idx[2], idx[3]}));
+                unique_faces.insert(makeKey({idx[1], idx[2], idx[3]}));
+                num_volumes++;
+                break;
+
+
+            default: break;
+        }
+    }
+
+    return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
+    */
+}
 
 
 
@@ -89,26 +158,38 @@ bool FEM_System::create_FE_space(FEM_Space * fe_space){
 //{
     // TODO: should use vector<Space>, what if we assign duplicate Space?
     // use vector<FEM_Space *>,
-    //global_space.push_back(fs);
+    //global_space_.push_back(fs);
     
 //}
 
 
 /**
- * @brief Assign space to all elements in mesh
+ * @brief assign functional space to specific group of elements, 
+ * if using default key {0, 0}, then assign space to global domain.
  *
- * @param fs finite element space.
+ * @param fe_space finite element space.
+ * @param group_key group key.
+ * 
+ * @return uninitialized block (with unique id, but offset/row_size/col_size set to zero).
  */
-bool FEM_System::assign_FE_space(FEM_Space& fe_space)
+Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key)
 {
     for(const auto& [type, size] : mesh_.get_mesh_element_geometry_size())
     {
         fe_space.add_basis_shape(to_basis_shape(type));
     }
+
+    // create uninitialized block
+    block_id_++;
+    Block new_block = {block_id_, 0, 0, 0};
+
+    fe_block_space_[new_block] = &fe_space;
     
-    // initialize dof
-    for(Element* e : mesh_.get_mesh_elements())
-    {
-        
+    if(group_key.dim == 0 && group_key.id==0){
+        global_space_.push_back(&fe_space);
+    }else{
+        group_space_[group_key].push_back(&fe_space);
+        fe_block_key_[new_block] = group_key;
     }
+
 }

@@ -83,6 +83,7 @@ public:
     virtual Space get_function_space() const = 0;
 
     virtual FEM_Space * get_basis_space(Basis_Shape s) const = 0;
+    virtual const std::vector<Basis_Shape>& get_basis_space() const = 0;
 
     // Returns basis values at a point in the unit tetrahedron
     // For H1: Scalars. For HCurl: Vectors.
