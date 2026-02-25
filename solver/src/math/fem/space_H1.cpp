@@ -44,7 +44,7 @@ FEM_Space * H1_Space::get_basis_space(Basis_Shape s) const
 }
 
 
-const std::vector<Basis_Shape>& H1_Space::get_basis_space() const
+const std::vector<Basis_Shape>& H1_Space::get_basis_shapes() const
 {
     return basis_shapes_;
 }

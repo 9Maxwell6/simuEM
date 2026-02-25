@@ -58,6 +58,7 @@ const std::array<size_t, 4>& Mesh::get_element_size_group(Key mesh_key) const
  */
 const std::set<size_t>& Mesh::get_node_group(Key mesh_key)
 {
+    // TODO: std::set has poor locality, change to other array structure.
     auto node_it = node_group.find(mesh_key);
     if (node_it != node_group.end()) {
         return node_it->second;

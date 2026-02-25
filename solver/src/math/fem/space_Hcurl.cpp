@@ -47,7 +47,7 @@ FEM_Space * Hcurl_Space::get_basis_space(Basis_Shape s) const
 
 
 
-const std::vector<Basis_Shape>& Hcurl_Space::get_basis_space() const
+const std::vector<Basis_Shape>& Hcurl_Space::get_basis_shapes() const
 {
     return basis_shapes_;
 }

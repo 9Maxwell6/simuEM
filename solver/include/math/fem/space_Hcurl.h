@@ -19,7 +19,7 @@ public:
 
     bool add_basis_shape(Basis_Shape g) override;
     FEM_Space * get_basis_space(Basis_Shape s) const override;
-    const std::vector<Basis_Shape>& get_basis_space() const override;
+    const std::vector<Basis_Shape>& get_basis_shapes() const override;
 
     // Returns the number of DOFs per element
     virtual int get_element_dof() const = 0;

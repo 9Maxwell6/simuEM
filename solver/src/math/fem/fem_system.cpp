@@ -20,15 +20,28 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh)
 
 void FEM_System::generate_space_dof_table(FEM_Space& fe_space,  const Key group_key)
 {
-
     const std::vector<Element*>& elements = (group_key.dim == 0 && group_key.id==0) ? mesh_.get_mesh_elements() : mesh_.get_element_group(group_key);
     
+    const std::vector<Basis_Shape>& basis_shapes = fe_space.get_basis_shapes();
+
+    bool is_node_dof   = false;
+    bool is_edge_dof   = false;
+    bool is_face_dof   = false;
+    bool is_volume_dof = false;
+
+    for(Basis_Shape s : basis_shapes)
+    {
+        FEM_Space * fe_basis_space = fe_space.get_basis_space(s);
+        if (fe_basis_space->get_n_dof_per_node() > 0)   is_node_dof = true;
+        if (fe_basis_space->get_n_dof_per_edge() > 0)   is_edge_dof = true;
+        if (fe_basis_space->get_n_dof_per_face() > 0)   is_face_dof = true;
+        if (fe_basis_space->get_n_dof_per_volume() > 0) is_volume_dof = true;
+    }
     
-    /*
     std::set<size_t>              unique_nodes;
     std::set<std::vector<size_t>> unique_edges;
     std::set<std::vector<size_t>> unique_faces;
-    size_t                     num_volumes = 0;
+    size_t                     num_volumes = 0; // volume always unique
 
     auto makeKey = [](std::initializer_list<size_t> list) {
         std::vector<size_t> v(list);
@@ -75,8 +88,8 @@ void FEM_System::generate_space_dof_table(FEM_Space& fe_space,  const Key group_
         }
     }
 
-    return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
-    */
+    //return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
+    
 }
 
 
