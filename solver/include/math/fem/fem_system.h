@@ -104,7 +104,7 @@ private:
 
     //void assign_dof(Element * e);
 
-    void generate_space_dof_table(FEM_Space& fe_space, const Key group_key={0,0});
+    bool generate_block_dof(Block& block);
 
     bool initialize_space_dof();
 

@@ -18,32 +18,91 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh)
 
 
 /**
- * @brief 
- *
- * @param fe_space finite element space.
- * @param group_key group key.
+ * @brief generate dof table given the function space and element group.
+ * if using default key {0, 0}, then global elements will be used.
  * 
- * @return uninitialized block (with unique id, but offset/row_size/col_size set to zero).
+ * each node/edge/face/volume will be assigned to a block dof based of the order:
+ *      node -> edge -> face -> volume.
+ * 
+ * however this information will not be stored explicitly, instead, we initialize
+ * std::vector<size_t> with the internal structure:
+ *      [{dof of element 1}, {dof of element 2}, {dof of element 3}, ..., {dof of element n}]
+ * 
+ * @example if element 1 is tetrahedron, with 4 node, 6 edge, 4 face, and 
+ * 1 dof per node, 2 dof per edge, 1 dof per face, 3 dof in interior(volume). Then 
+ * {dof of element 1} will be initialized as:
+ * {n_1, n_2, n_3, n_4, e_1_1, e_1_2, e_2_1, e_2_2, e_3_1, e_3_2, f_1, f_2, f_3, f_4, v_1, v_2, v_3}
+ * where unique dof within the block will be assigned to every components. 
+ * The index directly linked to the position in block matrix
+ * 
+ *         [ [nodes]    .       .        .     ]
+ *         [    .    [edges]    .        .     ]
+ *         [    .       .    [faces]     .     ]
+ *         [    .       .       .    [volumes] ]
+ * 
+ * notice that block index start from {0} to the {total number of dof - 1}, rather than the global index.
+ * global index will be determined when assemble mutiple block matrix into the final global matrix.
+ * 
+ * then store this std::vector<size_t> as value of fe_block_dof_, and with block as key.
+ * 
+ * 
+ *
+ * @param block symbol of matrix block, used as key to fetch function space and mesh elements.
+ * 
+ * @return true if dof for this block is succeffully initialized.
  */
-void FEM_System::generate_space_dof_table(FEM_Space& fe_space,  const Key group_key)
+bool FEM_System::generate_block_dof(Block& block)
 {
-    const std::vector<Element*>& elements = (group_key.dim == 0 && group_key.id==0) ? mesh_.get_mesh_elements() : mesh_.get_element_group(group_key);
+    FEM_Space * fe_space = fe_block_space_.at(block);
+
+    const std::vector<Element*>& elements = (fe_block_key_.find(block) != fe_block_key_.end()) 
+                                                ? mesh_.get_mesh_elements() 
+                                                : mesh_.get_element_group(fe_block_key_.at(block));
     
-    const std::vector<Basis_Shape>& basis_shapes = fe_space.get_basis_shapes();
+    const std::vector<Basis_Shape>& basis_shapes = fe_space->get_basis_shapes();
 
     bool is_node_dof   = false;
     bool is_edge_dof   = false;
     bool is_face_dof   = false;
     bool is_volume_dof = false;
 
+    // used for initialization of hash table size
+    size_t initial_size_1 = 0;
+    size_t initial_size_2 = 0;
+    size_t initial_size_3 = 0;
+    size_t initial_size_4 = 0;
+
+    std::vector<size_t> node_dof_id;
+    std::vector<size_t> edge_dof_id;
+    std::vector<size_t> face_dof_id;
+    std::vector<size_t> volume_dof_id;
+
     for(Basis_Shape s : basis_shapes)
     {
-        FEM_Space * fe_basis_space = fe_space.get_basis_space(s);
+        FEM_Space * fe_basis_space = fe_space->get_basis_space(s);
         if (fe_basis_space->get_n_dof_per_node() > 0)   is_node_dof = true;
         if (fe_basis_space->get_n_dof_per_edge() > 0)   is_edge_dof = true;
         if (fe_basis_space->get_n_dof_per_face() > 0)   is_face_dof = true;
         if (fe_basis_space->get_n_dof_per_volume() > 0) is_volume_dof = true;
+
+        switch (s)
+        {
+            case Basis_Shape::TETRAHEDRON:
+                if(is_node_dof) initial_size_1 = 32*1024;  // initialize hash table size for node
+                if(is_edge_dof) initial_size_2 = 32*1024;  // initialize hash table size for edge
+                if(is_face_dof) initial_size_3 = 32*1024;  // initialize hash table size for face
+                break;
+            default:
+                Logger::error("FEM_System::generate_block_dof - unknown Basis_Shape: return false");
+                return false;
+        }
     }
+
+    // block hash table is only used for node/edge/face
+    // no need for volume since there is no intersection between elements.
+    util::Block_Hash bh(initial_size_1, initial_size_2, initial_size_3, initial_size_4);
+
+    
     
     std::set<size_t>              unique_nodes;
     std::set<std::vector<size_t>> unique_edges;

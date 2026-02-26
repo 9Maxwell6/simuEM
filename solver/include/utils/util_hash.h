@@ -8,17 +8,21 @@ namespace util
 #include <algorithm>
 #include <cassert>
 
-
+struct Vertex_1 { size_t v[1]; size_t id; };
 struct Vertex_2 { size_t v[2]; size_t id; };
 struct Vertex_3 { size_t v[3]; size_t id; };
 struct Vertex_4 { size_t v[4]; size_t id; };
 
+struct Block_1  { std::vector<Vertex_1> entry_1; };
 struct Block_2 { std::vector<Vertex_2> entry_2; };
 struct Block_3 { std::vector<Vertex_3> entry_3; };
 struct Block_4 { std::vector<Vertex_4> entry_4; };
 
 
 // hashing constant using golden ratio
+inline size_t hash_1(size_t p0)
+    { return 0x9E3779B9ul*p0; }
+
 inline size_t hash_2(size_t p0, size_t p1) 
     { return 0x9E3779B9ul*p0 + 0xDAA66D2Bul*p1; }
 
@@ -29,31 +33,57 @@ inline size_t hash_4(size_t p0, size_t p1, size_t p2, size_t p3)
     { return 0x9E3779B9ul*p0 + 0xDAA66D2Bul*p1 + 0x7AD5623Dul*p2 + 0x1904564Ful*p3; }
 
 
-
-struct Block_Hash {
-    
+struct Block_Hash 
+{
+    std::vector<Block_1> table_1;
     std::vector<Block_2> table_2;
     std::vector<Block_3> table_3;
     std::vector<Block_4> table_4;
    
     // mask for allocating block entry
+    size_t mask_1;
     size_t mask_2;
     size_t mask_3;
     size_t mask_4;
 
     // increment on each insert, for generating new id and rehash
+    size_t count_1 = 0;
     size_t count_2 = 0; 
     size_t count_3 = 0;
     size_t count_4 = 0;
 
-    Block_Hash(size_t initial_size_2 = 32*1024, size_t initial_size_3 = 32*1024, size_t initial_size_4 = 32*1024) 
-        : table_2(initial_size_2), mask_2(initial_size_2 - 1),
-          table_3(initial_size_3), mask_3(initial_size_3 - 1),
-          table_4(initial_size_4), mask_4(initial_size_4 - 1)                                          
+    Block_Hash(size_t initial_size_1 = 32*1024, 
+               size_t initial_size_2 = 32*1024, 
+               size_t initial_size_3 = 32*1024, 
+               size_t initial_size_4 = 32*1024) 
+              :table_1(initial_size_1), mask_1(initial_size_1 - 1),
+               table_2(initial_size_2), mask_2(initial_size_2 - 1),
+               table_3(initial_size_3), mask_3(initial_size_3 - 1),
+               table_4(initial_size_4), mask_4(initial_size_4 - 1)                                          
     {
-        assert((initial_size_2 & (initial_size_2 - 1)) == 0); // power of 2
-        assert((initial_size_3 & (initial_size_3 - 1)) == 0); // power of 2
-        assert((initial_size_4 & (initial_size_4 - 1)) == 0); // power of 2
+        // power of 2
+        assert((initial_size_1 & (initial_size_1 - 1)) == 0); 
+        assert((initial_size_2 & (initial_size_2 - 1)) == 0); 
+        assert((initial_size_3 & (initial_size_3 - 1)) == 0); 
+        assert((initial_size_4 & (initial_size_4 - 1)) == 0); 
+    }
+
+    // 1 vertex
+    size_t get_id(size_t p0)
+    {
+        if (count_1 > 4*table_1.size()) rehash_1(table_1.size() * 2);
+
+        size_t slot = hash_1(p0) & mask_1;
+        std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
+
+        for (Vertex_1& e : block_1)
+            if (e.v[0] == p0)
+                return e.id;
+
+        size_t new_id = count_1;
+        block_1.push_back({{p0}, new_id});
+        count_1++;
+        return new_id;
     }
 
     // 2 vertices
@@ -72,9 +102,7 @@ struct Block_Hash {
 
         size_t new_id = count_2;                                  // global id in table
         block_2.push_back({{p0, p1}, new_id});
-
         count_2++;
-
         return new_id;
     }
 
@@ -94,9 +122,7 @@ struct Block_Hash {
 
         size_t new_id = count_3;  
         block_3.push_back({{v[0], v[1], v[2]}, new_id});
-
         count_3++;
-
         return new_id;
     }
 
@@ -116,14 +142,27 @@ struct Block_Hash {
 
         size_t new_id = count_4;
         block_4.push_back({{v[0], v[1], v[2], v[3]}, new_id});
-
         count_4++;
-
         return new_id;
     }
 
 
 private:
+
+    void rehash_1(size_t new_size)
+    {
+        std::vector<Block_1> new_table(new_size);
+        size_t new_mask = new_size - 1;
+        for (Block_1& block : table_1)
+            for (Vertex_1& e : block.entry_1) 
+            {
+                size_t slot = hash_1(e.v[0]) & new_mask;
+                new_table[slot].entry_1.push_back(e);
+            }
+
+        table_1 = std::move(new_table);
+        mask_1  = new_mask;
+    }
 
     void rehash_2(size_t new_size)
     {
@@ -131,7 +170,8 @@ private:
         size_t new_mask = new_size - 1;
 
         for (Block_2& block : table_2)
-            for (Vertex_2& e : block.entry_2) {
+            for (Vertex_2& e : block.entry_2)
+            {
                 size_t slot = hash_2(e.v[0], e.v[1]) & new_mask;
                 new_table[slot].entry_2.push_back(e);
             }
@@ -146,7 +186,8 @@ private:
         size_t new_mask = new_size - 1;
 
         for (Block_3& block : table_3)
-            for (Vertex_3& e : block.entry_3) {
+            for (Vertex_3& e : block.entry_3)
+            {
                 size_t slot = hash_3(e.v[0], e.v[1], e.v[2]) & new_mask;
                 new_table[slot].entry_3.push_back(e);
             }
@@ -161,7 +202,8 @@ private:
         size_t new_mask = new_size - 1;
 
         for (Block_4& block : table_4)
-            for (Vertex_4& e : block.entry_4) {
+            for (Vertex_4& e : block.entry_4)
+            {
                 size_t slot = hash_4(e.v[0], e.v[1], e.v[2], e.v[3]) & new_mask;
                 new_table[slot].entry_4.push_back(e);
             }

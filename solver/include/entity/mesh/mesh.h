@@ -150,6 +150,11 @@ public:
 
     std::vector<Element *> create_sub_element(Element * e, std::vector<size_t>& exclude_ids, int dim);
 
+    // TODO：
+    Key group_intersection(Key group_1, Key group_2);
+    Key group_union(Key group_1, Key group_2);
+    void delete_group(Key group);
+
 
     ~Mesh();
 
