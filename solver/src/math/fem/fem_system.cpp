@@ -17,7 +17,14 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh)
 };
 
 
-
+/**
+ * @brief 
+ *
+ * @param fe_space finite element space.
+ * @param group_key group key.
+ * 
+ * @return uninitialized block (with unique id, but offset/row_size/col_size set to zero).
+ */
 void FEM_System::generate_space_dof_table(FEM_Space& fe_space,  const Key group_key)
 {
     const std::vector<Element*>& elements = (group_key.dim == 0 && group_key.id==0) ? mesh_.get_mesh_elements() : mesh_.get_element_group(group_key);

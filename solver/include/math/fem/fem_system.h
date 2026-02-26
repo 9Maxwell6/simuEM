@@ -5,6 +5,8 @@
 #include "entity/mesh/e_collection.h"
 #include "math/fem/dof_handler.h"
 
+#include "utils/util_hash.h"
+
 
 
 namespace simu {
@@ -93,6 +95,8 @@ private:
     //
     // the mapping between 
 
+
+    // coupling between space need two block:   and dof list from each block
 
 
 
