@@ -77,13 +77,31 @@ bool FEM_System::generate_block_dof(Block& block)
     std::vector<size_t> face_dof_id;
     std::vector<size_t> volume_dof_id;
 
+    // overestimate the size of final dof table (usually much larger than actually needed)
+    size_t estimate_node_dof_size = 0;
+    size_t estimate_edge_dof_size = 0;
+    size_t estimate_face_dof_size = 0;
+    size_t estimate_volume_dof_size = 0;
+
     for(Basis_Shape s : basis_shapes)
     {
         FEM_Space * fe_basis_space = fe_space->get_basis_space(s);
-        if (fe_basis_space->get_n_dof_per_node() > 0)   is_node_dof = true;
-        if (fe_basis_space->get_n_dof_per_edge() > 0)   is_edge_dof = true;
-        if (fe_basis_space->get_n_dof_per_face() > 0)   is_face_dof = true;
-        if (fe_basis_space->get_n_dof_per_volume() > 0) is_volume_dof = true;
+
+        int n_dof_per_node = fe_basis_space->get_n_dof_per_node();
+        int n_dof_per_edge = fe_basis_space->get_n_dof_per_edge();
+        int n_dof_per_face = fe_basis_space->get_n_dof_per_face();
+        int n_dof_per_volume = fe_basis_space->get_n_dof_per_volume();
+
+        if (n_dof_per_node > 0)   is_node_dof = true;
+        if (n_dof_per_edge > 0)   is_edge_dof = true;
+        if (n_dof_per_face > 0)   is_face_dof = true;
+        if (n_dof_per_volume > 0) is_volume_dof = true;
+        
+        estimate_node_dof_size += elements.size()*(fe_basis_space->get_n_node()*n_dof_per_node);
+        estimate_edge_dof_size += elements.size()*(fe_basis_space->get_n_edge()*n_dof_per_edge);
+        estimate_face_dof_size += elements.size()*(fe_basis_space->get_n_face()*n_dof_per_face);
+        estimate_volume_dof_size += elements.size()*(fe_basis_space->get_n_volume()*n_dof_per_volume);
+                                              
 
         switch (s)
         {
@@ -95,8 +113,26 @@ bool FEM_System::generate_block_dof(Block& block)
             default:
                 Logger::error("FEM_System::generate_block_dof - unknown Basis_Shape: return false");
                 return false;
+            
+                
         }
     }
+
+    estimate_node_dof_size /= basis_shapes.size();
+    estimate_edge_dof_size /= basis_shapes.size();
+    estimate_face_dof_size /= basis_shapes.size();
+    estimate_volume_dof_size /= basis_shapes.size();
+
+    std::vector<size_t> block_node_dof;
+    std::vector<size_t> block_edge_dof;
+    std::vector<size_t> block_face_dof;
+    std::vector<size_t> block_volume_dof;
+
+    block_node_dof.reserve(estimate_node_dof_size);
+    block_edge_dof.reserve(estimate_edge_dof_size);
+    block_face_dof.reserve(estimate_face_dof_size);
+    block_volume_dof.reserve(estimate_volume_dof_size);
+
 
     // block hash table is only used for node/edge/face
     // no need for volume since there is no intersection between elements.
@@ -109,51 +145,64 @@ bool FEM_System::generate_block_dof(Block& block)
     std::set<std::vector<size_t>> unique_faces;
     size_t                     num_volumes = 0; // volume always unique
 
-    auto makeKey = [](std::initializer_list<size_t> list) {
-        std::vector<size_t> v(list);
-        std::sort(v.begin(), v.end());
-        return v;
-    };
+
 
     for (auto* e : elements) {
         const size_t* idx  = e->get_nodeIdx();
         int n = e->get_nodeNum();
 
-        auto g = e->get_geometry();
+        Geometry g = e->get_geometry();
 
-        for (int i = 0; i < n; ++i) unique_nodes.insert(idx[i]);
+        // assign dof to nodes
+        if(is_node_dof)
+            for (int i = 0; i < n; ++i) block_node_dof.push_back(bh.get_id(idx[i]));
 
-        switch (g) {
-            case Geometry::EDGE:
-                unique_edges.insert(makeKey({idx[0], idx[1]}));
+        switch (to_basis_shape(g)) {
+            case Basis_Shape::TETRAHEDRON:
+                if(is_edge_dof)
+                {
+                    // TODO multiple dof per edge or face??
+                    // for now just store single id, then we handle it in the final stage
+                    block_edge_dof.push_back(bh.get_id(idx[0], idx[1]));
+                    block_edge_dof.push_back(bh.get_id(idx[0], idx[2]));
+                    block_edge_dof.push_back(bh.get_id(idx[0], idx[3]));
+                    block_edge_dof.push_back(bh.get_id(idx[1], idx[2]));
+                    block_edge_dof.push_back(bh.get_id(idx[1], idx[3]));
+                    block_edge_dof.push_back(bh.get_id(idx[2], idx[3]));
+                    
+                }
+
+                if(is_face_dof)
+                {
+                    block_face_dof.push_back(bh.get_id(idx[0], idx[1], idx[2]));
+                    block_face_dof.push_back(bh.get_id(idx[0], idx[1], idx[3]));
+                    block_face_dof.push_back(bh.get_id(idx[0], idx[2], idx[3]));
+                    block_face_dof.push_back(bh.get_id(idx[1], idx[2], idx[3]));
+
+                }
+                
+                if(is_volume_dof)
+                {
+                    block_volume_dof.push_back(num_volumes++);
+                }
                 break;
 
-            case Geometry::TRIANGLE:
-                unique_edges.insert(makeKey({idx[0], idx[1]}));
-                unique_edges.insert(makeKey({idx[1], idx[2]}));
-                unique_edges.insert(makeKey({idx[0], idx[2]}));
-                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
-                break;
 
-            case Geometry::TETRAHEDRON:
-                unique_edges.insert(makeKey({idx[0], idx[1]}));
-                unique_edges.insert(makeKey({idx[0], idx[2]}));
-                unique_edges.insert(makeKey({idx[0], idx[3]}));
-                unique_edges.insert(makeKey({idx[1], idx[2]}));
-                unique_edges.insert(makeKey({idx[1], idx[3]}));
-                unique_edges.insert(makeKey({idx[2], idx[3]}));
-                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
-                unique_faces.insert(makeKey({idx[0], idx[1], idx[3]}));
-                unique_faces.insert(makeKey({idx[0], idx[2], idx[3]}));
-                unique_faces.insert(makeKey({idx[1], idx[2], idx[3]}));
-                num_volumes++;
-                break;
-
-
-            default: break;
+            default: 
+                Logger::error("FEM_System::generate_block_dof - unknown Basis_Shape: return false");
+                return false;
         }
     }
 
+    block_node_dof.shrink_to_fit();
+    block_edge_dof.shrink_to_fit();
+    block_face_dof.shrink_to_fit();
+    block_volume_dof.shrink_to_fit();
+
+    std::vector<size_t> fe_block_dof;
+    fe_block_dof.reserve(block_node_dof.size)
+
+    return true;
     //return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
     
 }
