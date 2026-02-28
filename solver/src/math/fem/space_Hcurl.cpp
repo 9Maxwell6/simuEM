@@ -53,6 +53,12 @@ const std::vector<Basis_Shape>& Hcurl_Space::get_basis_shapes() const
 }
 
 
+void Hcurl_Space::get_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_Hcurl_.at(s)->get_basis_s(p, basis); }
+void Hcurl_Space::get_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_Hcurl_.at(s)->get_basis_v(p, basis); }
+void Hcurl_Space::get_ED_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_Hcurl_.at(s)->get_ED_basis_s(p, basis); }
+void Hcurl_Space::get_ED_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_Hcurl_.at(s)->get_ED_basis_v(p, basis); }
+
+
 
 Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)
 {
@@ -74,7 +80,7 @@ Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)
 
 
 
-void Hcurl_tetrahedron::get_basis_v(Integration_Point p, Eigen::Ref<MatrixXd> basis) const 
+void Hcurl_tetrahedron::get_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const 
 {
     double x = p.x;
     double y = p.y;
@@ -110,7 +116,7 @@ void Hcurl_tetrahedron::get_basis_v(Integration_Point p, Eigen::Ref<MatrixXd> ba
 
 };
 
-void Hcurl_tetrahedron::get_ED_basis_v(Integration_Point p, Eigen::Ref<MatrixXd> basis) const {
+void Hcurl_tetrahedron::get_ED_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
     double x = p.x;
     double y = p.y;
     double z = p.z;
@@ -145,21 +151,11 @@ void Hcurl_tetrahedron::get_ED_basis_v(Integration_Point p, Eigen::Ref<MatrixXd>
 
 
 
-int Hcurl_tetrahedron::get_element_dof() const{
-    switch(p_)
-    {
-        case 1: return 6;
-        default:
-            throw std::invalid_argument("Edge element not available for order:  "+std::to_string(p_));
-    }
-}
-
-
-void Hcurl_tetrahedron::get_basis_s(Integration_Point p, Eigen::Ref<VectorXd> basis) const {
+void Hcurl_tetrahedron::get_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
     throw std::logic_error("Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
 };
 
 
-void Hcurl_tetrahedron::get_ED_basis_s(Integration_Point p, Eigen::Ref<VectorXd> basis) const {
+void Hcurl_tetrahedron::get_ED_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
     throw std::logic_error("Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
 };

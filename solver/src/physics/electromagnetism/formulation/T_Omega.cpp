@@ -2,7 +2,7 @@
 
 using namespace simu;
 
-T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh)
+T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
 {
 
     dim_ = mesh.get_mesh_dimension();
@@ -71,6 +71,13 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh)
                                                                         mesh.get_element_size_group(new_key_Omega_field_inner_boundary),
                                                                         mesh.get_group_description(new_key_Omega_field_inner_boundary));
     }
+
+
+    Logger::info("T_Omega - Create function space H1");
+    H1_Space field_Omega(dim_,1);
+
+    Logger::info("T_Omega - Assign space H1 to Omega field region");
+    Block omega = fe_system.register_FE_space(field_Omega, key_insulator[0]);
     
         
 };

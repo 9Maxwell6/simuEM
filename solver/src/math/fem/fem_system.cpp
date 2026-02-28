@@ -143,47 +143,68 @@ bool FEM_System::generate_block_dof(Block& block)
     std::set<size_t>              unique_nodes;
     std::set<std::vector<size_t>> unique_edges;
     std::set<std::vector<size_t>> unique_faces;
-    size_t                     num_volumes = 0; // volume always unique
+    size_t                        volume_dof_counter = 0; // volume always unique
 
-
-
+    // construct dof index for node/edge/face/volume separately
+    // if single node/edge/face/volume has multiple dof,
+    // we will store same dof id for those dof.
+    // in the final step of constructing block dof list, 
+    // those duplicate id value will be shifted until each dof has unique id.
     for (auto* e : elements) {
         const size_t* idx  = e->get_nodeIdx();
         int n = e->get_nodeNum();
 
         Geometry g = e->get_geometry();
 
+        FEM_Space * fe_basis_space = fe_space->get_basis_space(to_basis_shape(g));
+
+        int n_dof_per_node = fe_basis_space->get_n_dof_per_node();
+        int n_dof_per_edge = fe_basis_space->get_n_dof_per_edge();
+        int n_dof_per_face = fe_basis_space->get_n_dof_per_face();
+        int n_dof_per_volume = fe_basis_space->get_n_dof_per_volume();
+
         // assign dof to nodes
         if(is_node_dof)
-            for (int i = 0; i < n; ++i) block_node_dof.push_back(bh.get_id(idx[i]));
+            for (int i = 0; i < n; ++i) 
+                for (int j = 0; j < n_dof_per_node; ++j) 
+                {
+                    block_node_dof.push_back(bh.get_id(idx[i], j));
+                    //std::cout<<bh.get_id(idx[i], j)<<std::endl;
+                }
+                std::cout<<"------------------"<<std::endl;
 
         switch (to_basis_shape(g)) {
             case Basis_Shape::TETRAHEDRON:
                 if(is_edge_dof)
                 {
                     // TODO multiple dof per edge or face??
-                    // for now just store single id, then we handle it in the final stage
-                    block_edge_dof.push_back(bh.get_id(idx[0], idx[1]));
-                    block_edge_dof.push_back(bh.get_id(idx[0], idx[2]));
-                    block_edge_dof.push_back(bh.get_id(idx[0], idx[3]));
-                    block_edge_dof.push_back(bh.get_id(idx[1], idx[2]));
-                    block_edge_dof.push_back(bh.get_id(idx[1], idx[3]));
-                    block_edge_dof.push_back(bh.get_id(idx[2], idx[3]));
+                    // for now just store single id, then we hand   le it in the final stage
+                    for (int j = 0; j < n_dof_per_edge; ++j) block_edge_dof.push_back(bh.get_id(idx[0], idx[1], j));
+                    for (int j = 0; j < n_dof_per_edge; ++j) block_edge_dof.push_back(bh.get_id(idx[0], idx[2], j));
+                    for (int j = 0; j < n_dof_per_edge; ++j) block_edge_dof.push_back(bh.get_id(idx[0], idx[3], j));
+                    for (int j = 0; j < n_dof_per_edge; ++j) block_edge_dof.push_back(bh.get_id(idx[1], idx[2], j));
+                    for (int j = 0; j < n_dof_per_edge; ++j) block_edge_dof.push_back(bh.get_id(idx[1], idx[3], j));
+                    for (int j = 0; j < n_dof_per_edge; ++j) block_edge_dof.push_back(bh.get_id(idx[2], idx[3], j));
                     
                 }
 
                 if(is_face_dof)
                 {
-                    block_face_dof.push_back(bh.get_id(idx[0], idx[1], idx[2]));
-                    block_face_dof.push_back(bh.get_id(idx[0], idx[1], idx[3]));
-                    block_face_dof.push_back(bh.get_id(idx[0], idx[2], idx[3]));
-                    block_face_dof.push_back(bh.get_id(idx[1], idx[2], idx[3]));
+                    for (int j = 0; j < n_dof_per_face; ++j) block_face_dof.push_back(bh.get_id(idx[0], idx[1], idx[2], j));
+                    for (int j = 0; j < n_dof_per_face; ++j) block_face_dof.push_back(bh.get_id(idx[0], idx[1], idx[3], j));
+                    for (int j = 0; j < n_dof_per_face; ++j) block_face_dof.push_back(bh.get_id(idx[0], idx[2], idx[3], j));
+                    for (int j = 0; j < n_dof_per_face; ++j) block_face_dof.push_back(bh.get_id(idx[1], idx[2], idx[3], j));
 
                 }
                 
                 if(is_volume_dof)
-                {
-                    block_volume_dof.push_back(num_volumes++);
+                {   
+                    
+                    for (int j = 0; j < n_dof_per_volume; ++j)
+                    {
+                        block_volume_dof.push_back(volume_dof_counter);
+                        volume_dof_counter++;
+                    }
                 }
                 break;
 
@@ -195,13 +216,25 @@ bool FEM_System::generate_block_dof(Block& block)
     }
 
     block_node_dof.shrink_to_fit();
+    
     block_edge_dof.shrink_to_fit();
     block_face_dof.shrink_to_fit();
     block_volume_dof.shrink_to_fit();
 
     std::vector<size_t> fe_block_dof;
-    fe_block_dof.reserve(block_node_dof.size)
+    fe_block_dof.reserve(block_node_dof.size()+block_edge_dof.size()+block_face_dof.size()+block_volume_dof.size());
+    // 2. Append each vector
+    fe_block_dof.insert(fe_block_dof.end(), block_node_dof.begin(), block_node_dof.end());
+    fe_block_dof.insert(fe_block_dof.end(), block_edge_dof.begin(), block_edge_dof.end());
+    fe_block_dof.insert(fe_block_dof.end(), block_face_dof.begin(), block_face_dof.end());
+    fe_block_dof.insert(fe_block_dof.end(), block_volume_dof.begin(), block_volume_dof.end());
 
+
+    Logger::info(std::to_string(fe_block_dof.size()));
+    //for(size_t i=0 ; i<fe_block_dof.size(); i+=4){
+    //    std::cout<< fe_block_dof[i] << " " << fe_block_dof[i+1] << " " << fe_block_dof[i+2] << " " << fe_block_dof[i+3]  <<std::endl;
+    //}
+    fe_block_dof_[block] = fe_block_dof;
     return true;
     //return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
     
@@ -319,5 +352,7 @@ Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key)
         group_space_[group_key].push_back(&fe_space);
         fe_block_key_[new_block] = group_key;
     }
+
+    generate_block_dof(new_block);
 
 }

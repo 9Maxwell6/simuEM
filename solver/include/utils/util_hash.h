@@ -8,29 +8,57 @@ namespace util
 #include <algorithm>
 #include <cassert>
 
-struct Vertex_1 { size_t v[1]; size_t id; };
-struct Vertex_2 { size_t v[2]; size_t id; };
-struct Vertex_3 { size_t v[3]; size_t id; };
-struct Vertex_4 { size_t v[4]; size_t id; };
 
-struct Block_1  { std::vector<Vertex_1> entry_1; };
+// 64-bit rotate left
+inline uint64_t rotl64(uint64_t x, int r) 
+{
+    return (x << r) | (x >> (64 - r));
+}
+
+// bit-mixer
+inline size_t splitmix64(uint64_t x) 
+{
+    x += 0x9e3779b97f4a7c15ull;
+    x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
+    x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
+    return static_cast<size_t>(x ^ (x >> 31));
+}
+
+
+struct Vertex_1 { size_t v[1]; size_t dof; size_t id; };
+struct Vertex_2 { size_t v[2]; size_t dof; size_t id; };
+struct Vertex_3 { size_t v[3]; size_t dof; size_t id; };
+struct Vertex_4 { size_t v[4]; size_t dof; size_t id; };
+
+struct Block_1 { std::vector<Vertex_1> entry_1; };
 struct Block_2 { std::vector<Vertex_2> entry_2; };
 struct Block_3 { std::vector<Vertex_3> entry_3; };
 struct Block_4 { std::vector<Vertex_4> entry_4; };
 
 
 // hashing constant using golden ratio
-inline size_t hash_1(size_t p0)
-    { return 0x9E3779B9ul*p0; }
+inline size_t hash_1(size_t p0, size_t p_dof=0)
+{ 
+    return splitmix64(p0 ^ rotl64(p_dof, 31));
+}
 
-inline size_t hash_2(size_t p0, size_t p1) 
-    { return 0x9E3779B9ul*p0 + 0xDAA66D2Bul*p1; }
+inline size_t hash_2(size_t p0, size_t p1, size_t p_dof=0) 
+{ 
+    size_t h = p0 ^ rotl64(p1, 21) ^ rotl64(p_dof, 42);
+    return splitmix64(h);
+}
 
-inline size_t hash_3(size_t p0, size_t p1, size_t p2) 
-    { return 0x9E3779B9ul*p0 + 0xDAA66D2Bul*p1 + 0x7AD5623Dul*p2; }
+inline size_t hash_3(size_t p0, size_t p1, size_t p2, size_t p_dof=0) 
+{
+    size_t h = p0 ^ rotl64(p1, 16) ^ rotl64(p2, 32) ^ rotl64(p_dof, 48);
+    return splitmix64(h);
+}
 
-inline size_t hash_4(size_t p0, size_t p1, size_t p2, size_t p3) 
-    { return 0x9E3779B9ul*p0 + 0xDAA66D2Bul*p1 + 0x7AD5623Dul*p2 + 0x1904564Ful*p3; }
+inline size_t hash_4(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof=0) 
+{ 
+    size_t h = p0 ^ rotl64(p1, 10) ^ rotl64(p2, 20) ^ rotl64(p3, 30) ^ rotl64(p_dof, 50);
+    return splitmix64(h);
+}
 
 
 struct Block_Hash 
@@ -69,11 +97,12 @@ struct Block_Hash
     }
 
     // 1 vertex
-    size_t get_id(size_t p0)
+    size_t get_id(size_t p0, size_t p_dof)
     {
+        std::cout<<p0<<std::endl;
         if (count_1 > 4*table_1.size()) rehash_1(table_1.size() * 2);
 
-        size_t slot = hash_1(p0) & mask_1;
+        size_t slot = hash_1(p0, p_dof) & mask_1;
         std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
 
         for (Vertex_1& e : block_1)
@@ -87,13 +116,13 @@ struct Block_Hash
     }
 
     // 2 vertices
-    size_t get_id(size_t p0, size_t p1) 
+    size_t get_id(size_t p0, size_t p1, size_t p_dof) 
     {
         // check rehash
         if (count_2 > 4*table_2.size()) rehash_2(table_2.size() * 2);
 
         if (p0 > p1) std::swap(p0, p1);                           // sort in ascending order
-        size_t slot = hash_2(p0, p1) & mask_2;      
+        size_t slot = hash_2(p0, p1, p_dof) & mask_2;      
         std::vector<Vertex_2>&  block_2 = table_2[slot].entry_2;  // get block
 
         for (Vertex_2& e : block_2)                               // linear scan
@@ -107,13 +136,13 @@ struct Block_Hash
     }
 
     // 3 vertices
-    size_t get_id(size_t p0, size_t p1, size_t p2)
+    size_t get_id(size_t p0, size_t p1, size_t p2, size_t p_dof)
     {
         if (count_3 > 4*table_3.size()) rehash_3(table_3.size() * 2);
 
         size_t v[3] = {p0, p1, p2};
         std::sort(v, v + 3);
-        size_t slot = hash_3(v[0], v[1], v[2]) & mask_3;
+        size_t slot = hash_3(v[0], v[1], v[2], p_dof) & mask_3;
         std::vector<Vertex_3>&  block_3 = table_3[slot].entry_3;
 
         for (Vertex_3& e : block_3)
@@ -127,13 +156,13 @@ struct Block_Hash
     }
 
     // 4 vertices
-    size_t get_id(size_t p0, size_t p1, size_t p2, size_t p3)
+    size_t get_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
     {
         if (count_4 > 4*table_4.size()) rehash_4(table_4.size() * 2);
 
         size_t v[4] = {p0, p1, p2, p3};
         std::sort(v, v + 4);
-        size_t slot = hash_4(v[0], v[1], v[2], v[3]) & mask_4;
+        size_t slot = hash_4(v[0], v[1], v[2], v[3], p_dof) & mask_4;
         std::vector<Vertex_4>&  block_4 = table_4[slot].entry_4;
 
         for (auto& e : block_4)

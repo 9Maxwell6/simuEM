@@ -16,6 +16,7 @@ class T_Omega
 
 private:
     Mesh& mesh_;
+    FEM_System fe_system;
 
     int dim_;
 
