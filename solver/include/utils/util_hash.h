@@ -68,6 +68,75 @@ inline size_t hash_4(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof=0)
     return splitmix64(h);
 }
 
+struct Block_Hash_1
+{
+    friend struct Block_Hash;
+private:
+    std::vector<Block_1> table_1;
+    // mask for allocating block entry
+    size_t mask_1;
+    // increment on each insert, for generating new id and rehash
+    size_t count_1 = 0;
+    void rehash_1(size_t new_size);
+
+public:
+    Block_Hash_1(size_t initial_size = 32*1024);
+    size_t get_id(size_t p0, size_t p_dof);
+    bool if_exist(size_t p0, size_t p_dof);
+};
+
+struct Block_Hash_2
+{
+    friend struct Block_Hash;
+private:
+    std::vector<Block_2> table_2;
+    // mask for allocating block entry
+    size_t mask_2;
+    // increment on each insert, for generating new id and rehash
+    size_t count_2 = 0;
+    void rehash_2(size_t new_size);
+
+public:
+    Block_Hash_2(size_t initial_size = 32*1024);
+    size_t get_id(size_t p0, size_t p1, size_t p_dof);
+    bool if_exist(size_t p0, size_t p1, size_t p_dof);
+};
+
+struct Block_Hash_3
+{
+    friend struct Block_Hash;
+private:
+    std::vector<Block_3> table_3;
+    // mask for allocating block entry
+    size_t mask_3;
+    // increment on each insert, for generating new id and rehash
+    size_t count_3 = 0;
+    void rehash_3(size_t new_size);
+
+public:
+    Block_Hash_3(size_t initial_size = 32*1024);
+    size_t get_id(size_t p0, size_t p1, size_t p2, size_t p_dof);
+    bool if_exist(size_t p0, size_t p1, size_t p2, size_t p_dof);
+};
+
+struct Block_Hash_4
+{
+    friend struct Block_Hash;
+private:
+    std::vector<Block_4> table_4;
+    // mask for allocating block entry
+    size_t mask_4;
+    // increment on each insert, for generating new id and rehash
+    size_t count_4 = 0;
+    void rehash_4(size_t new_size);
+
+public:
+    Block_Hash_4(size_t initial_size = 32*1024);
+    size_t get_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof);
+    bool if_exist(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof);
+};
+
+
 
 
 struct Block_Hash 
