@@ -106,13 +106,49 @@ Element * Mesh::create_element(Geometry element_type, std::vector<std::size_t> n
         case Geometry::TRIANGLE: return new Triangle(node_idx, element_id, property_id, o);
         case Geometry::TETRAHEDRON: return new Tetrahedron(node_idx, element_id, property_id, o);
         default: 
-            Logger::warning("Mesh_Parser::create_element - failed: element_type not available, return nullptr");
+            Logger::warning("Mesh_Parser::create_element - failed: element_type not available, return nullptr.");
             return nullptr;
     }
 
 }
 
+Key Mesh::group_union(Key group_1_key, Key group_2_key, const std::string& description)
+{
+    if(group_1_key.dim != group_2_key.dim) { Logger::error("Key Mesh::group_union - failed: group dimension not match, return bad key."); return {0,0}; }
 
+    auto it_1 = element_group.find(group_1_key);
+    if (it_1 == element_group.end()){ Logger::warning("Mesh::group_union - group_1_key not found, return bad key."); return {0,0};}
+
+    auto it_2 = element_group.find(group_2_key);
+    if (it_2 == element_group.end()){ Logger::warning("Mesh::group_union - group_2_key not found, return bad key."); return {0,0};}
+
+    const std::vector<Element*>& group_1 =it_1->second;
+    const std::vector<Element*>& group_2 =it_2->second;
+
+    dim_keys[group_1_key.dim].id++;
+    Key new_key = dim_keys[group_1_key.dim];
+    std::vector<Element*>& group_1_2 = element_group[new_key];
+    group_1_2.insert(group_1_2.end(), group_1.begin(), group_1.end());
+
+    util::Block_Hash_D bh(32*1024);
+
+    for (auto* e : group_1)
+    {
+        const size_t* idx  = e->get_nodeIdx();
+        int n = e->get_nodeNum();
+        bh.get_id(idx, n, 0);
+    }
+
+    for (auto* e : group_2)
+    {
+        const size_t* idx  = e->get_nodeIdx();
+        int n = e->get_nodeNum();
+        if(!bh.if_exist(idx, n, 0)) group_1_2.push_back(e);
+
+    }
+
+    return new_key;
+}
 
 /**
  * @brief Count unique topological entities in a mesh.

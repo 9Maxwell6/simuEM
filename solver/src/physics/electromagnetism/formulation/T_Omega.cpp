@@ -72,12 +72,14 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
                                                                         mesh.get_group_description(new_key_Omega_field_inner_boundary));
     }
 
+    Key new_key_Omega_field = mesh_.group_union(key_insulator[0], key_conductor_interface_layer[0], "Omega field");
+
 
     Logger::info("T_Omega - Create function space H1");
     H1_Space field_Omega(dim_,1);
 
     Logger::info("T_Omega - Assign space H1 to Omega field region");
-    Block omega = fe_system.register_FE_space(field_Omega, key_insulator[0]);
+    Block omega = fe_system.register_FE_space(field_Omega, key_conductor[0]);
     
         
 };

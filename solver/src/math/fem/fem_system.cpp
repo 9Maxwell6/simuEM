@@ -56,8 +56,8 @@ bool FEM_System::generate_block_dof(Block& block)
     FEM_Space * fe_space = fe_block_space_.at(block);
 
     const std::vector<Element*>& elements = (fe_block_key_.find(block) != fe_block_key_.end()) 
-                                                ? mesh_.get_mesh_elements() 
-                                                : mesh_.get_element_group(fe_block_key_.at(block));
+                                                ? mesh_.get_element_group(fe_block_key_.at(block))
+                                                : mesh_.get_mesh_elements();
     
     const std::vector<Basis_Shape>& basis_shapes = fe_space->get_basis_shapes();
 
@@ -171,7 +171,7 @@ bool FEM_System::generate_block_dof(Block& block)
                     block_node_dof.push_back(bh.get_id(idx[i], j));
                     //std::cout<<bh.get_id(idx[i], j)<<std::endl;
                 }
-                std::cout<<"------------------"<<std::endl;
+                //std::cout<<"------------------"<<std::endl;
 
         switch (to_basis_shape(g)) {
             case Basis_Shape::TETRAHEDRON:
@@ -230,10 +230,17 @@ bool FEM_System::generate_block_dof(Block& block)
     fe_block_dof.insert(fe_block_dof.end(), block_volume_dof.begin(), block_volume_dof.end());
 
 
-    Logger::info(std::to_string(fe_block_dof.size()));
-    //for(size_t i=0 ; i<fe_block_dof.size(); i+=4){
-    //    std::cout<< fe_block_dof[i] << " " << fe_block_dof[i+1] << " " << fe_block_dof[i+2] << " " << fe_block_dof[i+3]  <<std::endl;
-    //}
+    //Logger::info(std::to_string(fe_block_dof.size()));
+    size_t i=0;
+    for (auto* e : elements) {
+        const size_t* idx  = e->get_nodeIdx();
+        int n = e->get_nodeNum();
+        std::cout<< idx[0] << " " << idx[1] << " " << idx[2] << " " << idx[3] << " | " << fe_block_dof[i] << " " << fe_block_dof[i+1] << " " << fe_block_dof[i+2] << " " << fe_block_dof[i+3]  <<std::endl;
+        i+=4;
+    }
+    for(size_t i=0 ; i<fe_block_dof.size(); i+=4){
+        //std::cout<< fe_block_dof[i] << " " << fe_block_dof[i+1] << " " << fe_block_dof[i+2] << " " << fe_block_dof[i+3]  <<std::endl;
+    }
     fe_block_dof_[block] = fe_block_dof;
     return true;
     //return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
