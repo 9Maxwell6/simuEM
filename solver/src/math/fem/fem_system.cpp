@@ -337,6 +337,20 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
                                                 ? mesh_.get_element_group(fe_block_key_.at(block_2))
                                                 : mesh_.get_mesh_elements();
 
+    const std::vector<Element*>& elements_1_2 = (shared_group_key.dim==0 && shared_group_key.id==0) 
+                                                  ? mesh_.get_element_group(shared_group_key)
+                                                  : mesh_.get_mesh_elements();
+
+    for (auto* e : elements_1) {
+        const size_t* idx  = e->get_nodeIdx();
+        int n = e->get_nodeNum();
+
+        Geometry g = e->get_geometry();
+
+        FEM_Space * fe_basis_space = fe_space_1->get_basis_space(to_basis_shape(g));
+
+    }
+
     
     // coupling can only happen within elements who are appeared in both region.
     // filter out these elements and obtain the corresponding dof index from each group separately.
