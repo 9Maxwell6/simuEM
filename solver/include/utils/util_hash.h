@@ -70,7 +70,6 @@ inline size_t hash_4(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof=0)
 
 struct Block_Hash_1
 {
-    friend struct Block_Hash;
 private:
     std::vector<Block_1> table_1;
     // mask for allocating block entry
@@ -87,7 +86,6 @@ public:
 
 struct Block_Hash_2
 {
-    friend struct Block_Hash;
 private:
     std::vector<Block_2> table_2;
     // mask for allocating block entry
@@ -104,7 +102,6 @@ public:
 
 struct Block_Hash_3
 {
-    friend struct Block_Hash;
 private:
     std::vector<Block_3> table_3;
     // mask for allocating block entry
@@ -121,7 +118,6 @@ public:
 
 struct Block_Hash_4
 {
-    friend struct Block_Hash;
 private:
     std::vector<Block_4> table_4;
     // mask for allocating block entry
@@ -135,6 +131,7 @@ public:
     size_t get_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof);
     bool if_exist(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof);
 };
+
 
 
 

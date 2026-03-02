@@ -53,7 +53,16 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh)
  */
 bool FEM_System::generate_block_dof(Block& block)
 {
-    FEM_Space * fe_space = fe_block_space_.at(block);
+    FEM_Space * fe_space;
+    auto it = fe_block_space_.find(block);
+    if (it != fe_block_space_.end()){
+        fe_space = it->second;
+    }else{
+        Logger::error("FEM_System::generate_block_dof - block not found: return false");
+        return false;
+    }
+     
+    //FEM_Space * fe_space = fe_block_space_.at(block);
 
     const std::vector<Element*>& elements = (fe_block_key_.find(block) != fe_block_key_.end()) 
                                                 ? mesh_.get_element_group(fe_block_key_.at(block))
@@ -231,6 +240,7 @@ bool FEM_System::generate_block_dof(Block& block)
 
 
     //Logger::info(std::to_string(fe_block_dof.size()));
+    /*
     size_t i=0;
     for (auto* e : elements) {
         const size_t* idx  = e->get_nodeIdx();
@@ -241,29 +251,139 @@ bool FEM_System::generate_block_dof(Block& block)
     for(size_t i=0 ; i<fe_block_dof.size(); i+=4){
         //std::cout<< fe_block_dof[i] << " " << fe_block_dof[i+1] << " " << fe_block_dof[i+2] << " " << fe_block_dof[i+3]  <<std::endl;
     }
-    fe_block_dof_[block] = fe_block_dof;
-    return true;
-    //return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
-    
+    */
+   
+    block.row_size = fe_block_dof.size();
+    block.col_size = fe_block_dof.size();
+    fe_block_dof_[block] = std::move(fe_block_dof);
+    return true;    
 }
 
 
 
 
-bool FEM_System::initialize_space_dof()
+
+/**
+ * @brief assign functional space to specific group of elements, 
+ * if using default key {0, 0}, then assign space to global domain.
+ *
+ * @param fe_space finite element space.
+ * @param group_key group key.
+ * 
+ * @return partially initialized block (with unique id, row_size and col_size, 
+ * but row_offset and col_offset set to zero).
+ */
+Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key)
 {
+    for(const auto& [type, size] : mesh_.get_mesh_element_geometry_size())
+    {
+        fe_space.add_basis_shape(to_basis_shape(type));
+    }
+
+    // create uninitialized block
+    block_id_++;
+    Block new_block = {block_id_, 0, 0, 0, 0};
+
+    fe_block_space_[new_block] = &fe_space;
+    
+    if(group_key.dim == 0 && group_key.id==0){
+        global_space_.push_back(&fe_space);
+    }else{
+        group_space_[group_key].push_back(&fe_space);
+        fe_block_key_[new_block] = group_key;
+    }
+
+    generate_block_dof(new_block);
+
+    return new_block;
 
 }
 
-
-
-size_t FEM_System::assign_element_dof(FEM_Space& fe_space, Element& e)
+/**
+ * @brief given two group of elements under separate function space,
+ * determine the shared dof index from each group. The resulting block matrix
+ * will be the coupling between two function space.
+ * 
+ * @param block_1 block 1 with function space and group of elements.
+ * @param block_2 block 1 with function space and group of elements.
+ * @param shared_group_key mesh_key to group of elements that is shared by both blocks,
+ * 
+ * @note it is your duty to make sure the group of elements provided by shared_group_key
+ * is actually shared by both blocks! If key not provided, this function will assume the
+ * coupling happens across the whole mesh domain.
+ * 
+ * @return partially initialized block (with unique id, row_size and col_size, 
+ * but row_offset and col_offset set to zero).
+ */
+Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& block_2, const Key shared_group_key)
 {
-    size_t current_offset = dof_offset_;
-    FEM_Space * basis_space = fe_space.get_basis_space(to_basis_shape(e.get_geometry()));
-    
+    FEM_Space * fe_space_1;
+    FEM_Space * fe_space_2;
+    auto it_1 = fe_block_space_.find(block_1);
+    auto it_2 = fe_block_space_.find(block_2);
+    if (it_1 != fe_block_space_.end() && it_2 != fe_block_space_.end()){
+        fe_space_1 = it_1->second;
+        fe_space_2 = it_2->second;
+    }else{
+        Logger::error("FEM_System::register_FE_space_coupling - block not found: return bad block");
+        return {0,0,0,0,0};
+    }
 
-    return current_offset;
+    const std::vector<Element*>& elements_1 = (fe_block_key_.find(block_1) != fe_block_key_.end()) 
+                                                ? mesh_.get_element_group(fe_block_key_.at(block_1))
+                                                : mesh_.get_mesh_elements();
+
+    const std::vector<Element*>& elements_2 = (fe_block_key_.find(block_2) != fe_block_key_.end()) 
+                                                ? mesh_.get_element_group(fe_block_key_.at(block_2))
+                                                : mesh_.get_mesh_elements();
+
+    
+    // coupling can only happen within elements who are appeared in both region.
+    // filter out these elements and obtain the corresponding dof index from each group separately.
+
+    // first check shared elements of same dimension
+
+    
+}
+
+
+const FEM_Space* FEM_System::get_block_space(const Block& block) const
+{
+    auto it = fe_block_space_.find(block);
+    if (it != fe_block_space_.end()) return it->second;
+
+    Logger::error("Mesh::get_block_space - failed: block not found, return null pointer.");
+    return nullptr;
+}
+
+const Key FEM_System::get_block_group_key(const Block& block) const
+{
+    auto it = fe_block_key_.find(block);
+    if (it != fe_block_key_.end()) return it->second;
+
+    Logger::error("Mesh::get_block_group_key - failed: block not found, return bad key.");
+    static const Key empty = {0,0};
+    return empty;
+}
+
+const std::vector<size_t>& FEM_System::get_block_dof(const Block& block) const
+{
+    auto it = fe_block_dof_.find(block);
+    if (it != fe_block_dof_.end()) return it->second;
+
+    Logger::error("Mesh::get_block_dof - failed: block not found, return empty list of dof.");
+    static const std::vector<size_t> empty;
+    return empty;
+}
+
+const std::pair<Block, Block>& FEM_System::get_coupled_block(const Block& block) const
+{
+    auto it = coupled_block_.find(block);
+    if (it != coupled_block_.end()) return it->second;
+
+    Logger::error("Mesh::get_block_dof - failed: block not found, return empty list of dof.");
+    static const std::pair<Block, Block> empty;
+    return empty;
 }
 
 
@@ -291,75 +411,4 @@ Geometry FEM_System::to_element_geometry(Basis_Shape g)
             throw std::invalid_argument("geometry not supported yet.");
         }
     }
-}
-
-
-/*
-bool FEM_System::create_FE_space(FEM_Space * fe_space){
-
-    std::vector<FEM_Space *> new_fem_space;
-
-    switch (dim_)
-    {
-    case 3:
-        //if(mesh_.)
-        break;
-    case 2:
-        break;
-    case 1:
-        break;
-    default:
-        Logger::error("FEM_System::create_FE_space - impossible dimension: "+std::to_string(dim_));
-        
-    }
-}
-    */
-
-
-/**
- * @brief Assign space to all elements in mesh
- *
- * @param fs finite element space.
- * @param p_order order of basis function.
- */
-//bool FEM_System::initialize_FE_space(FEM_Space& fe_space)
-//{
-    // TODO: should use vector<Space>, what if we assign duplicate Space?
-    // use vector<FEM_Space *>,
-    //global_space_.push_back(fs);
-    
-//}
-
-
-/**
- * @brief assign functional space to specific group of elements, 
- * if using default key {0, 0}, then assign space to global domain.
- *
- * @param fe_space finite element space.
- * @param group_key group key.
- * 
- * @return uninitialized block (with unique id, but offset/row_size/col_size set to zero).
- */
-Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key)
-{
-    for(const auto& [type, size] : mesh_.get_mesh_element_geometry_size())
-    {
-        fe_space.add_basis_shape(to_basis_shape(type));
-    }
-
-    // create uninitialized block
-    block_id_++;
-    Block new_block = {block_id_, 0, 0, 0};
-
-    fe_block_space_[new_block] = &fe_space;
-    
-    if(group_key.dim == 0 && group_key.id==0){
-        global_space_.push_back(&fe_space);
-    }else{
-        group_space_[group_key].push_back(&fe_space);
-        fe_block_key_[new_block] = group_key;
-    }
-
-    generate_block_dof(new_block);
-
 }

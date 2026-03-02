@@ -18,7 +18,7 @@ const std::vector<Element *>& Mesh::get_mesh_elements() const { return elements_
 const std::map<Geometry, size_t>& Mesh::get_mesh_element_geometry_size() const { return geometry_size_; }
 
 
-const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
+const std::vector<Element *>& Mesh::get_element_group(const Key& mesh_key) const
 {
     auto it = element_group.find(mesh_key);
     if (it != element_group.end()) return it->second;
@@ -28,7 +28,7 @@ const std::vector<Element *>& Mesh::get_element_group(Key mesh_key) const
     return empty;
 }
 
-const std::map<Geometry, size_t>& Mesh::get_element_geometry_size_group(Key mesh_key) const
+const std::map<Geometry, size_t>& Mesh::get_element_geometry_size_group(const Key& mesh_key) const
 {
     auto it = element_geometry_size_group.find(mesh_key);
     if (it != element_geometry_size_group.end()) return it->second;
@@ -38,7 +38,7 @@ const std::map<Geometry, size_t>& Mesh::get_element_geometry_size_group(Key mesh
     return empty;
 }
 
-const std::array<size_t, 4>& Mesh::get_element_size_group(Key mesh_key) const
+const std::array<size_t, 4>& Mesh::get_element_size_group(const Key& mesh_key) const
 {
     auto it = element_size_group.find(mesh_key);
     if (it != element_size_group.end()) return it->second;
@@ -56,7 +56,7 @@ const std::array<size_t, 4>& Mesh::get_element_size_group(Key mesh_key) const
  * @return (lambda function return) true if at least one element in conductor_interface is covered by the target element,
  * otherwise return false.
  */
-const std::set<size_t>& Mesh::get_node_group(Key mesh_key)
+const std::set<size_t>& Mesh::get_node_group(const Key& mesh_key)
 {
     // TODO: std::set has poor locality, change to other array structure.
     auto node_it = node_group.find(mesh_key);
@@ -87,7 +87,7 @@ const std::set<size_t>& Mesh::get_node_group(Key mesh_key)
 }
 
 
-const std::string& Mesh::get_group_description(Key mesh_key) const
+const std::string& Mesh::get_group_description(const Key& mesh_key) const
 { 
     auto it = element_group_description.find(mesh_key);
     if (it != element_group_description.end())
@@ -112,7 +112,7 @@ Element * Mesh::create_element(Geometry element_type, std::vector<std::size_t> n
 
 }
 
-Key Mesh::group_union(Key group_1_key, Key group_2_key, const std::string& description)
+Key Mesh::group_union(const Key& group_1_key, const Key& group_2_key, const std::string& description)
 {
     if(group_1_key.dim != group_2_key.dim) { Logger::error("Key Mesh::group_union - failed: group dimension not match, return bad key."); return {0,0}; }
 
@@ -127,7 +127,11 @@ Key Mesh::group_union(Key group_1_key, Key group_2_key, const std::string& descr
 
     dim_keys[group_1_key.dim].id++;
     Key new_key = dim_keys[group_1_key.dim];
+    element_group_description[new_key] = description;
+
     std::vector<Element*>& group_1_2 = element_group[new_key];
+    std::map<Geometry,size_t>& g_group_1_2 = element_geometry_size_group[new_key];
+    
     group_1_2.insert(group_1_2.end(), group_1.begin(), group_1.end());
 
     util::Block_Hash_D bh(32*1024);
@@ -137,15 +141,22 @@ Key Mesh::group_union(Key group_1_key, Key group_2_key, const std::string& descr
         const size_t* idx  = e->get_nodeIdx();
         int n = e->get_nodeNum();
         bh.get_id(idx, n, 0);
+        g_group_1_2[e->get_geometry()]++;
     }
 
     for (auto* e : group_2)
     {
         const size_t* idx  = e->get_nodeIdx();
         int n = e->get_nodeNum();
-        if(!bh.if_exist(idx, n, 0)) group_1_2.push_back(e);
+        if(!bh.if_exist(idx, n, 0)){
+            group_1_2.push_back(e);
+            g_group_1_2[e->get_geometry()]++;
+        }
 
     }
+
+    element_size_group[new_key] = count_node_edge_face_volume(element_group[new_key]);
+    
 
     return new_key;
 }
@@ -166,16 +177,23 @@ Key Mesh::group_union(Key group_1_key, Key group_2_key, const std::string& descr
  *         [3] = number of volumes
  */
 std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Element*>& elements) {
-    std::set<size_t>              unique_nodes;
-    std::set<std::vector<size_t>> unique_edges;
-    std::set<std::vector<size_t>> unique_faces;
-    size_t                     num_volumes = 0;
 
-    auto makeKey = [](std::initializer_list<size_t> list) {
-        std::vector<size_t> v(list);
-        std::sort(v.begin(), v.end());
-        return v;
-    };
+    util::Block_Hash bh(1024, 1024, 1024, 1024);
+    size_t unique_node_count = 0;
+    size_t unique_edge_count = 0;
+    size_t unique_face_count = 0;
+    size_t unique_volume_count = 0;
+
+    //std::set<size_t>              unique_nodes;
+    //std::set<std::vector<size_t>> unique_edges;
+    //std::set<std::vector<size_t>> unique_faces;
+    //size_t                     num_volumes = 0;
+
+    //auto makeKey = [](std::initializer_list<size_t> list) {
+    //    std::vector<size_t> v(list);
+    //    std::sort(v.begin(), v.end());
+    //    return v;
+    //};
 
     for (auto* e : elements) {
         const size_t* idx  = e->get_nodeIdx();
@@ -183,32 +201,53 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
 
         auto g = e->get_geometry();
 
-        for (int i = 0; i < n; ++i) unique_nodes.insert(idx[i]);
+        //for (int i = 0; i < n; ++i) unique_nodes.insert(idx[i]);
+
+        for (int i = 0; i < n; ++i) 
+            if(!bh.if_exist(idx[i], 0)) { unique_node_count++; bh.get_id(idx[i], 0); }
 
         switch (g) {
             case Geometry::EDGE:
-                unique_edges.insert(makeKey({idx[0], idx[1]}));
+                if(!bh.if_exist(idx[0], idx[1], 0)) { unique_node_count++; bh.get_id(idx[0], idx[1], 0); }
+
+                //unique_edges.insert(makeKey({idx[0], idx[1]}));
                 break;
 
             case Geometry::TRIANGLE:
-                unique_edges.insert(makeKey({idx[0], idx[1]}));
-                unique_edges.insert(makeKey({idx[1], idx[2]}));
-                unique_edges.insert(makeKey({idx[0], idx[2]}));
-                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
+                if(!bh.if_exist(idx[0], idx[1], 0)) { unique_edge_count++; bh.get_id(idx[0], idx[1], 0); }
+                if(!bh.if_exist(idx[1], idx[2], 0)) { unique_edge_count++; bh.get_id(idx[1], idx[2], 0); }
+                if(!bh.if_exist(idx[0], idx[2], 0)) { unique_edge_count++; bh.get_id(idx[0], idx[2], 0); }
+                if(!bh.if_exist(idx[0], idx[1], idx[2], 0)) { unique_face_count++; bh.get_id(idx[0], idx[1], idx[2], 0); }
+                //unique_edges.insert(makeKey({idx[0], idx[1]}));
+                //unique_edges.insert(makeKey({idx[1], idx[2]}));
+                //unique_edges.insert(makeKey({idx[0], idx[2]}));
+                //unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
                 break;
 
             case Geometry::TETRAHEDRON:
-                unique_edges.insert(makeKey({idx[0], idx[1]}));
-                unique_edges.insert(makeKey({idx[0], idx[2]}));
-                unique_edges.insert(makeKey({idx[0], idx[3]}));
-                unique_edges.insert(makeKey({idx[1], idx[2]}));
-                unique_edges.insert(makeKey({idx[1], idx[3]}));
-                unique_edges.insert(makeKey({idx[2], idx[3]}));
-                unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
-                unique_faces.insert(makeKey({idx[0], idx[1], idx[3]}));
-                unique_faces.insert(makeKey({idx[0], idx[2], idx[3]}));
-                unique_faces.insert(makeKey({idx[1], idx[2], idx[3]}));
-                num_volumes++;
+                if(!bh.if_exist(idx[0], idx[1], 0)) { unique_edge_count++; bh.get_id(idx[0], idx[1], 0); }
+                if(!bh.if_exist(idx[0], idx[2], 0)) { unique_edge_count++; bh.get_id(idx[0], idx[2], 0); }
+                if(!bh.if_exist(idx[0], idx[3], 0)) { unique_edge_count++; bh.get_id(idx[0], idx[3], 0); }
+                if(!bh.if_exist(idx[1], idx[2], 0)) { unique_edge_count++; bh.get_id(idx[1], idx[2], 0); }
+                if(!bh.if_exist(idx[1], idx[3], 0)) { unique_edge_count++; bh.get_id(idx[1], idx[3], 0); }
+                if(!bh.if_exist(idx[2], idx[3], 0)) { unique_edge_count++; bh.get_id(idx[2], idx[3], 0); }
+                if(!bh.if_exist(idx[0], idx[1], idx[2], 0)) { unique_face_count++; bh.get_id(idx[0], idx[1], idx[2], 0); }
+                if(!bh.if_exist(idx[0], idx[1], idx[3], 0)) { unique_face_count++; bh.get_id(idx[0], idx[1], idx[3], 0); }
+                if(!bh.if_exist(idx[0], idx[2], idx[3], 0)) { unique_face_count++; bh.get_id(idx[0], idx[2], idx[3], 0); }
+                if(!bh.if_exist(idx[1], idx[2], idx[3], 0)) { unique_face_count++; bh.get_id(idx[1], idx[2], idx[3], 0); }
+                unique_volume_count++;
+
+                //unique_edges.insert(makeKey({idx[0], idx[1]}));
+                //unique_edges.insert(makeKey({idx[0], idx[2]}));
+                //unique_edges.insert(makeKey({idx[0], idx[3]}));
+                //unique_edges.insert(makeKey({idx[1], idx[2]}));
+                //unique_edges.insert(makeKey({idx[1], idx[3]}));
+                //unique_edges.insert(makeKey({idx[2], idx[3]}));
+                //unique_faces.insert(makeKey({idx[0], idx[1], idx[2]}));
+                //unique_faces.insert(makeKey({idx[0], idx[1], idx[3]}));
+                //unique_faces.insert(makeKey({idx[0], idx[2], idx[3]}));
+                //unique_faces.insert(makeKey({idx[1], idx[2], idx[3]}));
+                //num_volumes++;
                 break;
 
 
@@ -216,7 +255,7 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
         }
     }
 
-    return {unique_nodes.size(), unique_edges.size(), unique_faces.size(), num_volumes};
+    return {unique_node_count, unique_edge_count, unique_face_count, unique_volume_count};
 }
 
 

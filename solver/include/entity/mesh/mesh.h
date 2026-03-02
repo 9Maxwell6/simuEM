@@ -135,11 +135,11 @@ public:
     const std::map<Geometry, size_t>& get_mesh_element_geometry_size() const;
 
 
-    const std::vector<Element *>&     get_element_group(Key mesh_key) const;
-    const std::map<Geometry, size_t>& get_element_geometry_size_group(Key mesh_key) const;
-    const std::array<size_t, 4>&      get_element_size_group(Key mesh_key) const;
-    const std::set<size_t>&           get_node_group(Key mesh_key);
-    const std::string&                get_group_description(Key mesh_key) const;
+    const std::vector<Element *>&     get_element_group(const Key& mesh_key) const;
+    const std::map<Geometry, size_t>& get_element_geometry_size_group(const Key& mesh_key) const;
+    const std::array<size_t, 4>&      get_element_size_group(const Key& mesh_key) const;
+    const std::set<size_t>&           get_node_group(const Key& mesh_key);
+    const std::string&                get_group_description(const Key& mesh_key) const;
 
 
     const std::vector<Key>& get_keys_true_boundary() const { return key_true_boundary; }
@@ -153,9 +153,9 @@ public:
     std::vector<Element *> create_sub_element(Element * e, std::vector<size_t>& exclude_ids, int dim);
 
     // TODO：
-    Key group_intersection(Key group_1, Key group_2, const std::string& description);
-    Key group_union(Key group_1, Key group_2, const std::string& description);
-    void delete_group(Key group);
+    Key group_intersection(const Key& group_1, const Key& group_2, const std::string& description);
+    Key group_union(const Key& group_1, const Key& group_2, const std::string& description);
+    void delete_group(const Key& group);
 
 
     ~Mesh();

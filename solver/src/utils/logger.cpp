@@ -4,8 +4,10 @@
 
 std::stringstream Logger::buffer;
 
-void Logger::log(Level level, const std::string& message) {
-    switch (level) {
+void Logger::log(Level level, const std::string& message)
+{
+    switch (level)
+    {
         case Level::INFO:
             std::cout << util::terminal::BOLD_CYAN << "[INFO] " << util::terminal::RESET;
             buffer << "[INFO] ";
@@ -34,7 +36,8 @@ void Logger::log(Level level, const std::string& message) {
 }
 
 
-void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, int n_types, std::array<size_t, 4> e_size, const std::string& name) {
+void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, int n_types, std::array<size_t, 4> e_size, const std::string& name)
+{
     std::string key_str = "{" + std::to_string(dim) + ", " + std::to_string(key_id) + "}";
     
     std::cout << util::terminal::GREEN << "Dim: "       << util::terminal::RESET << std::left << std::setw(4)  << dim         << " | "
@@ -50,7 +53,7 @@ void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, int n_typ
               << util::terminal::GREEN << "Name: "      << util::terminal::RESET << "\"" << name << "\"" 
               << std::endl;
     
-    buffer << "ENTITY | " 
+    buffer << "     GROUP | " 
            << "Dim: "  << std::left << std::setw(4) << dim      << " | "
            << "ID: "   << std::left << std::setw(3) << tag      << " | "
            << "Key: "  << std::left << std::setw(6) << key_str << " | "
@@ -64,11 +67,30 @@ void Logger::mesh_entity(int dim, int tag, int key_id, int n_elements, int n_typ
 }
 
 
-void Logger::start_timer(const std::string& label) {
+void Logger::block_info(size_t id, size_t row_offset, size_t col_offset, size_t row_size, size_t col_size)
+{
+    std::cout << util::terminal::GREEN << "block id: "   << util::terminal::RESET << std::left << std::setw(3)  << id          << " | "
+              << util::terminal::GREEN << "row_offset: " << util::terminal::RESET << std::left << std::setw(3)  << row_offset  << " | "
+              << util::terminal::GREEN << "col_offset: " << util::terminal::RESET << std::left << std::setw(3)  << col_offset  << " | "
+              << util::terminal::GREEN << "#row: "       << util::terminal::RESET << std::left << std::setw(3)  << row_size  << " | "
+              << util::terminal::GREEN << "#col: "       << util::terminal::RESET << std::left << std::setw(3)  << col_size  << " | "
+              << std::endl;
+    
+    buffer << "     BLOCK | " 
+           << "block id: "     << std::left << std::setw(3)  << id          << " | "
+           << "row_offset: "   << std::left << std::setw(3)  << row_offset  << " | "
+           << "col_offset: "   << std::left << std::setw(3)  << col_offset  << " | "
+           << "#row: "         << std::left << std::setw(3)  << row_size    << " | "
+           << "#col: "         << std::left << std::setw(3)  << col_size    << " | " << "\n";
+}
+
+void Logger::start_timer(const std::string& label)
+{
     timers_[label] = std::chrono::high_resolution_clock::now();
 }
 
-void Logger::stop_timer(const std::string& label) {
+void Logger::stop_timer(const std::string& label)
+{
     auto it = timers_.find(label);
     if (it == timers_.end()) {
         Logger::error("Logger::stop_timer - Timer ["+label+"] not found.\n");
@@ -81,7 +103,8 @@ void Logger::stop_timer(const std::string& label) {
 }
 
 
-void Logger::export_to_file(const std::string& filename) {
+void Logger::export_to_file(const std::string& filename)
+{
     std::ofstream file(filename);
     if (file.is_open()) {
         file << buffer.str();

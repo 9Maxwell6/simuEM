@@ -72,14 +72,31 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
                                                                         mesh.get_group_description(new_key_Omega_field_inner_boundary));
     }
 
+    Logger::info("T_Omega - Create Omega field group.");
     Key new_key_Omega_field = mesh_.group_union(key_insulator[0], key_conductor_interface_layer[0], "Omega field");
+    
+    Logger::mesh_entity(new_key_Omega_field.dim, -1, new_key_Omega_field.id, 
+                                                     mesh.get_element_group(new_key_Omega_field).size(), 
+                                                     mesh.get_element_geometry_size_group(new_key_Omega_field).size(),
+                                                     mesh.get_element_size_group(new_key_Omega_field),
+                                                     mesh.get_group_description(new_key_Omega_field));
 
 
     Logger::info("T_Omega - Create function space H1");
     H1_Space field_Omega(dim_,1);
 
     Logger::info("T_Omega - Assign space H1 to Omega field region");
-    Block omega = fe_system.register_FE_space(field_Omega, key_conductor[0]);
+    Block dof_Omega = fe_system.register_FE_space(field_Omega, new_key_Omega_field);
+    Logger::block_info(dof_Omega.id, dof_Omega.row_offset, dof_Omega.col_offset, dof_Omega.row_size, dof_Omega.col_size);
+
+    Logger::info("T_Omega - Create function space Hcurl");
+    Hcurl_Space field_T(dim_,1);
+
+    Logger::info("T_Omega - Assign space Hcurl to Omega field region");
+    Block dof_T = fe_system.register_FE_space(field_T, key_conductor[0]);
+    Logger::block_info(dof_T.id, dof_T.row_offset, dof_T.col_offset, dof_T.row_size, dof_T.col_size);
+
+
     
         
 };

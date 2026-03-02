@@ -15,7 +15,7 @@ namespace simu {
 
 struct Block 
 {
-    uint32_t id; 
+    size_t id; 
     size_t row_offset;
     size_t col_offset;
     size_t row_size;
@@ -30,12 +30,40 @@ struct Block
     {
         size_t operator()(const Block& b) const 
         {
-            return std::hash<uint32_t>{}(b.id);
+            return std::hash<size_t>{}(b.id);
         }
     };
 };
 
 
+/**
+ * multiple fe_space will result in block matrices configuration; 
+ * hence, we adopt a convention for block positions:
+ *  
+ *     dof_space_list_ = [ 0,               ...,  global_n,        group_1,        ...,  group_m         ]
+ *                         |                 |    |                |                |    |
+ *                         |                 |    |                |                |    |
+ *                         ↓                 |    |                |                |    |
+ *                       [ [global_space_1]  ↓.   |      .         |     .          |.   |      .        ] 
+ *                       [        .          ...  ↓      .         |     . {coupling|between spaces}     ]
+ *                       [        .           .   [global_space_n] ↓     .          |.   |     .         ]
+ *                       [        .           .          .         [group_space_1]  ↓.   |     .         ]
+ *                       [   {coupling between spaces}   .               .          ...  ↓     .         ]
+ *                       [        .           .          .               .           .   [group_space_m] ]
+ *
+ *
+ *
+ * for each block space, dof is ordered from:
+ *     node -> edge -> face -> volume
+ * i.e.:
+ *
+ *      [ [nodes]    .       .        .     ]
+ *      [    .    [edges]    .        .     ]
+ *      [    .       .    [faces]     .     ]
+ *      [    .       .       .    [volumes] ]
+ *
+ * the mapping between 
+ */
 class FEM_System
 {
 
@@ -60,41 +88,17 @@ private:
     std::unordered_map<Key, std::vector<FEM_Space * >, Key::Hash> group_space_;
 
     
-    uint32_t block_id_;
+    size_t block_id_;
     std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
     std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
     std::unordered_map<Block, std::vector<size_t>, Block::Hash> fe_block_dof_;
 
+    std::unordered_map<Block, std::pair<Block, Block>, Block::Hash> coupled_block_;
 
 
 
-    // multiple fe_space will result in block matrices configuration; 
-    // hence, we adopt a convention for block positions:
-    //  
-    //     dof_space_list_ = [ 0,               ...,  global_n,        group_1,        ...,  group_m         ]
-    //                         |                 |    |                |                |    |
-    //                         |                 |    |                |                |    |
-    //                         ↓                 |    |                |                |    |
-    //                       [ [global_space_1]  ↓.   |      .         |     .          |.   |      .        ] 
-    //                       [        .          ...  ↓      .         |     . {coupling|between spaces}     ]
-    //                       [        .           .   [global_space_n] ↓     .          |.   |     .         ]
-    //                       [        .           .          .         [group_space_1]  ↓.   |     .         ]
-    //                       [   {coupling between spaces}   .               .          ...  ↓     .         ]
-    //                       [        .           .          .               .           .   [group_space_m] ]
-    //
-    //
-    //
-    // for each block space, dof is ordered from:
-    //     node -> edge -> face -> volume
-    // i.e.:
-    //
-    //
-    //      [ [nodes]    .       .        .     ]
-    //      [    .    [edges]    .        .     ]
-    //      [    .       .    [faces]     .     ]
-    //      [    .       .       .    [volumes] ]
-    //
-    // the mapping between 
+
+    
 
 
     // coupling between space need two block:   and dof list from each block
@@ -107,13 +111,11 @@ private:
 
     bool generate_block_dof(Block& block);
 
-    bool initialize_space_dof();
-
-    size_t assign_element_dof(FEM_Space& fe_space, Element& e);
+    bool generate_coupling_block_dof(Block& block_1, Block& block_2);
 
 
-    // assume conforming FEM mesh
-    std::array<size_t, 4> count_node_edge_face_volume_dof(const std::vector<Element*>& elements);
+
+
 
     static Basis_Shape to_basis_shape(Geometry t);
 
@@ -128,7 +130,15 @@ public:
     // if using default key, assign space to global domain.
     Block register_FE_space(FEM_Space& fe_space, const Key group_key={0,0});
 
+    Block register_FE_space_coupling(const Block& block_1, const Block& block_2, const Key group_key={0,0});
 
+
+    
+    const FEM_Space* get_block_space(const Block& block) const;
+    const Key get_block_group_key(const Block& block) const;
+    const std::vector<size_t>& get_block_dof(const Block& block) const;
+
+    const std::pair<Block, Block>& get_coupled_block(const Block& block) const;
 
 
 };
