@@ -111,20 +111,10 @@ bool FEM_System::generate_block_dof(Block& block)
         estimate_face_dof_size += elements.size()*(fe_basis_space->get_n_face()*n_dof_per_face);
         estimate_volume_dof_size += elements.size()*(fe_basis_space->get_n_volume()*n_dof_per_volume);
                                               
-
-        switch (s)
-        {
-            case Basis_Shape::TETRAHEDRON:
-                if(is_node_dof) initial_size_1 = 32*1024;  // initialize hash table size for node
-                if(is_edge_dof) initial_size_2 = 32*1024;  // initialize hash table size for edge
-                if(is_face_dof) initial_size_3 = 32*1024;  // initialize hash table size for face
-                break;
-            default:
-                Logger::error("FEM_System::generate_block_dof - unknown Basis_Shape: return false");
-                return false;
-            
-                
-        }
+        if(is_node_dof) initial_size_1 = 32*1024;  // initialize hash table size for node
+        if(is_edge_dof) initial_size_2 = 32*1024;  // initialize hash table size for edge
+        if(is_face_dof) initial_size_3 = 32*1024;  // initialize hash table size for face
+        
     }
 
     estimate_node_dof_size /= basis_shapes.size();
@@ -147,12 +137,12 @@ bool FEM_System::generate_block_dof(Block& block)
     // no need for volume since there is no intersection between elements.
     util::Block_Hash bh(initial_size_1, initial_size_2, initial_size_3, initial_size_4);
 
-    
-    
-    std::set<size_t>              unique_nodes;
-    std::set<std::vector<size_t>> unique_edges;
-    std::set<std::vector<size_t>> unique_faces;
     size_t                        volume_dof_counter = 0; // volume always unique
+    
+    //std::set<size_t>              unique_nodes;
+    //std::set<std::vector<size_t>> unique_edges;
+    //std::set<std::vector<size_t>> unique_faces;
+    
 
     // construct dof index for node/edge/face/volume separately
     // if single node/edge/face/volume has multiple dof,
@@ -224,11 +214,24 @@ bool FEM_System::generate_block_dof(Block& block)
         }
     }
 
-    block_node_dof.shrink_to_fit();
+
     
+
+    // node dof starts from index 0
+    block_node_dof.shrink_to_fit();
+
+    // add offset to edge dof
     block_edge_dof.shrink_to_fit();
+    for (size_t& dof_id : block_edge_dof) dof_id += bh.get_node_count();
+
+
+    // add offset to face dof
     block_face_dof.shrink_to_fit();
+    for (size_t& dof_id : block_edge_dof) dof_id += bh.get_node_count()+bh.get_edge_count();
+
+    // add offset to volume dof
     block_volume_dof.shrink_to_fit();
+    for (size_t& dof_id : block_edge_dof) dof_id += bh.get_node_count()+bh.get_edge_count()+bh.get_face_count();
 
     std::vector<size_t> fe_block_dof;
     fe_block_dof.reserve(block_node_dof.size()+block_edge_dof.size()+block_face_dof.size()+block_volume_dof.size());
@@ -252,14 +255,66 @@ bool FEM_System::generate_block_dof(Block& block)
         //std::cout<< fe_block_dof[i] << " " << fe_block_dof[i+1] << " " << fe_block_dof[i+2] << " " << fe_block_dof[i+3]  <<std::endl;
     }
     */
-   
+    
     block.row_size = fe_block_dof.size();
     block.col_size = fe_block_dof.size();
     fe_block_dof_[block] = std::move(fe_block_dof);
+    fe_block_hash_[block] = std::move(bh);
     return true;    
 }
 
 
+
+bool FEM_System::generate_coupling_block_dof(Block& block_1_2, Block& block_1, Block& block_2)
+{
+    
+    const std::vector<Element*>& elements = (fe_block_key_.find(block_1_2) != fe_block_key_.end()) 
+                                                ? mesh_.get_element_group(fe_block_key_.at(block_1_2))
+                                                : mesh_.get_mesh_elements();
+
+    const std::array<Block, 2>& block_list = get_coupled_block(block_1_2);
+    const util::Block_Hash& block_hash_1 = get_block_hash(block_list[0]);
+    const util::Block_Hash& block_hash_2 = get_block_hash(block_list[1]);
+
+    const std::array<FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block_1_2);
+    const FEM_Space * fe_space_1 = fe_space_list[0];
+    const FEM_Space * fe_space_2 = fe_space_list[1];
+
+
+    std::vector<size_t> node_dof_id_1;
+    std::vector<size_t> edge_dof_id_1;
+    std::vector<size_t> face_dof_id_1;
+    std::vector<size_t> volume_dof_id_1;
+
+    std::vector<size_t> node_dof_id_2;
+    std::vector<size_t> edge_dof_id_2;
+    std::vector<size_t> face_dof_id_2;
+    std::vector<size_t> volume_dof_id_2;
+
+    for (auto* e : elements) {
+        const size_t* idx  = e->get_nodeIdx();
+        int n = e->get_nodeNum();
+
+        Geometry g = e->get_geometry();
+
+        FEM_Space * fe_basis_space_1 = fe_space_1->get_basis_space(to_basis_shape(g));
+        FEM_Space * fe_basis_space_2 = fe_space_2->get_basis_space(to_basis_shape(g));
+
+        int n_dof_per_node_1 = fe_basis_space_1->get_n_dof_per_node();
+        int n_dof_per_edge_1 = fe_basis_space_1->get_n_dof_per_edge();
+        int n_dof_per_face_1 = fe_basis_space_1->get_n_dof_per_face();
+        int n_dof_per_volume_1 = fe_basis_space_1->get_n_dof_per_volume();
+
+        int n_dof_per_node_2 = fe_basis_space_2->get_n_dof_per_node();
+        int n_dof_per_edge_2 = fe_basis_space_2->get_n_dof_per_edge();
+        int n_dof_per_face_2 = fe_basis_space_2->get_n_dof_per_face();
+        int n_dof_per_volume_2 = fe_basis_space_2->get_n_dof_per_volume();
+
+
+
+    }
+
+}
 
 
 
@@ -282,7 +337,7 @@ Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key)
 
     // create uninitialized block
     block_id_++;
-    Block new_block = {block_id_, 0, 0, 0, 0};
+    Block new_block = {block_id_, 0, 0, 0, 0, true};
 
     fe_block_space_[new_block] = &fe_space;
     
@@ -326,7 +381,23 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
         fe_space_2 = it_2->second;
     }else{
         Logger::error("FEM_System::register_FE_space_coupling - block not found: return bad block");
-        return {0,0,0,0,0};
+        return {0,0,0,0,0,false};
+    }
+
+    // create uninitialized block
+    block_id_++;
+    Block new_block = {block_id_, 0, 0, 0, 0, false};
+
+    std::array<Block, 2>& block_pair =  coupled_block_[new_block];
+    block_pair[0] = block_1;
+    block_pair[1] = block_2;
+
+    std::array<FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
+    block_space_pair[0] = fe_space_1;
+    block_space_pair[1] = fe_space_2;
+
+    if(shared_group_key.dim != 0 && shared_group_key.id!=0){
+        fe_block_key_[new_block] = shared_group_key;
     }
 
     const std::vector<Element*>& elements_1 = (fe_block_key_.find(block_1) != fe_block_key_.end()) 
@@ -390,17 +461,46 @@ const std::vector<size_t>& FEM_System::get_block_dof(const Block& block) const
     return empty;
 }
 
-const std::pair<Block, Block>& FEM_System::get_coupled_block(const Block& block) const
+const util::Block_Hash& FEM_System::get_block_hash(const Block& block) const
+{
+    auto it = fe_block_hash_.find(block);
+    if (it != fe_block_hash_.end()) return it->second;
+
+    Logger::error("Mesh::get_block_hash - failed: block not found, return empty block hash.");
+    static const util::Block_Hash empty;
+    return empty;
+}
+
+const std::array<Block, 2>& FEM_System::get_coupled_block(const Block& block) const
 {
     auto it = coupled_block_.find(block);
     if (it != coupled_block_.end()) return it->second;
 
-    Logger::error("Mesh::get_block_dof - failed: block not found, return empty list of dof.");
-    static const std::pair<Block, Block> empty;
+    Logger::error("Mesh::get_coupled_block - failed: block not found, return empty list of block.");
+    static const std::array<Block, 2> empty{};
+    return empty;
+}
+
+const std::array<FEM_Space *, 2>& FEM_System::get_coupled_block_space(const Block& block) const
+{
+    auto it = coupled_block_space_.find(block);
+    if (it != coupled_block_space_.end()) return it->second;
+
+    Logger::error("Mesh::get_coupled_block_space - failed: block not found, return empty list of fe_space.");
+    static const std::array<FEM_Space *, 2> empty{};
     return empty;
 }
 
 
+const std::array<std::vector<size_t>, 2>& FEM_System::get_coupled_block_dof(const Block& block) const
+{
+    auto it = coupled_block_dof_.find(block);
+    if (it != coupled_block_dof_.end()) return it->second;
+
+    Logger::error("Mesh::get_coupled_block_dof - failed: block not found, return empty list of dof.");
+    static const std::array<std::vector<size_t>, 2> empty{};
+    return empty;
+}
 
 
 Basis_Shape FEM_System::to_basis_shape(Geometry t)

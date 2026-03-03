@@ -21,6 +21,8 @@ struct Block
     size_t row_size;
     size_t col_size;
 
+    bool is_base_block;
+
     bool operator==(const Block& other) const 
     {
         return id == other.id;
@@ -89,11 +91,18 @@ private:
 
     
     size_t block_id_;
-    std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
     std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
-    std::unordered_map<Block, std::vector<size_t>, Block::Hash> fe_block_dof_;
 
-    std::unordered_map<Block, std::pair<Block, Block>, Block::Hash> coupled_block_;
+    // for basic block
+    std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
+    std::unordered_map<Block, std::vector<size_t>, Block::Hash> fe_block_dof_;
+    //temporary, for constructing dof, should be cleared after dof table is constructed.
+    std::unordered_map<Block, util::Block_Hash,    Block::Hash> fe_block_hash_;
+
+    // for coupling block
+    std::unordered_map<Block, std::array<Block, 2>,               Block::Hash> coupled_block_;
+    std::unordered_map<Block, std::array<FEM_Space *, 2>,         Block::Hash> coupled_block_space_;
+    std::unordered_map<Block, std::array<std::vector<size_t>, 2>, Block::Hash> coupled_block_dof_;
 
 
 
@@ -111,7 +120,7 @@ private:
 
     bool generate_block_dof(Block& block);
 
-    bool generate_coupling_block_dof(Block& block_1, Block& block_2);
+    bool generate_coupling_block_dof(Block& block_1_2, Block& block_1, Block& block_2);
 
 
 
@@ -137,8 +146,11 @@ public:
     const FEM_Space* get_block_space(const Block& block) const;
     const Key get_block_group_key(const Block& block) const;
     const std::vector<size_t>& get_block_dof(const Block& block) const;
+    const util::Block_Hash& get_block_hash(const Block& block) const;
 
-    const std::pair<Block, Block>& get_coupled_block(const Block& block) const;
+    const std::array<Block, 2>& get_coupled_block(const Block& block) const;
+    const std::array<FEM_Space *, 2>& get_coupled_block_space(const Block& block) const;
+    const std::array<std::vector<size_t>, 2>& get_coupled_block_dof(const Block& block) const; 
 
 
 };

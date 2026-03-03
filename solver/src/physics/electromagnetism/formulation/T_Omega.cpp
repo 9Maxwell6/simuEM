@@ -85,14 +85,14 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
     Logger::info("T_Omega - Create function space H1");
     H1_Space field_Omega(dim_,1);
 
-    Logger::info("T_Omega - Assign space H1 to Omega field region");
+    Logger::info("T_Omega - Assign space H1 to Omega-field region");
     Block dof_Omega = fe_system.register_FE_space(field_Omega, new_key_Omega_field);
     Logger::block_info(dof_Omega.id, dof_Omega.row_offset, dof_Omega.col_offset, dof_Omega.row_size, dof_Omega.col_size);
 
     Logger::info("T_Omega - Create function space Hcurl");
     Hcurl_Space field_T(dim_,1);
 
-    Logger::info("T_Omega - Assign space Hcurl to Omega field region");
+    Logger::info("T_Omega - Assign space Hcurl to T-field region");
     Block dof_T = fe_system.register_FE_space(field_T, key_conductor[0]);
     Logger::block_info(dof_T.id, dof_T.row_offset, dof_T.col_offset, dof_T.row_size, dof_T.col_size);
 

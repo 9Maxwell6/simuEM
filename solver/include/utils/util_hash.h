@@ -135,7 +135,34 @@ public:
 
 
 
+/**
+ * collection of hash table specifically designed for constructing dof list.
+ * contain hash table for: 
+ *      1 index + 1 dof   for node hash table  (table_1)
+ *      2 index + 1 dof   for edge hash table  (table_2)
+ *      3 index + 1 dof   for face hash table  (table_3)
+ *      4 index + 1 dof   for face hash table  (table_4)
+ * 
+ * table_3 and table_4 share the same counter since they both used for face dof.
+ * 
+ * the hash table contains number of blocks, each block has unique hash value.
+ * entries inside same block share the same hash value.
+ * 
+ * the initial table size must be power of 2.
 
+ * 
+ * the lookup procedure: 
+ *      1. compute hash based on the given number of vertices and dof index.
+ *      2. locate the block with the hash value.
+ *      3. linear search within the block.
+ *      4. if get exact match, return the entry id.
+ *      5. if no match, assign new id for this set of vertices and dof index, insert to block.
+ *      6. if the total size of the entry > 4 * size of block, increase table size by 2.
+ * 
+ * hash table is not needed for volume dof, since each volume is only belong to one element,
+ * but it is recommand to store the total number of volume dof by using Block_Hash::set_volume_count().
+ * 
+ */
 struct Block_Hash 
 {
     std::vector<Block_1> table_1;
@@ -151,10 +178,19 @@ struct Block_Hash
     size_t mask_4;
 
     // increment on each insert, for generating new id and rehash
-    size_t count_1 = 0;
-    size_t count_2 = 0; 
-    size_t count_3 = 0;
-    size_t count_4 = 0;
+    // TODO: for face element, there can be 3 nodes triangle or 4 nodes quadrilateral,
+    // hece we can use the same counter for 3 nodes and 4 nodes (i.e., merge count_3 and count_4 into one).
+    //size_t count_1 = 0;  // node counter
+    //size_t count_2 = 0;  // edge counter
+    //size_t count_3 = 0;  // face counter
+    //size_t count_4 = 0;  // face counter
+
+    size_t count_node = 0;    // node dof counter
+    size_t count_edge = 0;    // edge dof counter
+    size_t count_face = 0;    // face dof counter
+
+    //
+    size_t count_volume = 0;  // volume dof counter
 
     Block_Hash(size_t initial_size_1 = 32*1024, 
                size_t initial_size_2 = 32*1024, 
@@ -172,11 +208,18 @@ struct Block_Hash
         assert((initial_size_4 & (initial_size_4 - 1)) == 0); 
     }
 
+    const size_t get_node_count() const { return count_node; }
+    const size_t get_edge_count() const { return count_edge; }
+    const size_t get_face_count() const { return count_face; }
+
+    void set_volume_count(size_t volume_dof_size) { count_volume = volume_dof_size; }
+    const size_t get_volume_count() const { return count_volume; }
+
     // 1 vertex
     size_t get_id(size_t p0, size_t p_dof)
     {
         //std::cout<<p0<<std::endl;
-        if (count_1 > 4*table_1.size()) rehash_1(table_1.size() * 2);
+        if (count_node > 4*table_1.size()) rehash_1(table_1.size() * 2);
 
         size_t slot = hash_1(p0, p_dof) & mask_1;
         std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
@@ -184,9 +227,9 @@ struct Block_Hash
             if (e.v[0] == p0 && e.dof==p_dof)
                 return e.id;
 
-        size_t new_id = count_1;
+        size_t new_id = count_node;
         block_1.push_back({{p0}, p_dof, new_id});
-        count_1++;
+        count_node++;
         return new_id;
     }
 
@@ -194,7 +237,7 @@ struct Block_Hash
     size_t get_id(size_t p0, size_t p1, size_t p_dof) 
     {
         // check rehash
-        if (count_2 > 4*table_2.size()) rehash_2(table_2.size() * 2);
+        if (count_edge > 4*table_2.size()) rehash_2(table_2.size() * 2);
 
         if (p0 > p1) std::swap(p0, p1);                           // sort in ascending order
         size_t slot = hash_2(p0, p1, p_dof) & mask_2;      
@@ -204,16 +247,16 @@ struct Block_Hash
             if (e.v[0] == p0 && e.v[1] == p1  && e.dof==p_dof)
                 return e.id;
 
-        size_t new_id = count_2;                                  // global id in table
+        size_t new_id = count_edge;                               // global id in table
         block_2.push_back({{p0, p1}, p_dof, new_id});
-        count_2++;
+        count_edge++;
         return new_id;
     }
 
     // 3 vertices
     size_t get_id(size_t p0, size_t p1, size_t p2, size_t p_dof)
     {
-        if (count_3 > 4*table_3.size()) rehash_3(table_3.size() * 2);
+        if (count_face > 4*table_3.size()) rehash_3(table_3.size() * 2);
 
         size_t v[3] = {p0, p1, p2};
         std::sort(v, v + 3);
@@ -224,16 +267,16 @@ struct Block_Hash
             if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2]  && e.dof==p_dof)
                 return e.id;
 
-        size_t new_id = count_3;  
+        size_t new_id = count_face;  
         block_3.push_back({{v[0], v[1], v[2]}, p_dof, new_id});
-        count_3++;
+        count_face++;
         return new_id;
     }
 
     // 4 vertices
     size_t get_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
     {
-        if (count_4 > 4*table_4.size()) rehash_4(table_4.size() * 2);
+        if (count_face > 4*table_4.size()) rehash_4(table_4.size() * 2);
 
         size_t v[4] = {p0, p1, p2, p3};
         std::sort(v, v + 4);
@@ -244,9 +287,9 @@ struct Block_Hash
             if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2] && e.v[3] == v[3]  && e.dof==p_dof)
                 return e.id;
 
-        size_t new_id = count_4;
+        size_t new_id = count_face;
         block_4.push_back({{v[0], v[1], v[2], v[3]}, p_dof, new_id});
-        count_4++;
+        count_face++;
         return new_id;
     }
 
