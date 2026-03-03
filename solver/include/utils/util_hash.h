@@ -3,6 +3,8 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <optional>
+
 
 namespace util 
 {
@@ -233,6 +235,18 @@ struct Block_Hash
         return new_id;
     }
 
+    std::optional<size_t> get_exist_id(size_t p0, size_t p_dof)
+    {
+        if (count_node > 4*table_1.size()) rehash_1(table_1.size() * 2);
+
+        size_t slot = hash_1(p0, p_dof) & mask_1;
+        std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
+        for (Vertex_1& e : block_1)
+            if (e.v[0] == p0 && e.dof==p_dof)
+                return e.id;
+        return std::nullopt;
+    }
+
     // 2 vertices
     size_t get_id(size_t p0, size_t p1, size_t p_dof) 
     {
@@ -251,6 +265,21 @@ struct Block_Hash
         block_2.push_back({{p0, p1}, p_dof, new_id});
         count_edge++;
         return new_id;
+    }
+
+    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p_dof) 
+    {
+        // check rehash
+        if (count_edge > 4*table_2.size()) rehash_2(table_2.size() * 2);
+
+        if (p0 > p1) std::swap(p0, p1);                           // sort in ascending order
+        size_t slot = hash_2(p0, p1, p_dof) & mask_2;      
+        std::vector<Vertex_2>&  block_2 = table_2[slot].entry_2;  // get block
+
+        for (Vertex_2& e : block_2)                               // linear scan
+            if (e.v[0] == p0 && e.v[1] == p1  && e.dof==p_dof)
+                return e.id;
+        return std::nullopt;
     }
 
     // 3 vertices
@@ -273,6 +302,21 @@ struct Block_Hash
         return new_id;
     }
 
+    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p2, size_t p_dof)
+    {
+        if (count_face > 4*table_3.size()) rehash_3(table_3.size() * 2);
+
+        size_t v[3] = {p0, p1, p2};
+        std::sort(v, v + 3);
+        size_t slot = hash_3(v[0], v[1], v[2], p_dof) & mask_3;
+        std::vector<Vertex_3>&  block_3 = table_3[slot].entry_3;
+
+        for (Vertex_3& e : block_3)
+            if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2]  && e.dof==p_dof)
+                return e.id;
+        return std::nullopt;
+    }
+
     // 4 vertices
     size_t get_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
     {
@@ -291,6 +335,22 @@ struct Block_Hash
         block_4.push_back({{v[0], v[1], v[2], v[3]}, p_dof, new_id});
         count_face++;
         return new_id;
+    }
+
+    // 4 vertices
+    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
+    {
+        if (count_face > 4*table_4.size()) rehash_4(table_4.size() * 2);
+
+        size_t v[4] = {p0, p1, p2, p3};
+        std::sort(v, v + 4);
+        size_t slot = hash_4(v[0], v[1], v[2], v[3], p_dof) & mask_4;
+        std::vector<Vertex_4>&  block_4 = table_4[slot].entry_4;
+
+        for (auto& e : block_4)
+            if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2] && e.v[3] == v[3]  && e.dof==p_dof)
+                return e.id;
+        return std::nullopt;
     }
 
 
