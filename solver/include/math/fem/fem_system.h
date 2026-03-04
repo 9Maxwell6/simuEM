@@ -118,17 +118,20 @@ private:
 
     //void assign_dof(Element * e);
 
+    const util::Block_Hash_D create_volume_dof_hash(const Block& block) const;
+
     bool generate_block_dof(Block& block);
 
-    bool generate_coupling_block_dof(Block& block_1_2, Block& block_1, Block& block_2);
-
-
+    bool generate_coupling_block_dof(Block& block_1_2, const Block& block_1, const Block& block_2);
 
 
 
     static Basis_Shape to_basis_shape(Geometry t);
 
     static Geometry to_element_geometry(Basis_Shape t);
+
+    // TODO: implement auxilary function for extract repeated pattern of filling dof id on Tetrahedron element, i.e:
+    // dof_Tetrahedron(lambda function, dof per node, dof per edge, dof per face, dof per volume)
 
 
 public:
@@ -151,6 +154,9 @@ public:
     const std::array<Block, 2>& get_coupled_block(const Block& block) const;
     const std::array<FEM_Space *, 2>& get_coupled_block_space(const Block& block) const;
     const std::array<std::vector<size_t>, 2>& get_coupled_block_dof(const Block& block) const; 
+
+    // use only after every dof table of blocks are initialized
+    void delete_block_hash() { fe_block_hash_.clear(); }
 
 
 };

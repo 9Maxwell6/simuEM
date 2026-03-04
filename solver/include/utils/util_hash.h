@@ -235,13 +235,11 @@ struct Block_Hash
         return new_id;
     }
 
-    std::optional<size_t> get_exist_id(size_t p0, size_t p_dof)
+    std::optional<size_t> get_exist_id(size_t p0, size_t p_dof) const
     {
-        if (count_node > 4*table_1.size()) rehash_1(table_1.size() * 2);
-
         size_t slot = hash_1(p0, p_dof) & mask_1;
-        std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
-        for (Vertex_1& e : block_1)
+        const std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
+        for (const Vertex_1& e : block_1)
             if (e.v[0] == p0 && e.dof==p_dof)
                 return e.id;
         return std::nullopt;
@@ -267,16 +265,12 @@ struct Block_Hash
         return new_id;
     }
 
-    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p_dof) 
+    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p_dof) const
     {
-        // check rehash
-        if (count_edge > 4*table_2.size()) rehash_2(table_2.size() * 2);
-
         if (p0 > p1) std::swap(p0, p1);                           // sort in ascending order
         size_t slot = hash_2(p0, p1, p_dof) & mask_2;      
-        std::vector<Vertex_2>&  block_2 = table_2[slot].entry_2;  // get block
-
-        for (Vertex_2& e : block_2)                               // linear scan
+        const std::vector<Vertex_2>&  block_2 = table_2[slot].entry_2;  // get block
+        for (const Vertex_2& e : block_2)                               // linear scan
             if (e.v[0] == p0 && e.v[1] == p1  && e.dof==p_dof)
                 return e.id;
         return std::nullopt;
@@ -302,16 +296,14 @@ struct Block_Hash
         return new_id;
     }
 
-    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p2, size_t p_dof)
+    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p2, size_t p_dof) const
     {
-        if (count_face > 4*table_3.size()) rehash_3(table_3.size() * 2);
-
         size_t v[3] = {p0, p1, p2};
         std::sort(v, v + 3);
         size_t slot = hash_3(v[0], v[1], v[2], p_dof) & mask_3;
-        std::vector<Vertex_3>&  block_3 = table_3[slot].entry_3;
+        const std::vector<Vertex_3>&  block_3 = table_3[slot].entry_3;
 
-        for (Vertex_3& e : block_3)
+        for (const Vertex_3& e : block_3)
             if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2]  && e.dof==p_dof)
                 return e.id;
         return std::nullopt;
@@ -338,16 +330,13 @@ struct Block_Hash
     }
 
     // 4 vertices
-    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
+    std::optional<size_t> get_exist_id(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof) const
     {
-        if (count_face > 4*table_4.size()) rehash_4(table_4.size() * 2);
-
         size_t v[4] = {p0, p1, p2, p3};
         std::sort(v, v + 4);
         size_t slot = hash_4(v[0], v[1], v[2], v[3], p_dof) & mask_4;
-        std::vector<Vertex_4>&  block_4 = table_4[slot].entry_4;
-
-        for (auto& e : block_4)
+        const std::vector<Vertex_4>&  block_4 = table_4[slot].entry_4;
+        for (const Vertex_4& e : block_4)
             if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2] && e.v[3] == v[3]  && e.dof==p_dof)
                 return e.id;
         return std::nullopt;
@@ -355,49 +344,49 @@ struct Block_Hash
 
 
     // 1 vertex
-    bool if_exist(size_t p0, size_t p_dof)
+    bool if_exist(size_t p0, size_t p_dof) const
     {
         size_t slot = hash_1(p0, p_dof) & mask_1;
-        std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
-        for (Vertex_1& e : block_1)
+        const std::vector<Vertex_1>& block_1 = table_1[slot].entry_1;
+        for (const Vertex_1& e : block_1)
             if (e.v[0] == p0 && e.dof==p_dof)
                 return true;
         return false;
     }
 
     // 2 vertices
-    bool if_exist(size_t p0, size_t p1, size_t p_dof) 
+    bool if_exist(size_t p0, size_t p1, size_t p_dof) const
     {
         if (p0 > p1) std::swap(p0, p1);                           // sort in ascending order
         size_t slot = hash_2(p0, p1, p_dof) & mask_2;      
-        std::vector<Vertex_2>&  block_2 = table_2[slot].entry_2;  // get block
-        for (Vertex_2& e : block_2)                               // linear scan
+        const std::vector<Vertex_2>&  block_2 = table_2[slot].entry_2;  // get block
+        for (const Vertex_2& e : block_2)                               // linear scan
             if (e.v[0] == p0 && e.v[1] == p1  && e.dof==p_dof)
                 return true;
         return false;
     }
 
     // 3 vertices
-    bool if_exist(size_t p0, size_t p1, size_t p2, size_t p_dof)
+    bool if_exist(size_t p0, size_t p1, size_t p2, size_t p_dof) const
     {
         size_t v[3] = {p0, p1, p2};
         std::sort(v, v + 3);
         size_t slot = hash_3(v[0], v[1], v[2], p_dof) & mask_3;
-        std::vector<Vertex_3>&  block_3 = table_3[slot].entry_3;
-        for (Vertex_3& e : block_3)
+        const std::vector<Vertex_3>&  block_3 = table_3[slot].entry_3;
+        for (const Vertex_3& e : block_3)
             if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2]  && e.dof==p_dof)
                 return true;
         return false;
     }
 
     // 4 vertices
-    bool if_exist(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
+    bool if_exist(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof) const
     {
         size_t v[4] = {p0, p1, p2, p3};
         std::sort(v, v + 4);
         size_t slot = hash_4(v[0], v[1], v[2], v[3], p_dof) & mask_4;
-        std::vector<Vertex_4>&  block_4 = table_4[slot].entry_4;
-        for (auto& e : block_4)
+        const std::vector<Vertex_4>&  block_4 = table_4[slot].entry_4;
+        for (const Vertex_4& e : block_4)
             if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2] && e.v[3] == v[3]  && e.dof==p_dof)
                 return true;
         return false;
@@ -659,13 +648,38 @@ struct Block_Hash_D
         return new_id;
     }
 
-    bool if_exist(const size_t* p, size_t N, size_t p_dof)
+    std::optional<size_t> get_exist_id(const size_t* p, size_t N, size_t p_dof) const
+    {
+
+        std::vector<size_t> v_sorted(p, p + N);
+        std::sort(v_sorted.begin(), v_sorted.end());
+
+        size_t slot = hash_D(v_sorted.data(), N, p_dof) & mask_D;
+        const auto& bucket = table_D[slot].entry_D;
+
+        for (const auto& e : bucket) {
+            if (e.v.size() == N && e.dof == p_dof) {
+                bool match = true;
+                for (size_t i = 0; i < N; ++i) {
+                    if (v_sorted[i] != e.v[i]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) return e.id;
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    bool if_exist(const size_t* p, size_t N, size_t p_dof) const
     {
         std::vector<size_t> v_sorted(p, p + N);
         std::sort(v_sorted.begin(), v_sorted.end());
         
         size_t slot = hash_D(v_sorted.data(), N, p_dof) & mask_D;
-        auto& bucket = table_D[slot].entry_D;
+        const auto& bucket = table_D[slot].entry_D;
 
         for (const auto& e : bucket) {
             if (e.v.size() == N && e.dof == p_dof) {

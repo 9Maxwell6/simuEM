@@ -148,7 +148,8 @@ Key Mesh::group_union(const Key& group_1_key, const Key& group_2_key, const std:
     {
         const size_t* idx  = e->get_nodeIdx();
         int n = e->get_nodeNum();
-        if(!bh.if_exist(idx, n, 0)){
+        if(!bh.if_exist(idx, n, 0))
+        {
             group_1_2.push_back(e);
             g_group_1_2[e->get_geometry()]++;
         }
