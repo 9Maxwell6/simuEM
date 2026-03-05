@@ -2,40 +2,18 @@
 
 #include "math/fem/space_collection.h"
 #include "entity/mesh/e_collection.h"
-#include "math/fem/dof_handler.h"
+#include "math/fem/block_rack.h"
 #include "entity/mesh/mesh.h"
 
 
 #include "utils/util_hash.h"
 
+#include <utility>
+
 
 
 namespace simu {
 
-
-struct Block 
-{
-    size_t id; 
-    size_t row_offset;
-    size_t col_offset;
-    size_t row_size;
-    size_t col_size;
-
-    bool is_base_block;
-
-    bool operator==(const Block& other) const 
-    {
-        return id == other.id;
-    }
-
-    struct Hash 
-    {
-        size_t operator()(const Block& b) const 
-        {
-            return std::hash<size_t>{}(b.id);
-        }
-    };
-};
 
 
 /**
@@ -73,7 +51,7 @@ private:
     int dim_;
 
     Mesh& mesh_;
-    DoF_Handler dof_handler_;
+    Block_Rack block_rack_;
 
     std::vector<size_t> dof_list_;     // entry -> index in global dof
     size_t dof_offset_;                // for creating next dof
@@ -100,9 +78,12 @@ private:
     std::unordered_map<Block, util::Block_Hash,    Block::Hash> fe_block_hash_;
 
     // for coupling block
-    std::unordered_map<Block, std::array<Block, 2>,               Block::Hash> coupled_block_;
-    std::unordered_map<Block, std::array<FEM_Space *, 2>,         Block::Hash> coupled_block_space_;
-    std::unordered_map<Block, std::array<std::vector<size_t>, 2>, Block::Hash> coupled_block_dof_;
+    std::unordered_map<Block, std::array<Block, 2>,                       Block::Hash> coupled_block_;
+    std::unordered_map<Block, std::array<FEM_Space *, 2>,                 Block::Hash> coupled_block_space_;
+    std::unordered_map<Block, std::array<const std::vector<size_t> *, 2>, Block::Hash> coupled_block_dof_;
+
+    // store actual coupling block dof data, this is to avoid copy when transpose of block is applied.
+    std::unordered_map<Block, std::array<std::vector<size_t>, 2>,   Block::Hash> coupled_block_dof_data_;
 
 
 
@@ -122,7 +103,7 @@ private:
 
     bool generate_block_dof(Block& block);
 
-    bool generate_coupling_block_dof(Block& block_1_2, const Block& block_1, const Block& block_2);
+    bool generate_coupling_block_dof(Block& block);
 
 
 
@@ -157,11 +138,13 @@ public:
 
     const std::array<Block, 2>& get_coupled_block(const Block& block) const;
     const std::array<FEM_Space *, 2>& get_coupled_block_space(const Block& block) const;
-    const std::array<std::vector<size_t>, 2>& get_coupled_block_dof(const Block& block) const; 
+    const std::array<const std::vector<size_t> * ,2>& get_coupled_block_dof(const Block& block) const; 
 
     // use only after every dof table of blocks are initialized
     void delete_block_hash() { fe_block_hash_.clear(); }
 
+    // TODO:
+    Block transpose_block(const Block& block);
 
 };
 

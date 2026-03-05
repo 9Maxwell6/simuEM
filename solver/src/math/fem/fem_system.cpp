@@ -4,7 +4,7 @@ using namespace simu;
 
 
 
-FEM_System::FEM_System(Mesh& mesh):mesh_(mesh)
+FEM_System::FEM_System(Mesh& mesh):mesh_(mesh), block_rack_()
 {
     dim_ = mesh_.get_mesh_dimension();
 
@@ -247,34 +247,38 @@ bool FEM_System::generate_block_dof(Block& block)
  * @brief generate two dof table for the coupling block, using the hash table from each base block.
  * 
  * block_1 and block_2 should have shared elements where coupling happens, then:
- *      row dof of [block_1_2] should match with [ block_1 ]
- *      column dof of [block_1_2] should match with [ block_1 ]
+ *      row dof of [block] should match with [ block_1 ]
+ *      column dof of [block] should match with [ block_1 ]
  * 
- *      [ block_1 ]  [block_1_2]
- *                   [ block_2 ]
+ *      [block_1]    [block]
+ *                  [block_2]
  * 
  *
- * @param block_1_2 coupling block to be initialized.
+ * @param block coupling block to be initialized.
  * @param block_1 initialized base block 1.
  * @param block_2 initialized base block 2.
  * 
  * @return true if dof for this block is succeffully initialized.
  */
-bool FEM_System::generate_coupling_block_dof(Block& block_1_2, const Block& block_1, const Block& block_2)
+bool FEM_System::generate_coupling_block_dof(Block& block)
 {
+    const std::array<Block, 2>& block_list = get_coupled_block(block);
+    const Block& block_1 = block_list[0];
+    const Block& block_2 = block_list[1];
+
     if((!block_1.is_base_block) || (!block_2.is_base_block))
     {
         Logger::error("FEM_System::generate_coupling_block_dof - block_1 or block_2 not base block, hence no dof hash table.");
         return false;
     }
     
-    const std::vector<Element*>& elements = (fe_block_key_.find(block_1_2) != fe_block_key_.end()) 
-                                                ? mesh_.get_element_group(fe_block_key_.at(block_1_2))
+    const std::vector<Element*>& elements = (fe_block_key_.find(block) != fe_block_key_.end()) 
+                                                ? mesh_.get_element_group(fe_block_key_.at(block))
                                                 : mesh_.get_mesh_elements();
 
-    const std::array<Block, 2>& block_list = get_coupled_block(block_1_2);
-    const util::Block_Hash& bh_1 = get_block_hash(block_list[0]);
-    const util::Block_Hash& bh_2 = get_block_hash(block_list[1]);
+    
+    const util::Block_Hash& bh_1 = get_block_hash(block_1);
+    const util::Block_Hash& bh_2 = get_block_hash(block_2);
 
     size_t n_node_dof_1   = bh_1.get_node_count();
     size_t n_edge_dof_1   = bh_1.get_edge_count();
@@ -306,7 +310,7 @@ bool FEM_System::generate_coupling_block_dof(Block& block_1_2, const Block& bloc
 
 
 
-    const std::array<FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block_1_2);
+    const std::array<FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block);
     const FEM_Space * fe_space_1 = fe_space_list[0];
     const FEM_Space * fe_space_2 = fe_space_list[1];
 
@@ -409,11 +413,17 @@ bool FEM_System::generate_coupling_block_dof(Block& block_1_2, const Block& bloc
     }
 
 
-    block_1_2.row_size = block_1.row_size;
-    block_1_2.col_size = block_2.col_size;
-    std::array<std::vector<size_t>,2>& coupled_block_dof = coupled_block_dof_[block_1_2];
-    coupled_block_dof[0] = std::move(fe_shared_block_dof_1);
-    coupled_block_dof[1] = std::move(fe_shared_block_dof_2);
+    block.row_size = block_1.row_size;
+    block.col_size = block_2.col_size;
+
+    // store actual dof list
+    std::array<std::vector<size_t>,2>& coupled_block_dof_data = coupled_block_dof_data_[block];
+    coupled_block_dof_data[0] = std::move(fe_shared_block_dof_1);
+    coupled_block_dof_data[1] = std::move(fe_shared_block_dof_2);
+
+    std::array<const std::vector<size_t> * ,2>& coupled_block_dof = coupled_block_dof_[block];
+    coupled_block_dof[0] = &coupled_block_dof_data[0];
+    coupled_block_dof[1] = &coupled_block_dof_data[1];
 
     /*
     size_t i=0;
@@ -422,8 +432,8 @@ bool FEM_System::generate_coupling_block_dof(Block& block_1_2, const Block& bloc
         const size_t* idx  = e->get_nodeIdx();
         int n = e->get_nodeNum();
         std::cout<< idx[0] << " " << idx[1] << " " << idx[2] << " " << idx[3] << std::endl;
-        std::cout<< coupled_block_dof[0][j] << " " << coupled_block_dof[0][j+1] << " " << coupled_block_dof[0][j+2] << " " << coupled_block_dof[0][j+3] << " " << coupled_block_dof[0][j+4] << " " << coupled_block_dof[0][j+5]  <<std::endl;
-        std::cout<< coupled_block_dof[1][i] << " " << coupled_block_dof[1][i+1] << " " << coupled_block_dof[1][i+2] << " " << coupled_block_dof[1][i+3]  <<std::endl;
+        std::cout<< (*coupled_block_dof[0])[j] << " " << (*coupled_block_dof[0])[j+1] << " " << (*coupled_block_dof[0])[j+2] << " " << (*coupled_block_dof[0])[j+3] << " " << (*coupled_block_dof[0])[j+4] << " " << (*coupled_block_dof[0])[j+5]  <<std::endl;
+        std::cout<< (*coupled_block_dof[1])[i] << " " << (*coupled_block_dof[1])[i+1] << " " << (*coupled_block_dof[1])[i+2] << " " << (*coupled_block_dof[1])[i+3]  <<std::endl;
         std::cout<< "-----------------------------------" << std::endl;
         i+=4;
         j+=6;
@@ -522,7 +532,7 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
         fe_block_key_[new_block] = shared_group_key;
     }
 
-    if(generate_coupling_block_dof(new_block, block_1, block_2)){
+    if(generate_coupling_block_dof(new_block)){
         return new_block;
     }else{
         Logger::error("FEM_System::register_FE_space_coupling - coupling block initialization failed, return bad block.");
@@ -591,13 +601,13 @@ const std::array<FEM_Space *, 2>& FEM_System::get_coupled_block_space(const Bloc
 }
 
 
-const std::array<std::vector<size_t>, 2>& FEM_System::get_coupled_block_dof(const Block& block) const
+const std::array<const std::vector<size_t> * ,2>& FEM_System::get_coupled_block_dof(const Block& block) const
 {
     auto it = coupled_block_dof_.find(block);
     if (it != coupled_block_dof_.end()) return it->second;
 
     Logger::error("Mesh::get_coupled_block_dof - failed: block not found, return empty list of dof.");
-    static const std::array<std::vector<size_t>, 2> empty{};
+    static const std::array<const std::vector<size_t> * ,2> empty{};
     return empty;
 }
 
@@ -624,6 +634,59 @@ Geometry FEM_System::to_element_geometry(Basis_Shape g)
             throw std::invalid_argument("geometry not supported yet.");
         }
     }
+}
+
+
+Block FEM_System::transpose_block(const Block& block)
+{
+
+    block_id_++;
+    Block new_block = {block_id_, 0, 0, block.col_size, block.row_size, block.is_base_block};
+
+
+    if(!block.is_base_block)
+    {
+        const std::array<Block, 2>& block_list = get_coupled_block(block);
+        const Block& block_1 = block_list[0];
+        const Block& block_2 = block_list[1];
+
+        std::array<Block, 2>& block_pair =  coupled_block_[new_block];
+        block_pair[0] = block_2;
+        block_pair[1] = block_1;
+
+        const std::array<FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block);
+        FEM_Space * fe_space_1 = fe_space_list[0];
+        FEM_Space * fe_space_2 = fe_space_list[1];
+
+        std::array<FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
+        block_space_pair[0] = fe_space_2;
+        block_space_pair[1] = fe_space_1;
+
+        const std::array<const std::vector<size_t> * ,2>& block_dof_list = get_coupled_block_dof(block);
+        const std::vector<size_t>* block_dof_1 = block_dof_list[0];
+        const std::vector<size_t>* block_dof_2 = block_dof_list[1];
+
+        std::array<const std::vector<size_t> *, 2>& block_dof_pair = coupled_block_dof_[new_block];
+        block_dof_pair[0] = block_dof_2;
+        block_dof_pair[1] = block_dof_1;
+
+        auto it = fe_block_key_.find(block);
+        if (it != fe_block_key_.end()) fe_block_key_[new_block] = it->second;
+
+
+
+    }
+    
+    return new_block;
+
+    
+
+
+    
+
+
+    // TODO: once block has PETSc matrix, compute transpose of the matrix and link to new block
+
 }
 
 

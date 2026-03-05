@@ -100,8 +100,15 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
     Block coupling_region = fe_system.register_FE_space_coupling(dof_T, dof_Omega, key_conductor_interface_layer[0]);
     Logger::block_info(coupling_region.id, coupling_region.row_offset, coupling_region.col_offset, coupling_region.row_size, coupling_region.col_size);
 
+
+    Block coupling_region_transpose = fe_system.transpose_block(coupling_region);
+    Logger::block_info(coupling_region_transpose.id, coupling_region_transpose.row_offset, coupling_region_transpose.col_offset, coupling_region_transpose.row_size, coupling_region_transpose.col_size);
+
+
     Logger::info("[T_Omega] - delete temporary block hash.");
     fe_system.delete_block_hash();
+
+
     
         
 };
