@@ -130,8 +130,12 @@ private:
 
     static Geometry to_element_geometry(Basis_Shape t);
 
-    // TODO: implement auxilary function for extract repeated pattern of filling dof id on Tetrahedron element, i.e:
-    // dof_Tetrahedron(lambda function, dof per node, dof per edge, dof per face, dof per volume)
+
+    template <typename Get_dof>
+    bool node_edge_face_dof_handler(Get_dof&& dof_handler, Basis_Shape shape, const size_t* node_idx, int node_size, 
+                                                                    int n_dof_per_node, size_t node_dof_offset,
+                                                                    int n_dof_per_edge, size_t edge_dof_offset, 
+                                                                    int n_dof_per_face, size_t face_dof_offset);
 
 
 public:
