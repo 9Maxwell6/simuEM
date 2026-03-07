@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <functional>
 
 
 namespace simu {
@@ -22,7 +23,16 @@ struct Block
 
 
 
-
+/**
+ * 
+ *      +-----+-----+-----+
+ *      |     |     |     |
+ *      +-----+-----+-----+
+ *      |     |     |     |
+ *      +-----+-----+-----+
+ *      |     |     |     |
+ *      +-----+-----+-----+
+ */
 class Block_Rack
 {
     friend class FEM_System;
@@ -31,13 +41,18 @@ private:
     size_t row_block_size_; 
     size_t col_block_size_; 
 
-    std::vector<std::vector<size_t>> rack_;
+    std::vector<Block*> rack_;
+
+    std::vector<size_t> unit_row_length_;
+    std::vector<size_t> unit_col_length_;
     
 public:
     Block_Rack(){};
     Block_Rack(size_t row_block_size, size_t col_block_size);
 
-    bool insert_block(const Block& block, size_t row_num, size_t col_num);
+    void set_grid(size_t row_block_size, size_t col_block_size);
+
+    bool insert_block(const Block& block, size_t row, size_t col);
 
 
 
