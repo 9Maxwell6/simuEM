@@ -1,4 +1,8 @@
 #pragma once
+
+#include "utils/logger.h"
+
+
 #include <cstddef>
 #include <functional>
 
@@ -38,23 +42,25 @@ class Block_Rack
     friend class FEM_System;
 private:
     
-    size_t row_block_size_; 
-    size_t col_block_size_; 
+    size_t n_row_; 
+    size_t n_col_; 
 
     std::vector<Block*> rack_;
 
     std::vector<size_t> unit_row_length_;
     std::vector<size_t> unit_col_length_;
+
+    bool compute_block_offset();
     
 public:
     Block_Rack(){};
-    Block_Rack(size_t row_block_size, size_t col_block_size);
+    Block_Rack(size_t n_row, size_t n_col);
 
-    void set_grid(size_t row_block_size, size_t col_block_size);
+    void set_grid(size_t n_row, size_t n_col);
 
-    bool insert_block(const Block& block, size_t row, size_t col);
+    bool insert_block(Block& block, size_t row, size_t col);
 
-
+    
 
 
 

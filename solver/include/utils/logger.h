@@ -46,6 +46,8 @@ public:
     static void mesh_entity(int dim, int tag, int key_id, int n_elements, int n_types, std::array<size_t, 4> e_size, const std::string& name);
     static void block_info(size_t id, size_t row_offset, size_t col_offset, size_t row_size, size_t col_size);
 
+    static void block_rack();
+
 
     static void start_timer(const std::string& label);
 

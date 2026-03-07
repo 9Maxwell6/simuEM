@@ -756,3 +756,9 @@ bool FEM_System::node_edge_face_dof_handler(Get_dof&& dof_handler, Basis_Shape s
 
     return true;
 }
+
+
+Block_Rack FEM_System::initialize_block_rack(size_t n_row, size_t n_col)
+{
+    return Block_Rack(n_row, n_col);
+}

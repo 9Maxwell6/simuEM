@@ -146,6 +146,8 @@ public:
     // TODO:
     Block transpose_block(const Block& block);
 
+    Block_Rack initialize_block_rack(size_t n_row, size_t n_col);
+
 };
 
 }
