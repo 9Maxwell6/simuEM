@@ -73,7 +73,7 @@ private:
 
     // for basic block
     std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
-    std::unordered_map<Block, std::vector<size_t>, Block::Hash> fe_block_dof_;
+    std::unordered_map<Block, const std::vector<size_t> *, Block::Hash> fe_block_dof_;
     //temporary, for constructing dof, should be cleared after dof table is constructed.
     std::unordered_map<Block, util::Block_Hash,    Block::Hash> fe_block_hash_;
 
@@ -83,6 +83,7 @@ private:
     std::unordered_map<Block, std::array<const std::vector<size_t> *, 2>, Block::Hash> coupled_block_dof_;
 
     // store actual coupling block dof data, this is to avoid copy when transpose of block is applied.
+    std::unordered_map<Block, std::vector<size_t>,   Block::Hash> fe_block_dof_data_;
     std::unordered_map<Block, std::array<std::vector<size_t>, 2>,   Block::Hash> coupled_block_dof_data_;
 
 
@@ -133,7 +134,7 @@ public:
     
     const FEM_Space* get_block_space(const Block& block) const;
     const Key get_block_group_key(const Block& block) const;
-    const std::vector<size_t>& get_block_dof(const Block& block) const;
+    const std::vector<size_t> * get_block_dof(const Block& block) const;
     const util::Block_Hash& get_block_hash(const Block& block) const;
 
     const std::array<Block, 2>& get_coupled_block(const Block& block) const;

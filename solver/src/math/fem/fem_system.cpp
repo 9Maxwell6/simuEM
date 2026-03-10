@@ -228,8 +228,10 @@ bool FEM_System::generate_block_dof(Block& block)
     
     block.row_size = fe_block_dof.size();
     block.col_size = fe_block_dof.size();
-    fe_block_dof_[block] = std::move(fe_block_dof);
+    fe_block_dof_data_[block] = std::move(fe_block_dof);
     fe_block_hash_[block] = std::move(bh);
+
+    fe_block_dof_[block] = &fe_block_dof_data_[block];
 
 
     if(!shape_found_flag)
@@ -314,15 +316,15 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
     const FEM_Space * fe_space_1 = fe_space_list[0];
     const FEM_Space * fe_space_2 = fe_space_list[1];
 
-    const std::vector<size_t>& fe_block_dof_1 = get_block_dof(block_1);
-    const std::vector<size_t>& fe_block_dof_2 = get_block_dof(block_2);
+    const std::vector<size_t>* fe_block_dof_1 = get_block_dof(block_1);
+    const std::vector<size_t>* fe_block_dof_2 = get_block_dof(block_2);
 
 
     std::vector<size_t> fe_shared_block_dof_1;
     std::vector<size_t> fe_shared_block_dof_2;
 
-    fe_shared_block_dof_1.reserve(fe_block_dof_1.size());
-    fe_shared_block_dof_2.reserve(fe_block_dof_2.size());
+    fe_shared_block_dof_1.reserve(fe_block_dof_1->size());
+    fe_shared_block_dof_2.reserve(fe_block_dof_2->size());
 
     bool error_dof_flag = false;
     bool shape_found_flag = true;
@@ -560,14 +562,13 @@ const Key FEM_System::get_block_group_key(const Block& block) const
     return empty;
 }
 
-const std::vector<size_t>& FEM_System::get_block_dof(const Block& block) const
+const std::vector<size_t>* FEM_System::get_block_dof(const Block& block) const
 {
     auto it = fe_block_dof_.find(block);
     if (it != fe_block_dof_.end()) return it->second;
 
-    Logger::error("Mesh::get_block_dof - failed: block not found, return empty list of dof.");
-    static const std::vector<size_t> empty;
-    return empty;
+    Logger::error("Mesh::get_block_dof - failed: block not found, return nullptr.");
+    return nullptr;
 }
 
 const util::Block_Hash& FEM_System::get_block_hash(const Block& block) const
