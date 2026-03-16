@@ -97,17 +97,24 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
 
 
     Logger::info("[T_Omega] - initialize coupling between T-field and Omega-field");
-    Block coupling_region = fe_system.register_FE_space_coupling(dof_T, dof_Omega, key_conductor_interface_layer[0]);
-    Logger::block_info(coupling_region.id, coupling_region.row_offset, coupling_region.col_offset, coupling_region.row_size, coupling_region.col_size);
+    Block dof_coupling = fe_system.register_FE_space_coupling(dof_T, dof_Omega, key_conductor_interface_layer[0]);
+    Logger::block_info(dof_coupling.id, dof_coupling.row_offset, dof_coupling.col_offset, dof_coupling.row_size, dof_coupling.col_size);
 
 
-    Block coupling_region_transpose = fe_system.transpose_block(coupling_region);
-    Logger::block_info(coupling_region_transpose.id, coupling_region_transpose.row_offset, coupling_region_transpose.col_offset, coupling_region_transpose.row_size, coupling_region_transpose.col_size);
+    Block dof_coupling_tp = fe_system.transpose_block(dof_coupling);
+    Logger::block_info(dof_coupling_tp.id, dof_coupling_tp.row_offset, dof_coupling_tp.col_offset, dof_coupling_tp.row_size, dof_coupling_tp.col_size);
 
 
     Logger::info("[T_Omega] - delete temporary block hash.");
     fe_system.delete_block_hash();
 
+    Block_Rack br_l = fe_system.initialize_block_rack(2, 2);
+    br_l.insert_block(dof_T,           0, 0);
+    br_l.insert_block(dof_Omega,       1, 1);
+    br_l.insert_block(dof_coupling,    0, 1);
+    br_l.insert_block(dof_coupling_tp, 1, 0);
+    br_l.compute_block_offset();
+    Logger::info("[T_Omega] - initialize block rack: \n"+br_l.print_block_rack());
 
     
         

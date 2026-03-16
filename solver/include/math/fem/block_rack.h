@@ -50,7 +50,6 @@ private:
     std::vector<size_t> unit_row_length_;
     std::vector<size_t> unit_col_length_;
 
-    bool compute_block_offset();
     
 public:
     Block_Rack(){};
@@ -59,6 +58,11 @@ public:
     void set_grid(size_t n_row, size_t n_col);
 
     bool insert_block(Block& block, size_t row, size_t col);
+
+    bool compute_block_offset();
+
+    std::string print_block_rack() const;
+
 
     
 
