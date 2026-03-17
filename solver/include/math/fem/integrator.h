@@ -1,5 +1,8 @@
 #pragma once
 
+#include "math/fem/integration.h"
+
+
 namespace simu {
 
 
@@ -12,6 +15,11 @@ namespace simu {
 class Integrator
 {
 
+protected:
+    Integrator();
+
+    //std::vector<Integration_Point>& 
+//public:
 
     
 };

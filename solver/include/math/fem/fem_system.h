@@ -130,8 +130,10 @@ public:
 
     Block register_FE_space_coupling(const Block& block_1, const Block& block_2, const Key group_key={0,0});
 
+    // important !!!!
+    // TODO: when assign dof, for each block, record dof of boundary, separate by group key.
+    // [dof of element 1, dof of element 2]
 
-    
     const FEM_Space* get_block_space(const Block& block) const;
     const Key get_block_group_key(const Block& block) const;
     const std::vector<size_t> * get_block_dof(const Block& block) const;
