@@ -41,10 +41,10 @@ public:
     virtual int get_nodeNum() const = 0;
     virtual void set_nodeIdx(const size_t *ind) = 0;
 
-    inline size_t get_Id() const {return id_;}
+    inline size_t get_id() const {return id_;}
     inline int    get_geometry_order() const {return o_;}
-    inline size_t get_propertyId() const {return property_id_;}
-    inline void   set_propertyId(size_t property_id) {property_id_ = property_id;}
+    inline size_t get_property_id() const {return property_id_;}
+    inline void   set_property_id(size_t property_id) {property_id_ = property_id;}
 
 
 

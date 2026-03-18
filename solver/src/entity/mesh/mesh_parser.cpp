@@ -280,7 +280,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     }
 
     for (Element* el : mesh.elements_) {
-        element_map_md[el->get_Id()] = el; 
+        element_map_md[el->get_id()] = el; 
     }
 
     std::array<size_t, 4> count = mesh.count_node_edge_face_volume(mesh.elements_);

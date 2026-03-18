@@ -179,13 +179,14 @@ public:
      * @param search_key   Key of an existing group to search within.
      *                     Default {0,0} searches all elements.
      * @param description  A label for the new group. Default "None".
+     * @param property_id  Element property id, used for applying coefficients.
      * 
      * @return Key of the newly created group, or {dim, 0} if:
      *         - the search pool is empty,
      *         - no elements matched the filter.
      */
     template <typename Filter>
-    Key mark_elements(Filter&& filter, Key search_key = {0,0}, const std::string& description = "None")
+    Key mark_elements(Filter&& filter, Key search_key = {0,0}, const std::string& description = "None", size_t property_id=0)
     {
         auto it = element_group.find(search_key);
         if (it == element_group.end()) Logger::info("Mesh::mark_elements - search_key not found: search from all elements with the same dimension of mesh.");
@@ -209,6 +210,7 @@ public:
         {
             if (filter(e))
             {
+                if(property_id!=0) e->set_property_id(property_id);
                 e_group.push_back(e);
                 g_group[e->get_geometry()]++;
             }
@@ -265,7 +267,7 @@ public:
      *         - no elements matched the filter.
      */
     template <typename Filter>
-    Key mark_new_elements(Filter&& filter, int dim, Key search_key = {0,0}, const std::string& description = "None")
+    Key mark_new_elements(Filter&& filter, int dim, Key search_key = {0,0}, const std::string& description = "None", size_t property_id=0)
     {
 
         if (dim < 0 || dim > dim_)
@@ -298,6 +300,7 @@ public:
             std::vector<Element *> new_es = filter(e);
             for(Element * new_e : new_es){
                 // TODO: check if new element is duplicate ?  (probobly not, element contains exterior normal info)
+                if(property_id!=0) new_e->set_property_id(property_id);
                 e_group.push_back(new_e);
                 g_group[new_e->get_geometry()]++;
                 const size_t * e_ids = new_e->get_nodeIdx();

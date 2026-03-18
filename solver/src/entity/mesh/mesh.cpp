@@ -276,8 +276,8 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
  */
 std::vector<Element *> Mesh::create_sub_element(Element * e, std::vector<size_t>& exclude_ids, int dim)
 {
-    int element_id = e->get_Id();
-    int property_id = e->get_propertyId();
+    int element_id = e->get_id();
+    int property_id = e->get_property_id();
     int order = e->get_geometry_order();
 
     const size_t * node_ids =  e->get_nodeIdx();
