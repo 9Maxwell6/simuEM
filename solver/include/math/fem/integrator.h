@@ -6,6 +6,9 @@
 namespace simu {
 
 
+
+
+
 /**
  * s: scalar coefficient
  * v: vector coefficient
@@ -18,7 +21,13 @@ class Integrator
 protected:
     Integrator();
 
-    //std::vector<Integration_Point>& 
+    std::vector<Integration_Point *> Triangle_order_;
+    std::vector<Integration_Point *> Tetrahedron_order_;
+    // TODO： support more integration rules: point/edge/squares/cube/ etc.s
+
+    virtual void assemble_element_matrix();
+    
+
 //public:
 
     
@@ -33,7 +42,7 @@ protected:
  */
 class Integrator__s_S__S : public Integrator
 {
-
+    void assemble_element_matrix() override;
 };
 
 
@@ -44,7 +53,7 @@ class Integrator__s_S__S : public Integrator
  */
 class Integrator__s_grad_S__grad_S : public Integrator
 {
-
+    void assemble_element_matrix() override;
 };
 
 
@@ -55,7 +64,7 @@ class Integrator__s_grad_S__grad_S : public Integrator
  */
 class Integrator__s_V__grad_S : public Integrator
 {
-
+    void assemble_element_matrix() override;
 };
 
 
@@ -66,7 +75,7 @@ class Integrator__s_V__grad_S : public Integrator
  */
 class Integrator__s_curl_V__curl_V : public Integrator
 {
-
+    void assemble_element_matrix() override;
 };
 
 /**
@@ -76,7 +85,7 @@ class Integrator__s_curl_V__curl_V : public Integrator
  */
 class Integrator__s_V__V : public Integrator
 {
-
+    void assemble_element_matrix() override;
 };
 
 
