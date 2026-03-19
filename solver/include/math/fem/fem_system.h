@@ -81,12 +81,13 @@ private:
     std::unordered_map<Block, std::array<Block, 2>,                       Block::Hash> coupled_block_;
     std::unordered_map<Block, std::array<FEM_Space *, 2>,                 Block::Hash> coupled_block_space_;
     std::unordered_map<Block, std::array<const std::vector<size_t> *, 2>, Block::Hash> coupled_block_dof_;
+    
 
     // store actual coupling block dof data, this is to avoid copy when transpose of block is applied.
     std::unordered_map<Block, std::vector<size_t>,   Block::Hash> fe_block_dof_data_;
     std::unordered_map<Block, std::array<std::vector<size_t>, 2>,   Block::Hash> coupled_block_dof_data_;
 
-
+    
 
 
     

@@ -12,10 +12,12 @@ using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 
 
 template <int R, int C>
-using Matrix = Eigen::Matrix<double, R, C, Eigen::RowMajor>;
+//using Matrix = Eigen::Matrix<double, R, C, Eigen::RowMajor>;
+using Matrix = Eigen::Matrix<double, R, C>;
 
 
-using MatrixXd = Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
+//using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 
 
 }

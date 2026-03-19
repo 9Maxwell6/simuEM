@@ -1,6 +1,10 @@
 #pragma once
 
 #include "math/fem/integration.h"
+#include "math/matrix.h"
+
+#include <Eigen/Dense>
+
 
 
 namespace simu {
@@ -15,7 +19,7 @@ namespace simu {
  * S: scalar function
  * V: vector function
  */
-class Integrator
+class Integrator 
 {
 
 protected:
@@ -25,8 +29,8 @@ protected:
     std::vector<Integration_Point *> Tetrahedron_order_;
     // TODO： support more integration rules: point/edge/squares/cube/ etc.s
 
-    virtual void assemble_element_matrix();
-    
+    //virtual  void assemble_element_matrix();
+
 
 //public:
 
@@ -39,10 +43,14 @@ protected:
  * domain: H_1
  * range:  H_1 
  * 
+ * @param coeff scalar coefficient value at each element.
+ * @param det_J determinant of Jacobian of transformation from reference geometry to actual geometry in mesh.
+ * @param element_matrix computed local element matrix will be add to element_matrix.
+ * 
  */
 class Integrator__s_S__S : public Integrator
 {
-    void assemble_element_matrix() override;
+    void static assemble_element_matrix(double coeff, double det_J, Eigen::Ref<MatrixXd> element_matrix);
 };
 
 
@@ -50,10 +58,14 @@ class Integrator__s_S__S : public Integrator
  * domain: H_1
  * range:  H_1 
  * 
+ * @param coeff scalar coefficient value at each element.
+ * @param inv_J_T transpose of inverse of Jacobian of transformation from reference geometry to actual geometry in mesh.
+ * @param element_matrix computed local element matrix will be add to element_matrix.
+ * 
  */
 class Integrator__s_grad_S__grad_S : public Integrator
 {
-    void assemble_element_matrix() override;
+    void static assemble_element_matrix(double coeff, Eigen::Ref<MatrixXd> inv_J_T, Eigen::Ref<MatrixXd> element_matrix);
 };
 
 
@@ -64,7 +76,7 @@ class Integrator__s_grad_S__grad_S : public Integrator
  */
 class Integrator__s_V__grad_S : public Integrator
 {
-    void assemble_element_matrix() override;
+    void static assemble_element_matrix(double coeff, double det_J, Eigen::Ref<MatrixXd> inv_J_T, Eigen::Ref<MatrixXd> element_matrix);
 };
 
 
@@ -75,7 +87,7 @@ class Integrator__s_V__grad_S : public Integrator
  */
 class Integrator__s_curl_V__curl_V : public Integrator
 {
-    void assemble_element_matrix() override;
+    void static assemble_element_matrix();
 };
 
 /**
@@ -85,7 +97,7 @@ class Integrator__s_curl_V__curl_V : public Integrator
  */
 class Integrator__s_V__V : public Integrator
 {
-    void assemble_element_matrix() override;
+    void static assemble_element_matrix();
 };
 
 
