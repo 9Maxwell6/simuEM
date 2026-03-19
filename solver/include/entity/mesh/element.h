@@ -45,6 +45,7 @@ public:
     inline int    get_geometry_order() const {return o_;}
     inline size_t get_property_id() const {return property_id_;}
     inline void   set_property_id(size_t property_id) {property_id_ = property_id;}
+    
 
 
 

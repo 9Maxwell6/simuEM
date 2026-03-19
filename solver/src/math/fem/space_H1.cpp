@@ -51,10 +51,10 @@ const std::vector<Basis_Shape>& H1_Space::get_basis_shapes() const
 
 
 
-void H1_Space::get_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_H1_.at(s)->get_basis_s(p, basis); }
-void H1_Space::get_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_H1_.at(s)->get_basis_v(p, basis); }
-void H1_Space::get_ED_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_H1_.at(s)->get_ED_basis_s(p, basis); }
-void H1_Space::get_ED_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_H1_.at(s)->get_ED_basis_v(p, basis); }
+void H1_Space::get_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_H1_.at(s)->get_basis_s(p, basis); }
+void H1_Space::get_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_H1_.at(s)->get_basis_v(p, basis); }
+void H1_Space::get_ED_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_H1_.at(s)->get_ED_basis_s(p, basis); }
+void H1_Space::get_ED_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_H1_.at(s)->get_ED_basis_v(p, basis); }
 
 
 H1_tetrahedron::H1_tetrahedron(int p) : H1_Space(3, p)
@@ -74,7 +74,7 @@ H1_tetrahedron::H1_tetrahedron(int p) : H1_Space(3, p)
 
 
 
-void H1_tetrahedron::get_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
+void H1_tetrahedron::get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
     double x = p.x;
     double y = p.y;
     double z = p.z;
@@ -102,7 +102,7 @@ void H1_tetrahedron::get_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basi
 };
 
 
-void H1_tetrahedron::get_ED_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
+void H1_tetrahedron::get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
     double x = p.x;
     double y = p.y;
     double z = p.z;
@@ -134,10 +134,10 @@ void H1_tetrahedron::get_ED_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> b
 
 
 
-void H1_tetrahedron::get_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
+void H1_tetrahedron::get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
     throw std::logic_error("Basis functions in H(grad) are scalar-valued, call get_basis_s instead.");
 };
 
-void H1_tetrahedron::get_ED_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
+void H1_tetrahedron::get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
     throw std::logic_error("Exterior derivative of basis functions in H(grad) corresponds to the vector-valued grad, call get_ED_basis_v instead.");
 };

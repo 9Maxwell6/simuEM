@@ -23,24 +23,24 @@ public:
 
     // Returns basis values at a point in the unit tetrahedron
     // For H1: Scalars. For HCurl: Vectors.
-    void get_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const;
-    void get_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const;
+    void get_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const;
+    void get_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const;
     
     // Return vector proxy of Exterior Derivative of basis of the corresponding form.
-    void get_ED_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const;
-    void get_ED_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const;
+    void get_ED_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const;
+    void get_ED_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const;
     
 
     Space get_function_space() const override {return Space::H_1;};
 
 protected:
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
 
     // Return vector proxy of Exterior Derivative of basis of the corresponding form.
-    virtual void get_ED_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_ED_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
 
 };
 
@@ -63,15 +63,15 @@ private:
     ~H1_tetrahedron(){};
 
 public:
-    //void get_basis_s(Integration_Point p, const Eigen::Ref<VectorXd> basis) const override {
+    //void get_basis_s(const Integration_Point p, const Eigen::Ref<VectorXd> basis) const override {
     //   const double * ss = basis.data();
     //};
 
-    void get_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const override;
-    void get_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const override;
+    void get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const override;
+    void get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const override;
 
-    void get_ED_basis_s(Integration_Point& p, Eigen::Ref<VectorXd> basis) const override;
-    void get_ED_basis_v(Integration_Point& p, Eigen::Ref<MatrixXd> basis) const override;
+    void get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const override;
+    void get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const override;
 
     
 };

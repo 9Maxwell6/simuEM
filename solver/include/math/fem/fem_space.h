@@ -86,12 +86,12 @@ public:
 
     // Returns basis values at a point in the unit tetrahedron
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
-    virtual void get_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
+    virtual void get_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
+    virtual void get_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
 
     // Return vector proxy of Exterior Derivative of basis of the corresponding form.
-    virtual void get_ED_basis_v(Basis_Shape s, Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
-    virtual void get_ED_basis_s(Basis_Shape s, Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
+    virtual void get_ED_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
+    virtual void get_ED_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
 
 
     
