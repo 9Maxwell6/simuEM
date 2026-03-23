@@ -43,15 +43,15 @@ private:
      */
     std::function<bool(Element*)> conductor_interface_layer_filter() {
         return [this](Element* e) -> bool {
-            const size_t * e_ids = e->get_nodeIdx();
-            int e_size = e->get_nodeNum();
+            const size_t * e_ids = e->get_node_idx();
+            int e_size = e->get_node_num();
             //std::cout<<e_ids[0]<<" "<< e_ids[1]<<" " << e_ids[2]<<" "<< e_ids[3]<<" " <<std::endl;
             for(Key& key: this->key_conductor_interface)
             {    
                 for (Element* ie : this->mesh_.get_element_group(key))
                 {
-                    const size_t * ie_ids = ie->get_nodeIdx();
-                    int ie_size = ie->get_nodeNum();
+                    const size_t * ie_ids = ie->get_node_idx();
+                    int ie_size = ie->get_node_num();
 
                     for (size_t i = 0; i < ie_size; ++i) 
                     {
@@ -79,8 +79,8 @@ private:
      */
     std::function<std::vector<Element *>(Element*)> scalar_field_Omega_inner_boundary_filter() {
         return [this](Element* e) -> std::vector<Element *> {
-            const size_t * e_ids = e->get_nodeIdx();
-            int e_size = e->get_nodeNum();
+            const size_t * e_ids = e->get_node_idx();
+            int e_size = e->get_node_num();
 
             for(Key& key: this->key_conductor_interface)
             {    

@@ -31,8 +31,8 @@ void compute_Jacobian_Tetrahedron_3D_p1(const Node& n1, const Node& n2, const No
 
 
 
-template <int phy_dim, int ref_dim>
-void Element_Transformation<phy_dim, ref_dim>::compute_inverse_Jacobian(Matrix<phy_dim, ref_dim>& J, Matrix<ref_dim, phy_dim>& inv_J)
+template <int phy_dim, int ref_dim, int node_num>
+void Element_Transformation<phy_dim, ref_dim, node_num>::compute_inverse_Jacobian(Matrix<phy_dim, ref_dim>& J, Matrix<ref_dim, phy_dim>& inv_J)
 {
     if constexpr (phy_dim == ref_dim)
         inv_J = J.inverse();

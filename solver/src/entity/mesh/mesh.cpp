@@ -70,8 +70,8 @@ const std::set<size_t>& Mesh::get_node_group(const Key& mesh_key)
     if (element_it != element_group.end()){
         for(Element * e : element_it->second)
         {
-            const size_t * node_ids =  e->get_nodeIdx();
-            int nodes_size = e->get_nodeNum();
+            const size_t * node_ids =  e->get_node_idx();
+            int nodes_size = e->get_node_num();
             for (size_t i = 0; i < nodes_size; ++i) 
             {
                 group.insert(node_ids[i]);
@@ -138,16 +138,16 @@ Key Mesh::group_union(const Key& group_1_key, const Key& group_2_key, const std:
 
     for (auto* e : group_1)
     {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
         bh.get_id(idx, n, 0);
         g_group_1_2[e->get_geometry()]++;
     }
 
     for (auto* e : group_2)
     {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
         if(!bh.if_exist(idx, n, 0))
         {
             group_1_2.push_back(e);
@@ -197,8 +197,8 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
     //};
 
     for (auto* e : elements) {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
 
         auto g = e->get_geometry();
 
@@ -280,8 +280,8 @@ std::vector<Element *> Mesh::create_sub_element(Element * e, std::vector<size_t>
     int property_id = e->get_property_id();
     int order = e->get_geometry_order();
 
-    const size_t * node_ids =  e->get_nodeIdx();
-    int nodes_size = e->get_nodeNum();
+    const size_t * node_ids =  e->get_node_idx();
+    int nodes_size = e->get_node_num();
 
     std::vector<Element *> new_sub_elements;
     

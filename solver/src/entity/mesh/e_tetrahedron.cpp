@@ -31,7 +31,7 @@ Tetrahedron::Tetrahedron(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4,
     node_idx_[3] = idx_4;
 }
 
-void Tetrahedron::set_nodeIdx(const size_t *idx)
+void Tetrahedron::set_node_idx(const size_t *idx)
 {
    for (int i = 0; i < 4; i++)
    {
@@ -39,7 +39,7 @@ void Tetrahedron::set_nodeIdx(const size_t *idx)
    }
 }
 
-void Tetrahedron::set_nodeIdx(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4)
+void Tetrahedron::set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4)
 {
     node_idx_[0] = idx_1;
     node_idx_[1] = idx_2;
@@ -47,7 +47,7 @@ void Tetrahedron::set_nodeIdx(size_t idx_1, size_t idx_2, size_t idx_3, size_t i
     node_idx_[3] = idx_4;
 }
 
-const size_t * Tetrahedron::get_nodeIdx() const
+const size_t * Tetrahedron::get_node_idx() const
 {
    return node_idx_;
 }

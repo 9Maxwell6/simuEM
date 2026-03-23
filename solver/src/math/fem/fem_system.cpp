@@ -13,6 +13,11 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh), block_rack_()
     dof_offset_ = 0;
     dof_space_offset_ = 0;
     
+    transform_triangle_o1_2D.set_mesh(mesh);
+    transform_triangle_o1_3D.set_mesh(mesh);
+    transform_tetrahedron_o1_3D.set_mesh(mesh);
+    transform_element_2D.set_mesh(mesh);
+    transform_element_3D.set_mesh(mesh);
 
 };
 
@@ -35,8 +40,8 @@ const util::Block_Hash_D FEM_System::create_volume_dof_hash(const Block& block) 
     util::Block_Hash_D bh_volume(32*1024);
 
     for (auto* e : elements) {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
 
         Geometry g = e->get_geometry();
 
@@ -156,8 +161,8 @@ bool FEM_System::generate_block_dof(Block& block)
     // offset will be applied for edge/face/volume dof index.
     for (auto* e : elements) 
     {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
 
         Geometry g = e->get_geometry();
 
@@ -201,8 +206,8 @@ bool FEM_System::generate_block_dof(Block& block)
 
     for (auto* e : elements) 
     {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
 
         Geometry g = e->get_geometry();
 
@@ -350,8 +355,8 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
 
     
     for (auto* e : elements) {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
 
         Geometry g = e->get_geometry();
 
@@ -431,8 +436,8 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
     size_t i=0;
     size_t j=0;
     for (auto* e : elements) {
-        const size_t* idx  = e->get_nodeIdx();
-        int n = e->get_nodeNum();
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
         std::cout<< idx[0] << " " << idx[1] << " " << idx[2] << " " << idx[3] << std::endl;
         std::cout<< (*coupled_block_dof[0])[j] << " " << (*coupled_block_dof[0])[j+1] << " " << (*coupled_block_dof[0])[j+2] << " " << (*coupled_block_dof[0])[j+3] << " " << (*coupled_block_dof[0])[j+4] << " " << (*coupled_block_dof[0])[j+5]  <<std::endl;
         std::cout<< (*coupled_block_dof[1])[i] << " " << (*coupled_block_dof[1])[i+1] << " " << (*coupled_block_dof[1])[i+2] << " " << (*coupled_block_dof[1])[i+3]  <<std::endl;

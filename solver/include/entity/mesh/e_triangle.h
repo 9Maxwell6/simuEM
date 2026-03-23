@@ -34,16 +34,17 @@ public:
 
     Geometry get_geometry() const override;
 
-    const size_t * get_nodeIdx() const override;
-    int get_nodeNum() const override{ return 3; }
+    const size_t * get_node_idx() const override;
+    int get_node_num() const override{ return 3; }
 
 
-    void set_nodeIdx(const size_t *idx);
-    void set_nodeIdx(size_t idx_1, size_t idx_2, size_t idx_3);
+    void set_node_idx(const size_t *idx);
+    void set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3);
     
     
-    
-
 };
+
+
+
 
 }

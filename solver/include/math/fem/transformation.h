@@ -16,7 +16,7 @@ namespace simu {
 
 
 
-template <int phy_dim, int ref_dim>
+template <int phy_dim, int ref_dim, int node_num>
 struct Element_Transformation
 {
 
@@ -27,8 +27,13 @@ protected:
 
     const Integration_Point * i_p_;
 
+    bool reset_ = true;
     
-    
+
+    void get_D_shape(Geometry geometry, int order, Matrix<node_num, ref_dim>& d_shape);
+
+
+    void compute_Jacobian(const Integration_Point& i_p, const Matrix<phy_dim, node_num>& node_matrix, Matrix<phy_dim, ref_dim>& J);
 
 
 
@@ -57,20 +62,30 @@ protected:
 };
 
 
-using Transformation_Triangle_2D       = Element_Transformation<2,2>;  
-
-using Transformation_Triangle_3D       = Element_Transformation<3,2>; 
-using Transformation_Tetreahedron_3D   = Element_Transformation<3,3>; 
 
 
+using Transformation_Triangle_2D_o1        = Element_Transformation<2,2,3>;  
+using Transformation_Triangle_3D_o1        = Element_Transformation<3,2,3>; 
+using Transformation_Tetreahedron_3D_o1    = Element_Transformation<3,3,4>; 
+using Transformation_Tetreahedron_3D_o2    = Element_Transformation<3,3,10>; 
+
+using Transformation_general  = Element_Transformation<Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic>; 
+
+
+
+
+
+
+
+
+namespace Transformation {
 
 // explicitly for polynomial order-1
 void compute_Jacobian_Triangle_2D_p1(const Node& n1, const Node& n2, const Node& n3, Matrix<2,2>& J);
 void compute_Jacobian_Triangle_3D_p1(const Node& n1, const Node& n2, const Node& n3, Matrix<3,2>& J);
 void compute_Jacobian_Tetrahedron_3D_p1(const Node& n1, const Node& n2, const Node& n3, const Node& n4, Matrix<3,3>& J);
 
-
-
+}
 
 
 

@@ -37,9 +37,9 @@ public:
     /// Returns element's type
     virtual Geometry get_geometry() const = 0;
 
-    virtual const size_t * get_nodeIdx() const = 0;
-    virtual int get_nodeNum() const = 0;
-    virtual void set_nodeIdx(const size_t *ind) = 0;
+    virtual const size_t * get_node_idx() const = 0;
+    virtual int get_node_num() const = 0;
+    virtual void set_node_idx(const size_t *ind) = 0;
 
     inline size_t get_id() const {return id_;}
     inline int    get_geometry_order() const {return o_;}

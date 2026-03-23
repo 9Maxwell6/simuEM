@@ -76,7 +76,7 @@ protected:
 
     // count size of faces for each different number of vertices, used for constructing dof structure.
     //  map<#vertices, #faces>
-    std::map<size_t, size_t> face_size_;
+    //std::map<size_t, size_t> face_size_;
 
 
 
@@ -130,6 +130,8 @@ protected:
 public:
 
     int get_mesh_dimension() const {return dim_; }
+
+    const Node& get_node(size_t idx) const { return nodes_[idx]; }
 
     const std::vector<Element *>& get_mesh_elements() const;
     const std::map<Geometry, size_t>& get_mesh_element_geometry_size() const;
@@ -303,7 +305,7 @@ public:
                 if(property_id!=0) new_e->set_property_id(property_id);
                 e_group.push_back(new_e);
                 g_group[new_e->get_geometry()]++;
-                const size_t * e_ids = new_e->get_nodeIdx();
+                const size_t * e_ids = new_e->get_node_idx();
             }
 
         }

@@ -4,6 +4,8 @@
 #include "entity/mesh/e_collection.h"
 #include "math/fem/block_rack.h"
 #include "entity/mesh/mesh.h"
+#include "entity/mesh/e__transformation.h"
+
 
 
 #include "utils/util_hash.h"
@@ -120,6 +122,17 @@ private:
                                                                     int n_dof_per_edge, size_t edge_dof_offset, 
                                                                     int n_dof_per_face, size_t face_dof_offset);
 
+    
+
+    // used for transformation from reference element to actual element in mesh.
+    Transform_general_2D          transform_element_2D;
+    Transform_general_3D          transform_element_3D;
+
+    // special optimization is implemented:
+    Transform_Triangle_o1_2D      transform_triangle_o1_2D;
+    Transform_Triangle_o1_3D      transform_triangle_o1_3D;
+    Transform_Tetrahedron_o1_3D   transform_tetrahedron_o1_3D;
+
 
 public:
     FEM_System(Mesh& mesh);
@@ -151,6 +164,9 @@ public:
     Block transpose_block(const Block& block);
 
     Block_Rack initialize_block_rack(size_t n_row, size_t n_col);
+
+
+    bool assemble_block(const Block& block);
 
 };
 

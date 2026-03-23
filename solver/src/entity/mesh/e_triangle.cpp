@@ -32,7 +32,7 @@ Triangle::Triangle(size_t idx_1, size_t idx_2, size_t idx_3, size_t id, size_t p
     node_idx_[2] = idx_3;
 }
 
-void Triangle::set_nodeIdx(const size_t *idx)
+void Triangle::set_node_idx(const size_t *idx)
 {
    for (int i = 0; i < 3; i++)
    {
@@ -40,14 +40,14 @@ void Triangle::set_nodeIdx(const size_t *idx)
    }
 }
 
-void Triangle::set_nodeIdx(size_t idx_1, size_t idx_2, size_t idx_3)
+void Triangle::set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3)
 {
     node_idx_[0] = idx_1;
     node_idx_[1] = idx_2;
     node_idx_[2] = idx_3;
 }
 
-const size_t * Triangle::get_nodeIdx() const
+const size_t * Triangle::get_node_idx() const
 {
    return node_idx_;
 }

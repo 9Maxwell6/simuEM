@@ -31,7 +31,7 @@ Edge::Edge(size_t idx_1, size_t idx_2, size_t id, size_t property_id, int o) : E
     node_idx_[1] = idx_2;
 }
 
-void Edge::set_nodeIdx(const size_t *idx)
+void Edge::set_node_idx(const size_t *idx)
 {
    for (int i = 0; i < 2; i++)
    {
@@ -39,13 +39,13 @@ void Edge::set_nodeIdx(const size_t *idx)
    }
 }
 
-void Edge::set_nodeIdx(size_t idx_1, size_t idx_2, size_t idx_3)
+void Edge::set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3)
 {
     node_idx_[0] = idx_1;
     node_idx_[1] = idx_2;
 }
 
-const size_t * Edge::get_nodeIdx() const
+const size_t * Edge::get_node_idx() const
 {
    return node_idx_;
 }
