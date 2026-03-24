@@ -1,3 +1,4 @@
+#include "entity/mesh/mesh.h"
 #include "entity/mesh/e_triangle.h"
 
 using namespace simu;
@@ -52,5 +53,46 @@ const size_t * Triangle::get_node_idx() const
    return node_idx_;
 }
 
+
+void Triangle::compute_Jacobian(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> J) const 
+{
+   switch (o_)
+   {
+   case 1:
+   {
+      const Node& n0 = mesh.get_node(node_idx_[0]);
+      const Node& n1 = mesh.get_node(node_idx_[1]);
+      const Node& n2 = mesh.get_node(node_idx_[2]);
+      if (mesh.get_mesh_dimension() == 2) {
+         J << n1.x-n0.x,  n2.x-n0.x,
+              n1.y-n0.y,  n2.y-n0.y;
+      } else {
+         J << n1.x-n0.x,  n2.x-n0.x,
+              n1.y-n0.y,  n2.y-n0.y,
+              n1.z-n0.z,  n2.z-n0.z;
+      } 
+      break;
+   }
+   default:
+      Logger::warning("Triangle::compute_Jacobian: higher order case not available.");
+      break;
+   }
+}
+
+void Triangle::compute_D_shape(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> d_shape) const
+{
+   switch (o_)
+   {
+   case 1:
+      d_shape << -1, -1,
+                  1,  0,
+                  0,  1;
+      break;
+   
+   default:
+      Logger::warning("Triangle::compute_D_shape: higher order case not available.");
+      break;
+   }
+}
 
 

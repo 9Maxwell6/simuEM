@@ -13,11 +13,13 @@ FEM_System::FEM_System(Mesh& mesh):mesh_(mesh), block_rack_()
     dof_offset_ = 0;
     dof_space_offset_ = 0;
     
+    /*
     transform_triangle_o1_2D.set_mesh(mesh);
     transform_triangle_o1_3D.set_mesh(mesh);
     transform_tetrahedron_o1_3D.set_mesh(mesh);
     transform_element_2D.set_mesh(mesh);
     transform_element_3D.set_mesh(mesh);
+    */
 
 };
 
@@ -317,7 +319,7 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
 
 
 
-    const std::array<FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block);
+    const std::array<const FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block);
     const FEM_Space * fe_space_1 = fe_space_list[0];
     const FEM_Space * fe_space_2 = fe_space_list[1];
 
@@ -531,7 +533,7 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
     block_pair[0] = block_1;
     block_pair[1] = block_2;
 
-    std::array<FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
+    std::array<const FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
     block_space_pair[0] = fe_space_1;
     block_space_pair[1] = fe_space_2;
 
@@ -596,13 +598,13 @@ const std::array<Block, 2>& FEM_System::get_coupled_block(const Block& block) co
     return empty;
 }
 
-const std::array<FEM_Space *, 2>& FEM_System::get_coupled_block_space(const Block& block) const
+const std::array<const FEM_Space *, 2>& FEM_System::get_coupled_block_space(const Block& block) const
 {
     auto it = coupled_block_space_.find(block);
     if (it != coupled_block_space_.end()) return it->second;
 
     Logger::error("Mesh::get_coupled_block_space - failed: block not found, return empty list of fe_space.");
-    static const std::array<FEM_Space *, 2> empty{};
+    static const std::array<const FEM_Space *, 2> empty{};
     return empty;
 }
 
@@ -660,11 +662,11 @@ Block FEM_System::transpose_block(const Block& block)
         block_pair[0] = block_2;
         block_pair[1] = block_1;
 
-        const std::array<FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block);
-        FEM_Space * fe_space_1 = fe_space_list[0];
-        FEM_Space * fe_space_2 = fe_space_list[1];
+        const std::array<const FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block);
+        const FEM_Space * fe_space_1 = fe_space_list[0];
+        const FEM_Space * fe_space_2 = fe_space_list[1];
 
-        std::array<FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
+        std::array<const FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
         block_space_pair[0] = fe_space_2;
         block_space_pair[1] = fe_space_1;
 
@@ -767,4 +769,102 @@ bool FEM_System::node_edge_face_dof_handler(Get_dof&& dof_handler, Basis_Shape s
 Block_Rack FEM_System::initialize_block_rack(size_t n_row, size_t n_col)
 {
     return Block_Rack(n_row, n_col);
+}
+
+
+
+
+bool FEM_System::assemble_block(const Block& block)
+{
+    const FEM_Space* space_1 = nullptr;
+    const FEM_Space* space_2 = nullptr;
+    if(block.is_base_block){
+        const FEM_Space* space = get_block_space(block);
+        space_1 = space;
+        space_2 = space;
+    }else{
+        const std::array<const FEM_Space*, 2>& space_list =  get_coupled_block_space(block);
+        space_1 = space_list[0];
+        space_2 = space_list[1];
+    }
+
+    const Key group_key = get_block_group_key(block);
+
+    const std::vector<Element *>& element_group = mesh_.get_element_group(group_key);
+
+
+    for(const Element* e : element_group)
+    {
+        int order = e->get_geometry_order() + space_1->get_basis_order() + space_2->get_basis_order();
+        Basis_Shape b = to_basis_shape(e->get_geometry());
+        const FEM_Space* shape_space_1 = space_1->get_basis_space(b);
+        const FEM_Space* shape_space_2 = space_2->get_basis_space(b);
+
+        size_t col_size = shape_space_1->get_n_dof();
+        size_t row_size = shape_space_1->get_n_dof();
+
+
+        // use fixed size matrix for small matrix (much faster than dynamic matrix!)
+        switch (col_size) 
+        {
+            case 3:
+            {
+                switch (row_size) 
+                {
+                    case 3: 
+                    // H1 - triangle - polynomial order 1 - 2D mesh
+                    Matrix<3,3> local_mat;
+                }
+                break;
+            }
+
+            case 4:
+            {
+                switch (row_size) 
+                {
+                    case 4:
+                    {
+                        // H1 - Tetrahedron - polynomial order 1 - 3D mesh
+                        Matrix<4,4> local_mat;
+                    }
+                    
+                    case 6:
+                    {
+                        // H1&Hcurl - Tetrahedron - polynomial order 1 - 3D mesh
+                        Matrix<4,6> local_mat;    
+                    } 
+                }
+                break;
+            }
+            case 6:
+            {
+                switch (row_size) 
+                {
+                    case 4: 
+                    {
+                        // Hcurl&H1 - Tetrahedron - polynomial order 1 - 3D mesh
+                        Matrix<6,4> local_mat;
+                    }
+                    
+                    case 6: 
+                    {
+                        // Hcurl - Tetrahedron - polynomial order 1 - 3D mesh
+                        Matrix<6,6> local_mat;    
+                    }
+                }
+                break;
+            }
+
+            default:
+            {
+                MatrixXd local_mat(col_size, row_size);
+            }
+                
+
+        }   
+    }
+
+
+
+    return true;
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "math/fem/integration.h"
-#include "math/fem/integrator.h"
 #include "utils/logger.h"
 
 
@@ -96,7 +95,7 @@ public:
 
     
 
-    int get_order() const { return p_;}
+    int get_basis_order() const { return p_;}
     int get_dim() const { return dim_;}
     int get_n_node() const { return n_node_;}
     int get_n_edge() const { return n_edge_;}

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/fem/operation.h"
 #include "math/fem/integration.h"
 #include "math/matrix.h"
 
@@ -19,7 +20,7 @@ namespace simu {
  * S: scalar function
  * V: vector function
  */
-class Integrator 
+class Integrator : public Operation
 {
 
 protected:
@@ -29,7 +30,13 @@ protected:
     std::vector<Integration_Point *> Tetrahedron_order_;
     // TODO： support more integration rules: point/edge/squares/cube/ etc.s
 
+    bool require_J = false;
+    bool require_inv_J = false;
+    bool require_det_J = false;
+
     //virtual  void assemble_element_matrix();
+public:
+     
 
 
 //public:
@@ -50,7 +57,12 @@ protected:
  */
 class Integrator__s_S__S : public Integrator
 {
+    // idea: from user side, they define coefficient.
+    // then inside fem_system::block_assemble, do the actual assemble with the user specified coefficient.
+
     void static assemble_element_matrix(double coeff, double det_J, Eigen::Ref<MatrixXd> element_matrix);
+    
+
 };
 
 

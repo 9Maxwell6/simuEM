@@ -1,3 +1,4 @@
+#include "entity/mesh/mesh.h"
 #include "entity/mesh/e_edge.h"
 
 using namespace simu;
@@ -50,5 +51,15 @@ const size_t * Edge::get_node_idx() const
    return node_idx_;
 }
 
+
+void Edge::compute_Jacobian(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> J) const 
+{
+
+}
+
+void Edge::compute_D_shape(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> d_shape) const
+{
+
+}
 
 

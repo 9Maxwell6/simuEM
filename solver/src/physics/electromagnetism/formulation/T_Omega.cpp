@@ -117,7 +117,7 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
     Logger::info("[T_Omega] - initialize block rack: \n"+br_l.print_block_rack());
 
     
-        
+    fe_system.assemble_block(dof_T);
 };
 
 

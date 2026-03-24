@@ -1,8 +1,10 @@
 #pragma once
-
 #include "element.h"
 
 namespace simu {
+
+class Mesh;
+
 
 /*-------------------------------------------------------------
  * local node id: 0, 1, 2, 3
@@ -46,8 +48,9 @@ public:
     void set_node_idx(const size_t *idx);
     void set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3, size_t idx_4);
     
-    
-    
+    void compute_Jacobian(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> J) const override;
+    void compute_D_shape(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> d_shape) const override;
+
 
 };
 

@@ -1,5 +1,10 @@
 #pragma once
 #include "../property/property.h"
+#include "math/matrix.h"
+#include "math/fem/integration.h"
+#include "utils/logger.h"
+#include "entity/mesh/node.h"
+
 
 
 #include <stddef.h>
@@ -20,7 +25,7 @@ enum class Geometry {
 
 
 
-
+class Mesh;
 
 class Element
 {
@@ -47,7 +52,9 @@ public:
     inline void   set_property_id(size_t property_id) {property_id_ = property_id;}
     
 
+    virtual void compute_Jacobian(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> J) const = 0;
 
+    virtual void compute_D_shape(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> d_shape) const = 0;
 
 };
 

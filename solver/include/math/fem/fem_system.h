@@ -4,7 +4,7 @@
 #include "entity/mesh/e_collection.h"
 #include "math/fem/block_rack.h"
 #include "entity/mesh/mesh.h"
-#include "entity/mesh/e__transformation.h"
+//#include "entity/mesh/e__transformation.h"
 
 
 
@@ -81,7 +81,7 @@ private:
 
     // for coupling block
     std::unordered_map<Block, std::array<Block, 2>,                       Block::Hash> coupled_block_;
-    std::unordered_map<Block, std::array<FEM_Space *, 2>,                 Block::Hash> coupled_block_space_;
+    std::unordered_map<Block, std::array<const FEM_Space *, 2>,                 Block::Hash> coupled_block_space_;
     std::unordered_map<Block, std::array<const std::vector<size_t> *, 2>, Block::Hash> coupled_block_dof_;
     
 
@@ -123,7 +123,8 @@ private:
                                                                     int n_dof_per_face, size_t face_dof_offset);
 
     
-
+    /*
+    // not used
     // used for transformation from reference element to actual element in mesh.
     Transform_general_2D          transform_element_2D;
     Transform_general_3D          transform_element_3D;
@@ -132,6 +133,7 @@ private:
     Transform_Triangle_o1_2D      transform_triangle_o1_2D;
     Transform_Triangle_o1_3D      transform_triangle_o1_3D;
     Transform_Tetrahedron_o1_3D   transform_tetrahedron_o1_3D;
+    */
 
 
 public:
@@ -154,7 +156,7 @@ public:
     const util::Block_Hash& get_block_hash(const Block& block) const;
 
     const std::array<Block, 2>& get_coupled_block(const Block& block) const;
-    const std::array<FEM_Space *, 2>& get_coupled_block_space(const Block& block) const;
+    const std::array<const FEM_Space *, 2>& get_coupled_block_space(const Block& block) const;
     const std::array<const std::vector<size_t> * ,2>& get_coupled_block_dof(const Block& block) const; 
 
     // use only after every dof table of blocks are initialized
