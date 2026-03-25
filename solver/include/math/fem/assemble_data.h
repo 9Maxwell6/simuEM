@@ -5,7 +5,11 @@
 namespace simu {
 
 
-struct Assemble_Data {
+struct Assemble_Data
+{
+    int mesh_dim;
+    int element_dim;
+
     const FEM_Space* space_1;
     const FEM_Space* space_2;
 
@@ -16,10 +20,50 @@ struct Assemble_Data {
 
     const std::vector<size_t>* row_dof;
     const std::vector<size_t>* col_dof;
-    
-    // ... whatever assemble needs
 
+    std::unordered_map<Basis_Shape , std::vector<std::vector<Integration_Point>>, Shape_Hash>& integration_rule;
     
+};
+
+
+
+
+
+/**
+ * Element_Data - per-element data shared across integrators.
+ *
+ * Available members:
+ *   e             - const Element*, current element
+ *   J             - Matrix<phy_dim, ref_dim>, Jacobian at current quad point
+ *   inv_J         - Matrix<ref_dim, phy_dim>, inverse/pseudo-inverse of Jacobian
+ *   det_J         - double, determinant of Jacobian
+ *   b_shape       - Basis_Shape, element geometry
+ *   shape_space_1 - const FEM_Space*, trial function space
+ *   shape_space_2 - const FEM_Space*, test function space
+ *   i_r_list      - integration rules per order
+ *
+ *
+ * Template parameters:
+ *   phy_dim - physical space dimension (1, 2, or 3)
+ *   ref_dim - reference element dimension (1, 2, or 3), ref_dim <= phy_dim
+ *
+ * Note: accessed via auto& in user callbacks. Use e_data.e, e_data.J, etc.
+ */
+template<int phy_dim, int ref_dim>
+struct Element_Data
+{
+    const Element* e;
+
+    Matrix<phy_dim, ref_dim> J;
+    Matrix<phy_dim, ref_dim> inv_J;
+    double det_J;
+    
+    Basis_Shape b_shape;
+
+    const FEM_Space* shape_space_1;
+    const FEM_Space* shape_space_2;
+
+    std::vector<std::vector<Integration_Point>>* i_r_list;
 };
 
 }

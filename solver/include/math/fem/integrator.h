@@ -3,6 +3,10 @@
 #include "math/fem/operation.h"
 #include "math/fem/integration.h"
 #include "math/matrix.h"
+#include "math/fem/assemble_data.h"
+#include "math/fem/fem_util.h"
+
+
 
 #include <Eigen/Dense>
 
@@ -55,15 +59,18 @@ public:
  * @param element_matrix computed local element matrix will be add to element_matrix.
  * 
  */
+
 class Integrator__s_S__S : public Integrator
 {
+public:
     // idea: from user side, they define coefficient.
     // then inside fem_system::block_assemble, do the actual assemble with the user specified coefficient.
-
-    void static assemble_element_matrix(double coeff, double det_J, Eigen::Ref<MatrixXd> element_matrix);
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
     
-
 };
+
+
 
 
 /**

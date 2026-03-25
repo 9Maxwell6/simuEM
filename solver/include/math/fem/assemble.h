@@ -15,32 +15,73 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
 {
     
 
-    auto assemble_local = [&](const Element* e, auto& local_mat, const auto& user_func) {
+    auto assemble_local = [&](auto& e_data, auto& local_mat, const auto& user_operation)
+    {        
         local_mat.setZero();
-        user_operation(e, local_mat);
-        
+        user_operation(e_data, local_mat);
     };
 
 
-    for(const Element* e : data.elements)
+    auto assemble_global = [&](auto& e_data, const auto& user_operation) 
     {
-        //int order = e->get_geometry_order() + space_1->get_basis_order() + space_2->get_basis_order();
-        Basis_Shape b = to_basis_shape(e->get_geometry());
-        const FEM_Space* shape_space_1 = data.space_1->get_basis_space(b);
-        const FEM_Space* shape_space_2 = data.space_2->get_basis_space(b);
+        size_t col_dof_counter = 0;
+        size_t row_dof_counter = 0;
 
-        size_t col_size = shape_space_1->get_n_dof();
-        size_t row_size = shape_space_1->get_n_dof();
+        for(const Element* e : *data.elements)
+        {
+            
+
+            //int order = e->get_geometry_order() + space_1->get_basis_order() + space_2->get_basis_order();
+            Basis_Shape b_shape = to_basis_shape(e->get_geometry());
+
+            std::vector<std::vector<Integration_Point>>& shape_integration_rule = data.integration_rule[b_shape];
+
+            e_data.e = e;
+            e_data.b_shape = b_shape;
+            e_data.i_r_list = &shape_integration_rule;
+
+            e_data.shape_space_1 = data.space_1->get_basis_space(b_shape);
+            e_data.shape_space_2 = data.space_2->get_basis_space(b_shape);
+
+            size_t col_size = e_data.shape_space_1->get_n_dof();
+            size_t row_size = e_data.shape_space_2->get_n_dof();
 
 
-        // dispatch to fixed-size, write logic once
-        if      (col_size == 3 && row_size == 3) { Matrix<3,3> m; assemble_local(e, m); }
-        else if (col_size == 4 && row_size == 4) { Matrix<4,4> m; assemble_local(e, m); }
-        else if (col_size == 4 && row_size == 6) { Matrix<4,6> m; assemble_local(e, m); }
-        else if (col_size == 6 && row_size == 4) { Matrix<6,4> m; assemble_local(e, m); }
-        else if (col_size == 6 && row_size == 6) { Matrix<6,6> m; assemble_local(e, m); }
-        else                                     { MatrixXd    m(col_size, row_size); assemble_local(e, m); }
-    }
+
+
+            // optimized with fixed size matrix for certain cases.
+            if      (col_size == 3 && row_size == 3) { Matrix<3,3> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (col_size == 4 && row_size == 4) { Matrix<4,4> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (col_size == 4 && row_size == 6) { Matrix<4,6> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (col_size == 6 && row_size == 4) { Matrix<6,4> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (col_size == 6 && row_size == 6) { Matrix<6,6> mat;                     assemble_local(e_data, mat, user_operation); }
+            else                                     { MatrixXd    mat(col_size, row_size); assemble_local(e_data, mat, user_operation); }
+
+
+            
+
+            col_dof_counter += col_size;
+            row_dof_counter += row_size;
+        }
+    };
+
+    int phy_dim = data.mesh_dim;
+    int ref_dim = data.element_dim;
+
+    if      (phy_dim == 3 && ref_dim == 3) { static Element_Data<3,3> e_data; assemble_global(e_data, user_operation); }
+    else if (phy_dim == 3 && ref_dim == 2) { static Element_Data<3,2> e_data; assemble_global(e_data, user_operation); }
+    else if (phy_dim == 3 && ref_dim == 1) { static Element_Data<3,1> e_data; assemble_global(e_data, user_operation); }
+    else if (phy_dim == 2 && ref_dim == 2) { static Element_Data<2,2> e_data; assemble_global(e_data, user_operation); }
+    else if (phy_dim == 2 && ref_dim == 1) { static Element_Data<2,1> e_data; assemble_global(e_data, user_operation); }
+    else if (phy_dim == 1 && ref_dim == 1) { static Element_Data<1,1> e_data; assemble_global(e_data, user_operation); }
+
+
+    
+
+    
+
+
+    
 
 
 

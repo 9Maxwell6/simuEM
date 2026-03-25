@@ -93,7 +93,8 @@ private:
     std::unordered_map<Block, std::array<std::vector<size_t>, 2>,   Block::Hash> coupled_block_dof_data_;
 
     
-
+    // usage: integration_rule_[Shape][order]    (make sure the length of outer vector >= required order)
+    std::unordered_map<Basis_Shape , std::vector<std::vector<Integration_Point>>, Shape_Hash> integration_rule_;
 
     
 

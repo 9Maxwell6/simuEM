@@ -751,7 +751,8 @@ Block_Rack FEM_System::initialize_block_rack(size_t n_row, size_t n_col)
 
 Assemble_Data FEM_System::assemble_data(const Block& block) 
 {
-    Assemble_Data data;
+    Assemble_Data data{.integration_rule = integration_rule_};
+
 
     data.row_size = block.row_size;
     data.col_size = block.col_size;
@@ -770,6 +771,9 @@ Assemble_Data FEM_System::assemble_data(const Block& block)
     }
 
     const Key group_key = get_block_group_key(block);
+
+    data.mesh_dim = dim_;
+    data.element_dim = group_key.dim;
 
     data.elements = &mesh_.get_element_group(group_key);
 

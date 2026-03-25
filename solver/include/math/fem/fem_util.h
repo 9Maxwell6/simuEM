@@ -1,4 +1,53 @@
 #pragma once
+
+#define INSTANTIATE_INTEGRATOR_TEMPLATE(Class, Method, ...)                                      \
+    /* Matrix<3,3> */                                                                   \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,3>&, Matrix<3,3>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,2>&, Matrix<3,3>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,1>&, Matrix<3,3>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,2>&, Matrix<3,3>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,1>&, Matrix<3,3>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<1,1>&, Matrix<3,3>&);         \
+    /* Matrix<4,4> */                                                                   \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,3>&, Matrix<4,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,2>&, Matrix<4,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,1>&, Matrix<4,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,2>&, Matrix<4,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,1>&, Matrix<4,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<1,1>&, Matrix<4,4>&);         \
+    /* Matrix<4,6> */                                                                   \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,3>&, Matrix<4,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,2>&, Matrix<4,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,1>&, Matrix<4,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,2>&, Matrix<4,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,1>&, Matrix<4,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<1,1>&, Matrix<4,6>&);         \
+    /* Matrix<6,4> */                                                                   \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,3>&, Matrix<6,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,2>&, Matrix<6,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,1>&, Matrix<6,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,2>&, Matrix<6,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,1>&, Matrix<6,4>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<1,1>&, Matrix<6,4>&);         \
+    /* Matrix<6,6> */                                                                   \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,3>&, Matrix<6,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,2>&, Matrix<6,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,1>&, Matrix<6,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,2>&, Matrix<6,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,1>&, Matrix<6,6>&);         \
+    template void Class::Method(__VA_ARGS__, Element_Data<1,1>&, Matrix<6,6>&);         \
+    /* MatrixXd */                                                                      \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,3>&, MatrixXd&);            \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,2>&, MatrixXd&);            \
+    template void Class::Method(__VA_ARGS__, Element_Data<3,1>&, MatrixXd&);            \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,2>&, MatrixXd&);            \
+    template void Class::Method(__VA_ARGS__, Element_Data<2,1>&, MatrixXd&);            \
+    template void Class::Method(__VA_ARGS__, Element_Data<1,1>&, MatrixXd&);
+
+
+
+
+
 #include "entity/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
 

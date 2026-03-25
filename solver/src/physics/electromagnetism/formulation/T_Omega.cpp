@@ -117,7 +117,37 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
     Logger::info("[T_Omega] - initialize block rack: \n"+br_l.print_block_rack());
 
     
-    fe_system.assemble_data(dof_T);
+
+    /**
+     * auto& e_data - per-element data shared across integrators.
+     * 
+     * see assemble_data.h -> Element_Data<phy_dim, ref_dim>
+     *
+     * Available members:
+     *   e             - const Element*, current element
+     *   J             - Matrix<phy_dim, ref_dim>, Jacobian at current quad point
+     *   inv_J         - Matrix<ref_dim, phy_dim>, inverse/pseudo-inverse of Jacobian
+     *   det_J         - double, determinant of Jacobian
+     *   b_shape       - Basis_Shape, element geometry
+     *   shape_space_1 - const FEM_Space*, trial function space
+     *   shape_space_2 - const FEM_Space*, test function space
+     *   i_r_list      - integration rules per order
+     *
+     *
+     * Template parameters:
+     *   phy_dim - physical space dimension (1, 2, or 3)
+     *   ref_dim - reference element dimension (1, 2, or 3), ref_dim <= phy_dim
+     *
+     * Note: accessed via auto& in user callbacks. Use e_data.e, e_data.J, etc.
+     */
+
+    assemble_block(fe_system.assemble_data(dof_T), [](auto& e_data, auto& mat) {
+        double sigma = 0.;
+        if(e_data.e->get_property_id()==1) sigma = 1.;
+        
+        Integrator__s_S__S::assemble_element_matrix(sigma,  e_data, mat);
+
+    });
 };
 
 
