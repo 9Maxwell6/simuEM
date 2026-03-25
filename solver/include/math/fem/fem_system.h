@@ -4,6 +4,9 @@
 #include "entity/mesh/e_collection.h"
 #include "math/fem/block_rack.h"
 #include "entity/mesh/mesh.h"
+#include "math/fem/assemble_data.h"
+#include "math/fem/fem_util.h"
+
 //#include "entity/mesh/e__transformation.h"
 
 
@@ -110,12 +113,6 @@ private:
     bool generate_coupling_block_dof(Block& block);
 
 
-
-    static Basis_Shape to_basis_shape(Geometry t);
-
-    static Geometry to_element_geometry(Basis_Shape t);
-
-
     template <typename Get_dof>
     bool node_edge_face_dof_handler(Get_dof&& dof_handler, Basis_Shape shape, const size_t* node_idx, int node_size, 
                                                                     int n_dof_per_node, size_t node_dof_offset,
@@ -167,8 +164,9 @@ public:
 
     Block_Rack initialize_block_rack(size_t n_row, size_t n_col);
 
+    
+    Assemble_Data assemble_data(const Block& block);
 
-    bool assemble_block(const Block& block);
 
 };
 

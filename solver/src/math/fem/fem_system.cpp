@@ -620,29 +620,6 @@ const std::array<const std::vector<size_t> * ,2>& FEM_System::get_coupled_block_
 }
 
 
-Basis_Shape FEM_System::to_basis_shape(Geometry t)
-{
-    switch (t) {
-        case Geometry::TETRAHEDRON: return Basis_Shape::TETRAHEDRON;
-        default:
-        {
-            Logger::error("FEM_System::to_basis_geometry - type not supported yet.");
-            throw std::invalid_argument("geometry not supported yet.");
-        }
-    }
-}
-
-Geometry FEM_System::to_element_geometry(Basis_Shape g)
-{
-    switch (g) {
-        case Basis_Shape::TETRAHEDRON: return Geometry::TETRAHEDRON;
-        default:
-        {
-            Logger::error("FEM_System::to_basis_geometry - geometry not supported yet.");
-            throw std::invalid_argument("geometry not supported yet.");
-        }
-    }
-}
 
 
 Block FEM_System::transpose_block(const Block& block)
@@ -772,99 +749,28 @@ Block_Rack FEM_System::initialize_block_rack(size_t n_row, size_t n_col)
 }
 
 
-
-
-bool FEM_System::assemble_block(const Block& block)
+Assemble_Data FEM_System::assemble_data(const Block& block) 
 {
-    const FEM_Space* space_1 = nullptr;
-    const FEM_Space* space_2 = nullptr;
+    Assemble_Data data;
+
+    data.row_size = block.row_size;
+    data.col_size = block.col_size;
+
     if(block.is_base_block){
         const FEM_Space* space = get_block_space(block);
-        space_1 = space;
-        space_2 = space;
+        data.space_1 = space;
+        data.space_2 = space;
+
+        data.col_dof = get_block_dof(block);
+
     }else{
         const std::array<const FEM_Space*, 2>& space_list =  get_coupled_block_space(block);
-        space_1 = space_list[0];
-        space_2 = space_list[1];
+        data.space_1 = space_list[0];
+        data.space_2 = space_list[1];
     }
 
     const Key group_key = get_block_group_key(block);
 
-    const std::vector<Element *>& element_group = mesh_.get_element_group(group_key);
+    data.elements = &mesh_.get_element_group(group_key);
 
-
-    for(const Element* e : element_group)
-    {
-        int order = e->get_geometry_order() + space_1->get_basis_order() + space_2->get_basis_order();
-        Basis_Shape b = to_basis_shape(e->get_geometry());
-        const FEM_Space* shape_space_1 = space_1->get_basis_space(b);
-        const FEM_Space* shape_space_2 = space_2->get_basis_space(b);
-
-        size_t col_size = shape_space_1->get_n_dof();
-        size_t row_size = shape_space_1->get_n_dof();
-
-
-        // use fixed size matrix for small matrix (much faster than dynamic matrix!)
-        switch (col_size) 
-        {
-            case 3:
-            {
-                switch (row_size) 
-                {
-                    case 3: 
-                    // H1 - triangle - polynomial order 1 - 2D mesh
-                    Matrix<3,3> local_mat;
-                }
-                break;
-            }
-
-            case 4:
-            {
-                switch (row_size) 
-                {
-                    case 4:
-                    {
-                        // H1 - Tetrahedron - polynomial order 1 - 3D mesh
-                        Matrix<4,4> local_mat;
-                    }
-                    
-                    case 6:
-                    {
-                        // H1&Hcurl - Tetrahedron - polynomial order 1 - 3D mesh
-                        Matrix<4,6> local_mat;    
-                    } 
-                }
-                break;
-            }
-            case 6:
-            {
-                switch (row_size) 
-                {
-                    case 4: 
-                    {
-                        // Hcurl&H1 - Tetrahedron - polynomial order 1 - 3D mesh
-                        Matrix<6,4> local_mat;
-                    }
-                    
-                    case 6: 
-                    {
-                        // Hcurl - Tetrahedron - polynomial order 1 - 3D mesh
-                        Matrix<6,6> local_mat;    
-                    }
-                }
-                break;
-            }
-
-            default:
-            {
-                MatrixXd local_mat(col_size, row_size);
-            }
-                
-
-        }   
-    }
-
-
-
-    return true;
 }
