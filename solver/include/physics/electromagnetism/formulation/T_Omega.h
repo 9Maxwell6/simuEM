@@ -17,7 +17,20 @@ class T_Omega
 
 private:
     Mesh& mesh_;
-    FEM_System fe_system;
+    FEM_System fe_system_;
+    Block_Rack br_l;
+
+    H1_Space           Omega_space_;
+    Block              dof_Omega_;
+
+    Hcurl_Space        T_space_;
+    std::vector<Block> dof_T_;
+
+    std::vector<Block> dof_coupling_;
+    std::vector<Block> dof_coupling_tp_;
+
+
+
 
     int dim_;
 
@@ -107,6 +120,8 @@ private:
 
 public:
     T_Omega(Mesh& mesh);
+
+    bool assemble_system();
 
 };
 

@@ -11,20 +11,6 @@
 
 namespace simu {
 
-/*
-enum class Function_Space
-{
-    H_1,
-    H_curl
-}
-
-struct Space 
-{
-    Function_Space space;
-    int p_order;
-    int s_id;
-};
-*/
 
 enum class Space { 
     H_1, 
@@ -32,6 +18,7 @@ enum class Space {
 };
 
 enum class Basis_Shape {
+    TRIANGLE,
     TETRAHEDRON, 
     // currently not support other element geometry
 };

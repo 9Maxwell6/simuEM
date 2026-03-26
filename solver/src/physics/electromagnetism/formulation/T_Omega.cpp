@@ -2,7 +2,7 @@
 
 using namespace simu;
 
-T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
+T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.get_mesh_dimension(), 1), T_space_(mesh.get_mesh_dimension(),1)
 {
 
     dim_ = mesh.get_mesh_dimension();
@@ -81,73 +81,118 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system(mesh)
                                                      mesh.get_element_size_group(new_key_Omega_field),
                                                      mesh.get_group_description(new_key_Omega_field));
 
-    Logger::info("[T_Omega] - Create function space Hcurl");
-    Hcurl_Space field_T(dim_,1);
 
-    Logger::info("[T_Omega] - Assign space Hcurl to T-field region");
-    Block dof_T = fe_system.register_FE_space(field_T, key_conductor[0]);
-    Logger::block_info(dof_T.id, dof_T.row_offset, dof_T.col_offset, dof_T.row_size, dof_T.col_size);                                                 
 
-    Logger::info("[T_Omega] - Create function space H1");
-    H1_Space field_Omega(dim_,1);
 
     Logger::info("[T_Omega] - Assign space H1 to Omega-field region");
-    Block dof_Omega = fe_system.register_FE_space(field_Omega, new_key_Omega_field);
-    Logger::block_info(dof_Omega.id, dof_Omega.row_offset, dof_Omega.col_offset, dof_Omega.row_size, dof_Omega.col_size);
+    //Block dof_Omega = fe_system_.register_FE_space(field_Omega, new_key_Omega_field);
+    dof_Omega_ = fe_system_.register_FE_space(Omega_space_, new_key_Omega_field);
+    Logger::block_info(dof_Omega_.id, dof_Omega_.row_offset, dof_Omega_.col_offset, dof_Omega_.row_size, dof_Omega_.col_size);
+
+
+
+    Logger::info("[T_Omega] - Assign space Hcurl to T-field region");
+    for(size_t i = 0; i < key_conductor.size(); ++i)
+    {
+        dof_T_.push_back(fe_system_.register_FE_space(T_space_, key_conductor[i]));
+        Logger::block_info(dof_T_[i].id, 
+                           dof_T_[i].row_offset, 
+                           dof_T_[i].col_offset, 
+                           dof_T_[i].row_size, 
+                           dof_T_[i].col_size);  
+    }
+    //Block dof_T = fe_system_.register_FE_space(field_T, key_conductor[0]);
+    
+    
+    
+
 
 
     Logger::info("[T_Omega] - initialize coupling between T-field and Omega-field");
-    Block dof_coupling = fe_system.register_FE_space_coupling(dof_T, dof_Omega, key_conductor_interface_layer[0]);
-    Logger::block_info(dof_coupling.id, dof_coupling.row_offset, dof_coupling.col_offset, dof_coupling.row_size, dof_coupling.col_size);
+    for(size_t i = 0; i < key_conductor_interface_layer.size(); ++i)
+    {
+        dof_coupling_.push_back(fe_system_.register_FE_space_coupling(dof_Omega_, dof_T_[i], key_conductor_interface_layer[i]));
+        Logger::block_info(dof_coupling_[i].id, 
+                           dof_coupling_[i].row_offset, 
+                           dof_coupling_[i].col_offset, 
+                           dof_coupling_[i].row_size, 
+                           dof_coupling_[i].col_size);
+    }
+    //Block dof_coupling = fe_system_.register_FE_space_coupling(dof_T_[i], dof_Omega, key_conductor_interface_layer[i]);
+    
 
 
-    Block dof_coupling_tp = fe_system.transpose_block(dof_coupling);
-    Logger::block_info(dof_coupling_tp.id, dof_coupling_tp.row_offset, dof_coupling_tp.col_offset, dof_coupling_tp.row_size, dof_coupling_tp.col_size);
+
+    for(size_t i = 0; i < dof_coupling_.size(); ++i)
+    {
+        dof_coupling_tp_.push_back(fe_system_.transpose_block(dof_coupling_[i]));
+
+        Logger::block_info(dof_coupling_tp_[i].id, 
+                           dof_coupling_tp_[i].row_offset, 
+                           dof_coupling_tp_[i].col_offset, 
+                           dof_coupling_tp_[i].row_size, 
+                           dof_coupling_tp_[i].col_size);
+    }
+    //Block dof_coupling_tp = fe_system_.transpose_block(dof_coupling);
 
 
     Logger::info("[T_Omega] - delete temporary block hash.");
-    fe_system.delete_block_hash();
+    fe_system_.delete_block_hash();
 
-    Block_Rack br_l = fe_system.initialize_block_rack(2, 2);
-    br_l.insert_block(dof_T,           0, 0);
-    br_l.insert_block(dof_Omega,       1, 1);
-    br_l.insert_block(dof_coupling,    0, 1);
-    br_l.insert_block(dof_coupling_tp, 1, 0);
+    Block_Rack br_l = fe_system_.initialize_block_rack(2, 2);
+    
+    br_l.insert_block(dof_Omega_,          0, 0);
+    br_l.insert_block(dof_T_[0],           1, 1);
+    br_l.insert_block(dof_coupling_[0],    0, 1);
+    br_l.insert_block(dof_coupling_tp_[0], 1, 0);
     br_l.compute_block_offset();
     Logger::info("[T_Omega] - initialize block rack: \n"+br_l.print_block_rack());
 
     
+}
 
-    /**
-     * auto& e_data - per-element data shared across integrators.
-     * 
-     * see assemble_data.h -> Element_Data<phy_dim, ref_dim>
-     *
-     * Available members:
-     *   e             - const Element*, current element
-     *   J             - Matrix<phy_dim, ref_dim>, Jacobian at current quad point
-     *   inv_J         - Matrix<ref_dim, phy_dim>, inverse/pseudo-inverse of Jacobian
-     *   det_J         - double, determinant of Jacobian
-     *   b_shape       - Basis_Shape, element geometry
-     *   shape_space_1 - const FEM_Space*, trial function space
-     *   shape_space_2 - const FEM_Space*, test function space
-     *   i_r_list      - integration rules per order
-     *
-     *
-     * Template parameters:
-     *   phy_dim - physical space dimension (1, 2, or 3)
-     *   ref_dim - reference element dimension (1, 2, or 3), ref_dim <= phy_dim
-     *
-     * Note: accessed via auto& in user callbacks. Use e_data.e, e_data.J, etc.
-     */
 
-    assemble_block(fe_system.assemble_data(dof_T), [](auto& e_data, auto& mat) {
-        double sigma = 0.;
-        if(e_data.e->get_property_id()==1) sigma = 1.;
-        
-        Integrator__s_S__S::assemble_element_matrix(sigma,  e_data, mat);
 
-    });
-};
+
+
+bool T_Omega::assemble_system()
+{
+
+    // auto& e_data - per-element data shared across integrators.
+    // 
+    // see assemble_data.h -> Element_Data<phy_dim, ref_dim>
+    //
+    // Available members:
+    //   e             - const Element*, current element
+    //   J             - Matrix<phy_dim, ref_dim>, Jacobian at current quad point
+    //   inv_J         - Matrix<ref_dim, phy_dim>, inverse/pseudo-inverse of Jacobian
+    //   det_J         - double, determinant of Jacobian
+    //   b_shape       - Basis_Shape, element geometry
+    //   shape_space_1 - const FEM_Space*, trial function space
+    //   shape_space_2 - const FEM_Space*, test function space
+    //   i_r_list      - integration rules per order
+    //
+    //
+    // Template parameters:
+    //   phy_dim - physical space dimension (1, 2, or 3)
+    //   ref_dim - reference element dimension (1, 2, or 3), ref_dim <= phy_dim
+    //
+    // Note: accessed via auto& in user callbacks. Use e_data.e, e_data.J, etc.
+
+    for(Block& dof_T : dof_T_)
+    {
+        assemble_block(fe_system_.assemble_data(dof_T), [&](auto& e_data, auto& mat) {
+            double sigma = 0.;
+            if(e_data.e->get_property_id()==1) sigma = 1.;
+
+            Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
+
+        });
+
+    }
+
+    
+
+}
 
 

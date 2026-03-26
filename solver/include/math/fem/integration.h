@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/logger.h"
+
 #include <vector>
 
 namespace simu {
@@ -10,13 +12,15 @@ struct Integration_Point {
     double weight;
 };
 
+enum class Basis_Shape;
 
 namespace Integration{
 
-    const std::vector<Integration_Point>& get_integrationPoints_triangle(int order);
+    const std::vector<Integration_Point>& get_integration_points(Basis_Shape b_shape, int order);
 
+    const std::vector<Integration_Point>& get_integration_points_triangle(int order);
 
-    const std::vector<Integration_Point>& get_integrationPoints_tetrahedron(int order);
+    const std::vector<Integration_Point>& get_integration_points_tetrahedron(int order);
 
 };
 

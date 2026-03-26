@@ -31,6 +31,12 @@ int main() {
     T_Omega t_o(mesh);
     Logger::stop_timer("Initialize T-Omega solver");
 
+    Logger::start_timer("Assemble T-Omega matrix system");
+    t_o.assemble_system();
+    Logger::stop_timer("Assemble T-Omega matrix system");
+
+
+
     //MFEM_Eddy_Current(SCRIPT_PATH "test_mesh_0_v2.2.msh");
 
     Logger::export_to_file("simuEM.log");

@@ -10,8 +10,8 @@ struct Assemble_Data
     int mesh_dim;
     int element_dim;
 
-    const FEM_Space* space_1;
-    const FEM_Space* space_2;
+    const FEM_Space* space_1;  // trial space
+    const FEM_Space* space_2;  // test  space
 
     const std::vector<Element*>* elements;
 
@@ -21,7 +21,7 @@ struct Assemble_Data
     const std::vector<size_t>* row_dof;
     const std::vector<size_t>* col_dof;
 
-    std::unordered_map<Basis_Shape , std::vector<std::vector<Integration_Point>>, Shape_Hash>& integration_rule;
+    std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash>& integration_rule;
     
 };
 
@@ -58,12 +58,12 @@ struct Element_Data
     Matrix<phy_dim, ref_dim> inv_J;
     double det_J;
     
-    Basis_Shape b_shape;
+    Basis_Shape b_shape;             // geometry shape
 
-    const FEM_Space* shape_space_1;
-    const FEM_Space* shape_space_2;
+    const FEM_Space* shape_space_1;  // trial space of specific geometry shape
+    const FEM_Space* shape_space_2;  // test  space of specific geometry shape
 
-    std::vector<std::vector<Integration_Point>>* i_r_list;
+    std::vector<const std::vector<Integration_Point>*>* i_r_list;
 };
 
 }

@@ -777,4 +777,6 @@ Assemble_Data FEM_System::assemble_data(const Block& block)
 
     data.elements = &mesh_.get_element_group(group_key);
 
+    return data;
+
 }

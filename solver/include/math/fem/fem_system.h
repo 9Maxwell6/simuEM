@@ -94,7 +94,7 @@ private:
 
     
     // usage: integration_rule_[Shape][order]    (make sure the length of outer vector >= required order)
-    std::unordered_map<Basis_Shape , std::vector<std::vector<Integration_Point>>, Shape_Hash> integration_rule_;
+    std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash> integration_rule_;
 
     
 

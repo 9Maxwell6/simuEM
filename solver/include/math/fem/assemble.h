@@ -30,15 +30,12 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
         for(const Element* e : *data.elements)
         {
             
-
             //int order = e->get_geometry_order() + space_1->get_basis_order() + space_2->get_basis_order();
             Basis_Shape b_shape = to_basis_shape(e->get_geometry());
 
-            std::vector<std::vector<Integration_Point>>& shape_integration_rule = data.integration_rule[b_shape];
-
             e_data.e = e;
             e_data.b_shape = b_shape;
-            e_data.i_r_list = &shape_integration_rule;
+            e_data.i_r_list = &data.integration_rule[b_shape];
 
             e_data.shape_space_1 = data.space_1->get_basis_space(b_shape);
             e_data.shape_space_2 = data.space_2->get_basis_space(b_shape);
@@ -74,14 +71,6 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
     else if (phy_dim == 2 && ref_dim == 2) { static Element_Data<2,2> e_data; assemble_global(e_data, user_operation); }
     else if (phy_dim == 2 && ref_dim == 1) { static Element_Data<2,1> e_data; assemble_global(e_data, user_operation); }
     else if (phy_dim == 1 && ref_dim == 1) { static Element_Data<1,1> e_data; assemble_global(e_data, user_operation); }
-
-
-    
-
-    
-
-
-    
 
 
 
