@@ -53,10 +53,10 @@ const std::vector<Basis_Shape>& Hcurl_Space::get_basis_shapes() const
 }
 
 
-void Hcurl_Space::get_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_Hcurl_.at(s)->get_basis_s(p, basis); }
-void Hcurl_Space::get_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_Hcurl_.at(s)->get_basis_v(p, basis); }
-void Hcurl_Space::get_ED_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_Hcurl_.at(s)->get_ED_basis_s(p, basis); }
-void Hcurl_Space::get_ED_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_Hcurl_.at(s)->get_ED_basis_v(p, basis); }
+//void Hcurl_Space::get_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_Hcurl_.at(s)->get_basis_s(p, basis); }
+//void Hcurl_Space::get_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_Hcurl_.at(s)->get_basis_v(p, basis); }
+//void Hcurl_Space::get_ED_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const { shape_Hcurl_.at(s)->get_ED_basis_s(p, basis); }
+//void Hcurl_Space::get_ED_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const { shape_Hcurl_.at(s)->get_ED_basis_v(p, basis); }
 
 
 
@@ -152,10 +152,12 @@ void Hcurl_tetrahedron::get_ED_basis_v(const Integration_Point& p, Eigen::Ref<Ma
 
 
 void Hcurl_tetrahedron::get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
+    Logger::error("Hcurl_tetrahedron::get_basis_s - Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
     throw std::logic_error("Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
 };
 
 
 void Hcurl_tetrahedron::get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
+    Logger::error("Hcurl_tetrahedron::get_ED_basis_s - Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
     throw std::logic_error("Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
 };

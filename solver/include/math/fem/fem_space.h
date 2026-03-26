@@ -70,17 +70,15 @@ public:
     virtual FEM_Space * get_basis_space(Basis_Shape s) const = 0;
     virtual const std::vector<Basis_Shape>& get_basis_shapes() const = 0;
 
-    // Returns basis values at a point in the unit tetrahedron
+    // Returns basis values at a point in the unit tetrahedron (e.g. implementation from Hcurl_Space)
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
-    virtual void get_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
+    //virtual void get_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
+    //virtual void get_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
 
     // Return vector proxy of Exterior Derivative of basis of the corresponding form.
-    virtual void get_ED_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
-    virtual void get_ED_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
+    //virtual void get_ED_basis_v(Basis_Shape s, const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const = 0;
+    //virtual void get_ED_basis_s(Basis_Shape s, const Integration_Point& p, Eigen::Ref<VectorXd> basis) const = 0;
 
-
-    
 
     int get_basis_order() const { return p_;}
     int get_dim() const { return dim_;}
@@ -93,6 +91,18 @@ public:
     int get_n_dof_per_edge() const { return n_dof_per_edge_;}
     int get_n_dof_per_face() const { return n_dof_per_face_;}
     int get_n_dof_per_volume() const { return n_dof_per_volume_;}
+
+
+
+    // in case Basis_Shape is known (e.g. implementation from Hcurl_tetrahedron)
+    virtual void get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+
+    virtual void get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+
+
+    
 };
 
 }

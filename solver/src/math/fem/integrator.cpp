@@ -27,6 +27,27 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
             (*e_data.i_r_list)[order] = i_p_list;
         }
         
+        for(int i=0; i<i_p_list->size(); ++i)
+        {
+            switch (trial_space->get_basis_order())
+            {
+                case 1: 
+                {
+                    Vector<4> trial_basis;
+                    trial_space->get_basis_s((*i_p_list)[i], trial_basis);
+                    break;
+                }
+                                    
+                default:
+                {
+                    VectorXd trial_basis;
+                    trial_space->get_basis_s((*i_p_list)[i], trial_basis);
+                    break;
+                }
+            }
+            
+        }
+        
 
         
     }

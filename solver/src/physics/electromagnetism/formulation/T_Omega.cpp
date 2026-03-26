@@ -179,6 +179,18 @@ bool T_Omega::assemble_system()
     //
     // Note: accessed via auto& in user callbacks. Use e_data.e, e_data.J, etc.
 
+    
+    Logger::info("[T_Omega] - assemble Omega-field block matrix.");
+    assemble_block(fe_system_.assemble_data(dof_Omega_), [&](auto& e_data, auto& mat) {
+        double sigma = 0.;
+        if(e_data.e->get_property_id()==1) sigma = 1.;
+
+        Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
+
+    });
+
+    /*
+    Logger::info("[T_Omega] - assemble T-field block matrix.");
     for(Block& dof_T : dof_T_)
     {
         assemble_block(fe_system_.assemble_data(dof_T), [&](auto& e_data, auto& mat) {
@@ -190,6 +202,8 @@ bool T_Omega::assemble_system()
         });
 
     }
+    */
+
 
     
 
