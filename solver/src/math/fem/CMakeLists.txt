@@ -5,4 +5,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     space_H1.cpp
     space_Hcurl.cpp
     integration.cpp
-    integrator.cpp)
+    integrator.cpp
+    assemble_data.cpp)

@@ -1,6 +1,8 @@
 #pragma once
 #include "entity/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
+#include "entity/mesh/mesh.h"
+
 
 namespace simu {
 
@@ -9,6 +11,8 @@ struct Assemble_Data
 {
     int mesh_dim;
     int element_dim;
+
+    const Mesh* mesh;
 
     const FEM_Space* space_1;  // trial space
     const FEM_Space* space_2;  // test  space
@@ -52,11 +56,15 @@ struct Assemble_Data
 template<int phy_dim, int ref_dim>
 struct Element_Data
 {
+    const Mesh* mesh;
+
     const Element* e;
 
-    Matrix<phy_dim, ref_dim> J;
-    Matrix<phy_dim, ref_dim> inv_J;
-    double det_J;
+    Matrix<phy_dim, ref_dim>      J;
+    Matrix<ref_dim, phy_dim>  inv_J;
+    double                    det_J;
+
+    
     
     Basis_Shape b_shape;             // geometry shape
 
@@ -64,6 +72,21 @@ struct Element_Data
     const FEM_Space* shape_space_2;  // test  space of specific geometry shape
 
     std::vector<const std::vector<Integration_Point>*>* i_r_list;
+
+    bool flag_J     = false;
+    bool flag_inv_J = false;
+    bool flag_det_J = false;
+
+    Matrix<phy_dim, ref_dim>& get_Jacobian(const Integration_Point& i_p);
+    Matrix<ref_dim, phy_dim>& get_inv_Jacobian(const Integration_Point& i_p);
+    double get_det_Jacobian(const Integration_Point& i_p);
+
+    void reset_flag() 
+    { 
+        flag_J = false;
+        flag_inv_J = false;
+        flag_det_J = false;
+    }
 };
 
 }

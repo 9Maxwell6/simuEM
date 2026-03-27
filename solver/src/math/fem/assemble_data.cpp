@@ -2,27 +2,69 @@
 
 using namespace simu;
 
-
-Basis_Shape to_basis_shape(Geometry t)
+template<int phy_dim, int ref_dim>
+Matrix<phy_dim, ref_dim>& Element_Data<phy_dim, ref_dim>::get_Jacobian(const Integration_Point& i_p)
 {
-    switch (t) {
-        case Geometry::TETRAHEDRON: return Basis_Shape::TETRAHEDRON;
-        default:
-        {
-            Logger::error("FEM_System::to_basis_geometry - type not supported yet.");
-            throw std::invalid_argument("geometry not supported yet.");
-        }
-    }
+    if(flag_J) return J;
+
+    flag_J = e->compute_Jacobian(*mesh, i_p, J);
+
+    return J;
 }
 
-Geometry to_element_geometry(Basis_Shape g)
+template<int phy_dim, int ref_dim>
+Matrix<ref_dim, phy_dim>& Element_Data<phy_dim, ref_dim>::get_inv_Jacobian(const Integration_Point& i_p)
 {
-    switch (g) {
-        case Basis_Shape::TETRAHEDRON: return Geometry::TETRAHEDRON;
-        default:
-        {
-            Logger::error("FEM_System::to_basis_geometry - geometry not supported yet.");
-            throw std::invalid_argument("geometry not supported yet.");
-        }
-    }
+    if(flag_inv_J) return inv_J;
+
+    if(!flag_J) flag_J = e->compute_Jacobian(*mesh, i_p, J);
+    flag_inv_J = flag_J;
+    
+    if constexpr (phy_dim == ref_dim)
+        inv_J = J.inverse();
+    else
+        inv_J = (J.transpose() * J).inverse() * J.transpose();
+    return inv_J;
+    
+    
+
+
 }
+
+template<int phy_dim, int ref_dim>
+double Element_Data<phy_dim, ref_dim>::get_det_Jacobian(const Integration_Point& i_p)
+{
+    if(flag_det_J) return det_J;
+
+    if(!flag_J) flag_J = e->compute_Jacobian(*mesh, i_p, J);
+    flag_det_J = flag_J;
+
+
+    if constexpr (phy_dim == ref_dim) {
+        det_J = J.determinant();
+    } 
+    else if constexpr (ref_dim == 1) {
+        // reference segment 
+        det_J = J.col(0).norm();
+    } 
+    else if constexpr (phy_dim == 3 && ref_dim == 2) {
+        // Surface in 3D
+        double E = J.col(0).squaredNorm();
+        double G = J.col(1).squaredNorm();
+        double F = J.col(0).dot(J.col(1));
+        det_J = std::sqrt(E * G - F * F);
+    }
+    else {
+        det_J = std::sqrt((J.transpose() * J).determinant());
+    }
+    return det_J;
+}
+
+
+
+template struct Element_Data<3, 3>;
+template struct Element_Data<3, 2>;
+template struct Element_Data<3, 1>;
+template struct Element_Data<2, 2>;
+template struct Element_Data<2, 1>;
+template struct Element_Data<1, 1>;

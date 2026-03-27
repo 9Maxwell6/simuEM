@@ -753,6 +753,7 @@ Assemble_Data FEM_System::assemble_data(const Block& block)
 {
     Assemble_Data data{.integration_rule = integration_rule_};
 
+    data.mesh = &mesh_;
 
     data.row_size = block.row_size;
     data.col_size = block.col_size;

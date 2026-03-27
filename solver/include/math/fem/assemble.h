@@ -19,6 +19,7 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
     {        
         local_mat.setZero();
         user_operation(e_data, local_mat);
+
     };
 
 
@@ -26,6 +27,8 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
     {
         size_t col_dof_counter = 0;
         size_t row_dof_counter = 0;
+
+        e_data.mesh = data.mesh;
 
         for(const Element* e : *data.elements)
         {
@@ -42,6 +45,8 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
 
             size_t col_size = e_data.shape_space_1->get_n_dof();
             size_t row_size = e_data.shape_space_2->get_n_dof();
+
+            e_data.reset_flag();
 
 
 

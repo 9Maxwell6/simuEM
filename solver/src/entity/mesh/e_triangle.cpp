@@ -54,7 +54,7 @@ const size_t * Triangle::get_node_idx() const
 }
 
 
-void Triangle::compute_Jacobian(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> J) const 
+bool Triangle::compute_Jacobian(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> J) const 
 {
    switch (o_)
    {
@@ -71,15 +71,16 @@ void Triangle::compute_Jacobian(const Mesh& mesh, const Integration_Point* i_p, 
               n1.y-n0.y,  n2.y-n0.y,
               n1.z-n0.z,  n2.z-n0.z;
       } 
-      break;
+      return true;
    }
    default:
       Logger::warning("Triangle::compute_Jacobian: higher order case not available.");
+      return false;
       break;
    }
 }
 
-void Triangle::compute_D_shape(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> d_shape) const
+void Triangle::compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> d_shape) const
 {
    switch (o_)
    {

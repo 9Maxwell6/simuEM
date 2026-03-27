@@ -52,14 +52,15 @@ const size_t * Edge::get_node_idx() const
 }
 
 
-void Edge::compute_Jacobian(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> J) const 
+bool Edge::compute_Jacobian(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> J) const 
 {
-
+   Logger::error("Edge::compute_Jacobian - not implemented.");
+   return false;
 }
 
-void Edge::compute_D_shape(const Mesh& mesh, const Integration_Point* i_p, Eigen::Ref<MatrixXd> d_shape) const
+void Edge::compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> d_shape) const
 {
-
+   Logger::error("Edge::compute_D_shape - not implemented.");
 }
 
 
