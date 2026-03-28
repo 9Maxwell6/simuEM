@@ -270,6 +270,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
             auto startIt = node_tags_mesh_md[i].begin() + (j * n_node);
             auto endIt   = startIt + n_node;
             std::vector<size_t> element_node_tags(startIt, endIt);
+            for (size_t& node_idx : element_node_tags) node_idx -= 1;  // change from 1-based indexing to 0-based indexing.
             //Element * element = create_element(type, element_node_tags, 0, order);
 
             Element * element;
@@ -380,6 +381,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
                     {
                         auto startIt = node_tags[i].begin() + (j * n_node);
                         std::vector<size_t> element_node_tags(startIt, startIt + n_node);
+                        for (size_t& node_idx : element_node_tags) node_idx -= 1;  // change from 1-based indexing to 0-based indexing.
                         e_group.push_back(create_element(type, element_node_tags, element_tags[i][j], gmsh_key.id, order));
                     }
                 }

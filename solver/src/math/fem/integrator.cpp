@@ -30,35 +30,16 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
         
         for(int i=0; i<i_p_list->size(); ++i)
         {
+            const Integration_Point& i_p = (*i_p_list)[i];
             Vector<R> basis;
-            trial_space->get_basis_s((*i_p_list)[i], basis);
+            trial_space->get_basis_s(i_p, basis);
             
-            double det_J = e_data.get_det_Jacobian((*i_p_list)[i]);
-
-            if(det_J==0){
-                const size_t * e_list = e->get_node_idx();
-                std::cout<<e_list[0]<<std::endl;
-                std::cout<<e_list[1]<<std::endl;
-                std::cout<<e_list[2]<<std::endl;
-                std::cout<<e_list[3]<<std::endl;
-                std::cout<<"-----------------------------------"<<std::endl;
-
-                const Node& n0 = e_data.mesh->get_node(e_list[0]);
-                const Node& n1 = e_data.mesh->get_node(e_list[1]);
-                const Node& n2 = e_data.mesh->get_node(e_list[2]);
-                const Node& n3 = e_data.mesh->get_node(e_list[3]);
-
-                std::cout<<"x: "<<n0.x<<",  y: "<<n0.y<<",  z: "<<n0.z<<std::endl;
-                std::cout<<"x: "<<n1.x<<",  y: "<<n1.y<<",  z: "<<n1.z<<std::endl;
-                std::cout<<"x: "<<n2.x<<",  y: "<<n2.y<<",  z: "<<n2.z<<std::endl;
-                std::cout<<"x: "<<n3.x<<",  y: "<<n3.y<<",  z: "<<n3.z<<std::endl;
-            }
+            double det_J = e_data.get_det_Jacobian(i_p);
             
+            element_matrix += coeff * i_p.weight * det_J * basis * basis.transpose();
+
         }
 
-        
-
-        
     }
 }
 

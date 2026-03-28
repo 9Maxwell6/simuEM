@@ -30,16 +30,19 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
         if(util::a_contains_b(description, {{"Source, Current"}}))
         {
             key_source.push_back(mesh_key);
+            mesh_.set_group_property_id(mesh_key, 1);
             Logger::debug("T_Omega - Found source current: " + description);
         }
         else if(util::a_contains_b(description, {{"Insulator"}, {"Insulating"}}))
         {
             key_insulator.push_back(mesh_key);
+            mesh_.set_group_property_id(mesh_key, 2);
             Logger::debug("T_Omega - Found insulating region: " + description);
         }
         else if(util::a_contains_b(description, {{"Conductor"}, {"Conducting"}}))
         {
             key_conductor.push_back(mesh_key);
+            mesh_.set_group_property_id(mesh_key, 3);
             Logger::debug("T_Omega - Found conductor: " + description);
         }
     }
@@ -183,7 +186,8 @@ bool T_Omega::assemble_system()
     Logger::info("[T_Omega] - assemble Omega-field block matrix.");
     assemble_block(fe_system_.assemble_data(dof_Omega_), [&](auto& e_data, auto& mat) {
         double sigma = 0.;
-        if(e_data.e->get_property_id()==1) sigma = 1.;
+        if(e_data.e->get_property_id()==3) sigma = 1.;
+        //std::cout<<e_data.e->get_property_id()<<std::endl;
 
         Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
 

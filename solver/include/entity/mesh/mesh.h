@@ -149,6 +149,8 @@ public:
     const std::vector<Key>& get_keys_domain() const { return key_domain; }
     const std::vector<Key>& get_keys_others() const { return key_others; }
 
+    void set_group_property_id(const Key& mesh_key, size_t property_id);
+
     Element * create_element(Geometry element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o);
 
 

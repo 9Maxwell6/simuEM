@@ -98,6 +98,26 @@ const std::string& Mesh::get_group_description(const Key& mesh_key) const
 }
 
 
+void Mesh::set_group_property_id(const Key& mesh_key, size_t property_id)
+{
+    if(property_id == 0) Logger::warning("Mesh::set_group_property_id - set to default id=0, not recommanded.");
+
+    auto it = element_group.find(mesh_key);
+    if (it != element_group.end()){
+        for(Element* e : it->second)
+        {
+            size_t old_id = e->get_property_id();
+            if(old_id !=0 ) Logger::warning("Mesh::set_group_property_id - overwrite element property id: old id: "+std::to_string(old_id)+"; new id: "+std::to_string(property_id)+".");
+            e->set_property_id(property_id);
+        }
+    }else{
+        Logger::error("Mesh::set_group_property_id - failed: key not found in mesh.");
+    }
+
+    
+}
+
+
 Element * Mesh::create_element(Geometry element_type, std::vector<std::size_t> node_idx, size_t element_id, size_t property_id, int o)
 {
     switch (element_type) 
