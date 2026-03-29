@@ -3,7 +3,7 @@
 using namespace simu;
 
 template<int phy_dim, int ref_dim>
-Matrix<phy_dim, ref_dim>& Element_Data<phy_dim, ref_dim>::get_Jacobian(const Integration_Point& i_p)
+const Matrix<phy_dim, ref_dim>& Element_Data<phy_dim, ref_dim>::get_J(const Integration_Point& i_p)
 {
     if(flag_J) return J;
 
@@ -13,7 +13,7 @@ Matrix<phy_dim, ref_dim>& Element_Data<phy_dim, ref_dim>::get_Jacobian(const Int
 }
 
 template<int phy_dim, int ref_dim>
-Matrix<ref_dim, phy_dim>& Element_Data<phy_dim, ref_dim>::get_inv_Jacobian(const Integration_Point& i_p)
+const Matrix<ref_dim, phy_dim>& Element_Data<phy_dim, ref_dim>::get_inv_J(const Integration_Point& i_p)
 {
     if(flag_inv_J) return inv_J;
 
@@ -25,14 +25,15 @@ Matrix<ref_dim, phy_dim>& Element_Data<phy_dim, ref_dim>::get_inv_Jacobian(const
     else
         inv_J = (J.transpose() * J).inverse() * J.transpose();
     return inv_J;
-    
-    
-
-
 }
 
+
+
+
+
+
 template<int phy_dim, int ref_dim>
-double Element_Data<phy_dim, ref_dim>::get_det_Jacobian(const Integration_Point& i_p)
+double Element_Data<phy_dim, ref_dim>::get_det_J(const Integration_Point& i_p)
 {
     if(flag_det_J) return det_J;
 
@@ -57,8 +58,21 @@ double Element_Data<phy_dim, ref_dim>::get_det_Jacobian(const Integration_Point&
     else {
         det_J = std::sqrt((J.transpose() * J).determinant());
     }
+    abs_det_J = std::abs(det_J);
     return det_J;
 }
+
+
+template<int phy_dim, int ref_dim>
+double Element_Data<phy_dim, ref_dim>::get_abs_det_J(const Integration_Point& i_p)
+{
+    if(flag_det_J) return abs_det_J;
+
+    get_det_J(i_p);
+    
+    return abs_det_J;
+}
+
 
 
 

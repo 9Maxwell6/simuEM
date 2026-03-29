@@ -10,7 +10,6 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
 
-
     if constexpr  (phy_dim == ref_dim && R == C) 
     {
         const Element* e = e_data.e;
@@ -18,31 +17,57 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
         const FEM_Space* test__space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order();
 
-        if(e_data.i_r_list->size() < order) e_data.i_r_list->resize(order+1, nullptr);
+        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
         
-        const std::vector<Integration_Point>* i_p_list = (*e_data.i_r_list)[order];
-        if(!i_p_list) {
-            i_p_list = &Integration::get_integration_points(e_data.b_shape, order);
-            (*e_data.i_r_list)[order] = i_p_list;
-        }
 
-        
-        
-        for(int i=0; i<i_p_list->size(); ++i)
+        Vector<R> basis;
+        for(const Integration_Point& i_p : i_p_list)
         {
-            const Integration_Point& i_p = (*i_p_list)[i];
-            Vector<R> basis;
             trial_space->get_basis_s(i_p, basis);
             
-            double det_J = e_data.get_det_Jacobian(i_p);
-            
-            element_matrix += coeff * i_p.weight * det_J * basis * basis.transpose();
+            double abs_det_J = e_data.get_abs_det_J(i_p);
 
+            element_matrix += i_p.weight * abs_det_J * basis * basis.transpose();
         }
-
+        element_matrix *= coeff;
     }
 }
-
 INSTANTIATE_INTEGRATOR_TEMPLATE(Integrator__s_S__S, assemble_element_matrix, double)
+
+
+
+
+template<int phy_dim, int ref_dim, typename Mat_Type>
+void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
+{
+    constexpr int R = Mat_Type::RowsAtCompileTime;
+    constexpr int C = Mat_Type::ColsAtCompileTime;
+
+    if constexpr  (phy_dim == ref_dim && R == C) 
+    {
+        const Element* e = e_data.e;
+        const FEM_Space* trial_space = e_data.shape_space_1;
+        const FEM_Space* test__space = e_data.shape_space_2;
+        int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order()-1;
+
+        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+    
+        Matrix<R,ref_dim> grad_basis;
+        Matrix<R, phy_dim> phy_grad_basis;
+        for(const Integration_Point& i_p : i_p_list)
+        {            
+            trial_space->get_ED_basis_v(i_p, grad_basis);
+            
+            double abs_det_J = e_data.get_abs_det_J(i_p);
+            const Matrix<ref_dim, phy_dim>& inv_J = e_data.get_inv_J(i_p);
+
+            phy_grad_basis = grad_basis*inv_J;
+
+            element_matrix += i_p.weight * abs_det_J * phy_grad_basis * phy_grad_basis.transpose();
+        }
+        element_matrix *= coeff;
+    }
+}
+INSTANTIATE_INTEGRATOR_TEMPLATE(Integrator__s_grad_S__grad_S, assemble_element_matrix, double)
 
 

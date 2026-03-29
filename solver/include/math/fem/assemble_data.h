@@ -63,6 +63,7 @@ struct Element_Data
     Matrix<phy_dim, ref_dim>      J;
     Matrix<ref_dim, phy_dim>  inv_J;
     double                    det_J;
+    double                abs_det_J;
 
     
     
@@ -77,9 +78,11 @@ struct Element_Data
     bool flag_inv_J = false;
     bool flag_det_J = false;
 
-    Matrix<phy_dim, ref_dim>& get_Jacobian(const Integration_Point& i_p);
-    Matrix<ref_dim, phy_dim>& get_inv_Jacobian(const Integration_Point& i_p);
-    double get_det_Jacobian(const Integration_Point& i_p);
+    const Matrix<phy_dim, ref_dim>& get_J(const Integration_Point& i_p);
+    const Matrix<ref_dim, phy_dim>& get_inv_J(const Integration_Point& i_p);
+    double                          get_det_J(const Integration_Point& i_p);
+    double                          get_abs_det_J(const Integration_Point& i_p);
+
 
     void reset_flag() 
     { 

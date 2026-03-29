@@ -6,8 +6,20 @@
 
 using namespace simu;
 
+const std::vector<Integration_Point>& Integration::integration_rule_update(std::vector<const std::vector<Integration_Point>*>& i_r_list, Basis_Shape& b_shape, int order)
+{
+    if(i_r_list.size() < order) i_r_list.resize(order+1, nullptr);
 
-const std::vector<Integration_Point>& Integration::get_integration_points(Basis_Shape b_shape, int order)
+    const std::vector<Integration_Point>* i_p_list = i_r_list[order];
+    if(!i_p_list) {
+        i_p_list = &Integration::get_integration_points(b_shape, order);
+        i_r_list[order] = i_p_list;
+    }
+    return *i_p_list;
+}
+
+
+const std::vector<Integration_Point>& Integration::get_integration_points(Basis_Shape& b_shape, int order)
 {
     switch(b_shape)
     {

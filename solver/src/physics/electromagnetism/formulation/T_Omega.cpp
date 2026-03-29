@@ -191,6 +191,8 @@ bool T_Omega::assemble_system()
 
         Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
 
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(sigma, e_data, mat);
+
     });
 
     /*

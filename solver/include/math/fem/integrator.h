@@ -55,7 +55,7 @@ public:
  * range:  H_1 
  * 
  * @param coeff scalar coefficient value at each element.
- * @param det_J determinant of Jacobian of transformation from reference geometry to actual geometry in mesh.
+ * @param e_data element data struct contains all information needed to assemble element matrix.
  * @param element_matrix computed local element matrix will be add to element_matrix.
  * 
  */
@@ -63,8 +63,6 @@ public:
 class Integrator__s_S__S : public Integrator
 {
 public:
-    // idea: from user side, they define coefficient.
-    // then inside fem_system::block_assemble, do the actual assemble with the user specified coefficient.
     template<int phy_dim, int ref_dim, typename Mat_Type>
     void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
     
@@ -78,13 +76,15 @@ public:
  * range:  H_1 
  * 
  * @param coeff scalar coefficient value at each element.
- * @param inv_J_T transpose of inverse of Jacobian of transformation from reference geometry to actual geometry in mesh.
+ * @param e_data element data struct contains all information needed to assemble element matrix.
  * @param element_matrix computed local element matrix will be add to element_matrix.
  * 
  */
 class Integrator__s_grad_S__grad_S : public Integrator
 {
-    void static assemble_element_matrix(double coeff, Eigen::Ref<MatrixXd> inv_J_T, Eigen::Ref<MatrixXd> element_matrix);
+public:
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
 };
 
 
@@ -95,6 +95,7 @@ class Integrator__s_grad_S__grad_S : public Integrator
  */
 class Integrator__s_V__grad_S : public Integrator
 {
+public:
     void static assemble_element_matrix(double coeff, double det_J, Eigen::Ref<MatrixXd> inv_J_T, Eigen::Ref<MatrixXd> element_matrix);
 };
 
@@ -106,6 +107,7 @@ class Integrator__s_V__grad_S : public Integrator
  */
 class Integrator__s_curl_V__curl_V : public Integrator
 {
+public:
     void static assemble_element_matrix();
 };
 
@@ -116,6 +118,7 @@ class Integrator__s_curl_V__curl_V : public Integrator
  */
 class Integrator__s_V__V : public Integrator
 {
+public:
     void static assemble_element_matrix();
 };
 

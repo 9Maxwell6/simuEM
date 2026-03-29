@@ -16,7 +16,9 @@ enum class Basis_Shape;
 
 namespace Integration{
 
-    const std::vector<Integration_Point>& get_integration_points(Basis_Shape b_shape, int order);
+    const std::vector<Integration_Point>& integration_rule_update(std::vector<const std::vector<Integration_Point>*>& i_r_list, Basis_Shape& b_shape, int order);
+
+    const std::vector<Integration_Point>& get_integration_points(Basis_Shape& b_shape, int order);
 
     const std::vector<Integration_Point>& get_integration_points_triangle(int order);
 
