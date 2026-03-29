@@ -189,7 +189,7 @@ bool T_Omega::assemble_system()
         if(e_data.e->get_property_id()==3) sigma = 1.;
         //std::cout<<e_data.e->get_property_id()<<std::endl;
 
-        Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
+        //Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
 
         Integrator__s_grad_S__grad_S::assemble_element_matrix(sigma, e_data, mat);
 

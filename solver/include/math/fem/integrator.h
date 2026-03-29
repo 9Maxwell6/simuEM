@@ -96,7 +96,8 @@ public:
 class Integrator__s_V__grad_S : public Integrator
 {
 public:
-    void static assemble_element_matrix(double coeff, double det_J, Eigen::Ref<MatrixXd> inv_J_T, Eigen::Ref<MatrixXd> element_matrix);
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
 };
 
 
