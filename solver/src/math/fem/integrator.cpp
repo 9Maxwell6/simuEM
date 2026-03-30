@@ -88,13 +88,20 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
 
-        if constexpr (R == Eigen::Dynamic && C ==Eigen::Dynamic) {
-            if(phy_dim*element_matrix.rows()!=element_matrix.cols()) {return;}  // error
-            VectorXd basis;
-
-            MatrixXd grad_basis;
-            MatrixXd phy_grad_basis;
+        if constexpr ((R == Eigen::Dynamic && C == Eigen::Dynamic) || (phy_dim*R == C)) {
+            const auto rows = element_matrix.rows();
+            const auto cols = element_matrix.cols();
+            if(phy_dim*rows != cols) { 
+                Logger::error("Integrator__s_V__grad_S::assemble_element_matrix: incorrect matrix dimensions.");
+                return;
+            }
             
+            Vector<R> basis;
+
+            Matrix<R, ref_dim> grad_basis;
+            Matrix<R, phy_dim> phy_grad_basis;
+
+            //Matrix<R, phy_dim*R> e_mat;
             for(const Integration_Point& i_p : i_p_list)
             {            
                 trial_space->get_basis_s(i_p, basis);
@@ -106,33 +113,15 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
 
                 phy_grad_basis = grad_basis*inv_J;
 
-                element_matrix += i_p.weight * abs_det_J * phy_grad_basis * phy_grad_basis.transpose();
+                for(size_t i=0; i<phy_dim; ++i)
+                {
+                    element_matrix.block(0, i*rows,   rows, rows) += i_p.weight * abs_det_J * basis * phy_grad_basis.col(i).transpose();
+                }               
             }
             element_matrix *= coeff;
-        }else if constexpr (phy_dim*R == C) {
-            Vector<R> basis;
-
-            Matrix<R, ref_dim> grad_basis;
-            Matrix<R, phy_dim> phy_grad_basis;
-            
-            for(const Integration_Point& i_p : i_p_list)
-            {            
-                trial_space->get_basis_s(i_p, basis);
-                test__space->get_ED_basis_v(i_p, grad_basis);
-
-                
-                double abs_det_J = e_data.get_abs_det_J(i_p);
-                const Matrix<ref_dim, phy_dim>& inv_J = e_data.get_inv_J(i_p);
-
-                phy_grad_basis = grad_basis*inv_J;
-
-                element_matrix += i_p.weight * abs_det_J * phy_grad_basis * phy_grad_basis.transpose();
-            }
-            element_matrix *= coeff;
-
         }
-
-        
+    
+        // TODO:  need to make sure the dof index from the r.h.s linear form match the dof from l.h.s bilinear form.
 
         if(coeff!=0){
             std::cout<<element_matrix<<std::endl;
