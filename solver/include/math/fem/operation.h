@@ -4,39 +4,24 @@
 
 #include "entity/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
+#include "math/fem/assemble_data.h"
+#include "math/fem/fem_util.h"
+
 #include "math/matrix.h"
 
-#include <Eigen/Dense>
 
 
 namespace simu {
 
-/*
-/**
- * contains all information for local Galerkin matrix assemble.
- */
-
-struct Element_Info
-{
-private:
-    friend class FEM_System;
-
-    const Element* element_;
-
-    const FEM_Space * space_1_;
-    const FEM_Space * space_2_;
-
-
-
-    Eigen::Ref<MatrixXd> J_;      
-    Eigen::Ref<MatrixXd> inv_J_;
-    double det_J_;
-};
 
 class Operation
 {
 protected:
     Operation();
+
+public:
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static dof_transformation(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
 };
 
 

@@ -40,7 +40,8 @@ public:
     bool compute_Jacobian(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> J) const override;
     void compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> d_shape) const override;
     
-
+    void compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const override;
+    void compute_dof_transformation_H_div (const Mesh& mesh, Eigen::Ref<MatrixXd> P) const override;
 };
 
 

@@ -63,4 +63,30 @@ void Edge::compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen
    Logger::error("Edge::compute_D_shape - not implemented.");
 }
 
+void Edge::compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const
+{
+   switch (o_)
+   {
+   case 1:
+   {
+      // P is 1x1 diagonal matrix of +1/-1
+      // Edge 0: 0 -> 1
+      size_t idx_0 = node_idx_[0];
+      size_t idx_1 = node_idx_[1];
+      double s0 = (idx_0 < idx_1) ? 1. : -1.;
+      P << s0;
+      break;
+   }
+   default:
+      Logger::warning("Edge::compute_dof_transformation_H_curl: higher order case not available.");
+      break;
+   }
+}
+
+
+void Edge::compute_dof_transformation_H_div(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const
+{
+   // TODO...
+   Logger::warning("Edge::compute_dof_transformation_H_div: not implemented.");
+}
 

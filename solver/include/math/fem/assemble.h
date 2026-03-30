@@ -2,6 +2,7 @@
 
 #include "math/fem/assemble_data.h"
 #include "math/fem/integrator.h"
+#include "math/fem/operation.h"
 #include "math/fem/fem_util.h"
 
 
@@ -18,7 +19,11 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
     auto assemble_local = [&](auto& e_data, auto& local_mat, const auto& user_operation)
     {        
         local_mat.setZero();
+        
         user_operation(e_data, local_mat);
+
+        Operation::dof_transformation(e_data, local_mat);
+        
 
     };
 

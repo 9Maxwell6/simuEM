@@ -58,20 +58,9 @@ double Element_Data<phy_dim, ref_dim>::get_det_J(const Integration_Point& i_p)
     else {
         det_J = std::sqrt((J.transpose() * J).determinant());
     }
-    abs_det_J = std::abs(det_J);
     return det_J;
 }
 
-
-template<int phy_dim, int ref_dim>
-double Element_Data<phy_dim, ref_dim>::get_abs_det_J(const Integration_Point& i_p)
-{
-    if(flag_det_J) return abs_det_J;
-
-    get_det_J(i_p);
-    
-    return abs_det_J;
-}
 
 
 

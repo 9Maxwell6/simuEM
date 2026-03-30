@@ -59,7 +59,6 @@ public:
  * @param element_matrix computed local element matrix will be add to element_matrix.
  * 
  */
-
 class Integrator__s_S__S : public Integrator
 {
 public:
@@ -108,8 +107,10 @@ public:
  */
 class Integrator__s_curl_V__curl_V : public Integrator
 {
+
 public:
-    void static assemble_element_matrix();
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
 };
 
 /**
@@ -120,7 +121,8 @@ public:
 class Integrator__s_V__V : public Integrator
 {
 public:
-    void static assemble_element_matrix();
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
 };
 
 

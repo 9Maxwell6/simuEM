@@ -64,6 +64,22 @@ public:
 
     virtual void compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> d_shape) const = 0;
 
+    /**
+     * @brief compute transformation matrix to correct dof direction on reference element to actual element in H_curl space.
+     * 
+     * @param mesh mesh that contains the element.
+     * @param P transformation matrix to be filled.
+     */
+    virtual void compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const = 0;
+
+    /**
+     * @brief compute transformation matrix to correct dof direction on reference element to actual element in H_div space.
+     * 
+     * @param mesh mesh that contains the element.
+     * @param P transformation matrix to be filled.
+     */
+    virtual void compute_dof_transformation_H_div(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const = 0;
+
 };
 
 }

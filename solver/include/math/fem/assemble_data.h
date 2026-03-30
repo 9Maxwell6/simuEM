@@ -63,7 +63,6 @@ struct Element_Data
     Matrix<phy_dim, ref_dim>      J;
     Matrix<ref_dim, phy_dim>  inv_J;
     double                    det_J;
-    double                abs_det_J;
 
     
     
@@ -74,14 +73,20 @@ struct Element_Data
 
     std::vector<const std::vector<Integration_Point>*>* i_r_list;
 
+    // flag for whether the Jacobian data can be reused.
     bool flag_J     = false;
     bool flag_inv_J = false;
     bool flag_det_J = false;
 
+    // flag for transformation from conventional dof direction on reference element to dof direction on actual element.
+    bool flag_H_curl_space_1 = false;
+    bool flag_H_curl_space_2 = false;
+    bool flag_H_div__space_1 = false;
+    bool flag_H_div__space_2 = false;
+
     const Matrix<phy_dim, ref_dim>& get_J(const Integration_Point& i_p);
     const Matrix<ref_dim, phy_dim>& get_inv_J(const Integration_Point& i_p);
     double                          get_det_J(const Integration_Point& i_p);
-    double                          get_abs_det_J(const Integration_Point& i_p);
 
 
     void reset_flag() 

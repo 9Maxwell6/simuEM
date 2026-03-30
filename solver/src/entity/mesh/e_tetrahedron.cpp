@@ -95,5 +95,49 @@ void Tetrahedron::compute_D_shape(const Mesh& mesh, const Integration_Point& i_p
    }
 }
 
+void Tetrahedron::compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const
+{
+   switch (o_)
+   {
+   case 1:
+   {
+      // P is 6x6 diagonal matrix of +1/-1
+      // Edge 0: 0 -> 1
+      // Edge 1: 0 -> 2
+      // Edge 2: 0 -> 3
+      // Edge 3: 1 -> 2
+      // Edge 4: 1 -> 3
+      // Edge 5: 2 -> 3
+      size_t idx_0 = node_idx_[0];
+      size_t idx_1 = node_idx_[1];
+      size_t idx_2 = node_idx_[2];
+      size_t idx_3 = node_idx_[3];
 
+      double s0 = (idx_0 < idx_1) ? 1. : -1.;
+      double s1 = (idx_0 < idx_2) ? 1. : -1.;
+      double s2 = (idx_0 < idx_3) ? 1. : -1.;
+      double s3 = (idx_1 < idx_2) ? 1. : -1.;
+      double s4 = (idx_1 < idx_3) ? 1. : -1.;
+      double s5 = (idx_2 < idx_3) ? 1. : -1.;
+
+      P << s0,  0,  0,  0,  0,  0,
+            0, s1,  0,  0,  0,  0,
+            0,  0, s2,  0,  0,  0,
+            0,  0,  0, s3,  0,  0,
+            0,  0,  0,  0, s4,  0,
+            0,  0,  0,  0,  0, s5;
+      break;
+   }
+   default:
+      Logger::warning("Tetrahedron::compute_dof_transformation_H_curl: higher order case not available.");
+      break;
+   }
+}
+
+
+void Tetrahedron::compute_dof_transformation_H_div(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const
+{
+   // TODO...
+   Logger::warning("Tetrahedron::compute_dof_transformation_H_div: not implemented.");
+}
 

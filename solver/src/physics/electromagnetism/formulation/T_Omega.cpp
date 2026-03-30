@@ -195,20 +195,20 @@ bool T_Omega::assemble_system()
 
     });
 
-    /*
+    //*
     Logger::info("[T_Omega] - assemble T-field block matrix.");
     for(Block& dof_T : dof_T_)
     {
         assemble_block(fe_system_.assemble_data(dof_T), [&](auto& e_data, auto& mat) {
             double sigma = 0.;
-            if(e_data.e->get_property_id()==1) sigma = 1.;
+            if(e_data.e->get_property_id()==3) sigma = 1.;
 
-            Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
+            Integrator__s_curl_V__curl_V::assemble_element_matrix(sigma, e_data, mat);
 
         });
 
     }
-    */
+    //*/
 
 
     
