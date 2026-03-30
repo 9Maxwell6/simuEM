@@ -21,10 +21,10 @@ void Operation::dof_transformation(Element_Data<phy_dim, ref_dim>& e_data, Mat_T
     const auto rows = element_matrix.rows();
     const auto cols = element_matrix.cols();
 
-    if (e_data.flag_H_curl_space_1 || e_data.flag_H_div__space_1) {
+    if (e_data.space_1 == Space::H_curl || e_data.space_1 == Space::H_div) {
         Matrix<R, R> P_1;
         P_1.setZero(rows, rows);
-        if (e_data.flag_H_curl_space_1) 
+        if (e_data.space_1 == Space::H_curl) 
             e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_1);
         else 
             e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_1);
@@ -32,11 +32,11 @@ void Operation::dof_transformation(Element_Data<phy_dim, ref_dim>& e_data, Mat_T
         element_matrix = P_1 * element_matrix;
     }
 
-    if (e_data.flag_H_curl_space_2 || e_data.flag_H_div__space_2) {
+    if (e_data.space_2 == Space::H_curl || e_data.space_2 == Space::H_div) {
         Matrix<C, C> P_2;
         P_2.setZero(cols, cols);
         MatrixXd P_trial;
-        if (e_data.flag_H_curl_space_2) 
+        if (e_data.space_2 == Space::H_curl) 
             e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_2);
         else 
             e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_2);

@@ -79,10 +79,8 @@ struct Element_Data
     bool flag_det_J = false;
 
     // flag for transformation from conventional dof direction on reference element to dof direction on actual element.
-    bool flag_H_curl_space_1 = false;
-    bool flag_H_curl_space_2 = false;
-    bool flag_H_div__space_1 = false;
-    bool flag_H_div__space_2 = false;
+    Space space_1;
+    Space space_2;
 
     const Matrix<phy_dim, ref_dim>& get_J(const Integration_Point& i_p);
     const Matrix<ref_dim, phy_dim>& get_inv_J(const Integration_Point& i_p);

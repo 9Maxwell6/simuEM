@@ -158,9 +158,6 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
         const FEM_Space* test__space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order()-1;
 
-        e_data.flag_H_curl_space_1 = true;
-        e_data.flag_H_curl_space_2 = true;
-
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
         
         Matrix<R, ref_dim> curl_basis;

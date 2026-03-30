@@ -14,7 +14,8 @@ namespace simu {
 
 enum class Space { 
     H_1, 
-    H_curl 
+    H_curl,
+    H_div 
 };
 
 enum class Basis_Shape {

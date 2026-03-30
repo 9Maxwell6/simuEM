@@ -23,7 +23,7 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
         user_operation(e_data, local_mat);
 
         Operation::dof_transformation(e_data, local_mat);
-        
+
 
     };
 
@@ -34,6 +34,10 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
         size_t row_dof_counter = 0;
 
         e_data.mesh = data.mesh;
+
+        e_data.space_1 =  data.space_1->get_function_space();
+        e_data.space_2 =  data.space_2->get_function_space();
+
 
         for(const Element* e : *data.elements)
         {
