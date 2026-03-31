@@ -1,5 +1,7 @@
 #include "math/fem/integrator.h"
 
+#include "math/fem/assemble_data.h"
+
 
 
 using namespace simu;
@@ -12,6 +14,8 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
 
     if constexpr  (phy_dim == ref_dim && R == C) 
     {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        
         const Element* e = e_data.e;
         const FEM_Space* trial_space = e_data.shape_space_1;
         const FEM_Space* test__space = e_data.shape_space_2;
@@ -19,10 +23,8 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
         
-        Vector<R> basis;
+        Vector<R> basis(e_data.rows);
 
-        Matrix<R, C> e_mat;
-        e_mat.setZero();
         for(const Integration_Point& i_p : i_p_list)
         {
             trial_space->get_basis_s(i_p, basis);
@@ -46,6 +48,8 @@ void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element
 
     if constexpr  (phy_dim == ref_dim && R == C) 
     {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+    
         const Element* e = e_data.e;
         const FEM_Space* trial_space = e_data.shape_space_1;
         const FEM_Space* test__space = e_data.shape_space_2;
@@ -53,8 +57,8 @@ void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
     
-        Matrix<R,ref_dim> grad_basis;
-        Matrix<R, phy_dim> phy_grad_basis;
+        Matrix<R,ref_dim> grad_basis(e_data.rows, ref_dim);
+        Matrix<R, phy_dim> phy_grad_basis(e_data.rows, phy_dim);
 
         for(const Integration_Point& i_p : i_p_list)
         {            
@@ -75,16 +79,15 @@ INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_grad_S__grad_S, assemble_eleme
 
 
 template<int phy_dim, int ref_dim, typename Mat_Type>
-void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
+void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
 {
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
 
-    const auto rows = element_matrix.rows();
-    const auto cols = element_matrix.cols();
-
     if constexpr  (phy_dim == ref_dim) 
     {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+
         const Element* e = e_data.e;
         const FEM_Space* trial_space = e_data.shape_space_1;
         const FEM_Space* test__space = e_data.shape_space_2;
@@ -94,15 +97,15 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
 
         if constexpr ((R == Eigen::Dynamic && C == Eigen::Dynamic) || (phy_dim*R == C)) {
             
-            if(phy_dim*rows != cols) { 
-                Logger::error("Integrator__s_V__grad_S::assemble_element_matrix: incorrect matrix dimensions.");
+            if(phy_dim*e_data.rows != e_data.cols) { 
+                Logger::error("Integrator_H1__s_V__grad_S::assemble_element_matrix: incorrect matrix dimensions.");
                 return;
             }
             
             Vector<R> basis;
 
-            Matrix<R, ref_dim> grad_basis;
-            Matrix<R, phy_dim> phy_grad_basis;
+            Matrix<R, ref_dim> grad_basis(e_data.rows, ref_dim);
+            Matrix<R, phy_dim> phy_grad_basis(e_data.rows, phy_dim);
 
             for(const Integration_Point& i_p : i_p_list)
             {            
@@ -117,7 +120,7 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
 
                 for(size_t i=0; i<phy_dim; ++i)
                 {
-                    element_matrix.block(0, i*rows, rows, rows) += coeff * i_p.weight * abs_det_J * basis * phy_grad_basis.col(i).transpose();
+                    element_matrix.block(0, i*e_data.rows, e_data.rows, e_data.rows) += coeff * i_p.weight * abs_det_J * basis * phy_grad_basis.col(i).transpose();
                 }
             }
         }
@@ -140,7 +143,7 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_V__grad_S, assemble_element_matrix, double)
+INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator_H1__s_V__grad_S, assemble_element_matrix, double)
 
 
 
@@ -153,6 +156,8 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
 
     if constexpr  (((phy_dim == 3 && (ref_dim == 3 || ref_dim ==2)) || (phy_dim == 2 && (phy_dim == ref_dim))) && R == C) 
     {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+
         const Element* e = e_data.e;
         const FEM_Space* trial_space = e_data.shape_space_1;
         const FEM_Space* test__space = e_data.shape_space_2;
@@ -160,8 +165,8 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
         
-        Matrix<R, ref_dim> curl_basis;
-        Matrix<R, phy_dim> phy_curl_basis;
+        Matrix<R, ref_dim> curl_basis(e_data.rows, ref_dim);
+        Matrix<R, phy_dim> phy_curl_basis(e_data.rows, phy_dim);
 
         for(const Integration_Point& i_p : i_p_list)
         {            
@@ -180,7 +185,6 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
             }
             element_matrix += coeff * i_p.weight * std::abs(det_J) * phy_curl_basis * phy_curl_basis.transpose();
         }
-
     }
 }
 INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_curl_V__curl_V, assemble_element_matrix, double)
@@ -191,6 +195,120 @@ INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_curl_V__curl_V, assemble_eleme
 template<int phy_dim, int ref_dim, typename Mat_Type>
 void Integrator__s_V__V::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
 {
+    constexpr int R = Mat_Type::RowsAtCompileTime;
+    constexpr int C = Mat_Type::ColsAtCompileTime;
 
+    if constexpr  (phy_dim == ref_dim && R == C) 
+    {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+
+        const Element* e = e_data.e;
+        const FEM_Space* trial_space = e_data.shape_space_1;
+        const FEM_Space* test__space = e_data.shape_space_2;
+        int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order();
+        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        
+        Matrix<R, ref_dim> basis(e_data.rows, ref_dim);
+        Matrix<R, phy_dim> phy_basis(e_data.rows, phy_dim);
+        for(const Integration_Point& i_p : i_p_list)
+        {
+            trial_space->get_basis_v(i_p, basis);
+            
+            double abs_det_J = std::abs(e_data.get_det_J(i_p));
+            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   
+
+            phy_basis = basis * J_inv;
+
+            element_matrix += coeff * i_p.weight * abs_det_J * phy_basis * phy_basis.transpose();
+        }
+    }
 }
 INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_V__V, assemble_element_matrix, double)
+
+
+
+
+template<int phy_dim, int ref_dim, typename Mat_Type>
+void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
+{
+    constexpr int R = Mat_Type::RowsAtCompileTime;
+    constexpr int C = Mat_Type::ColsAtCompileTime;
+
+    if constexpr  (phy_dim == ref_dim) 
+    {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+
+        const Element* e = e_data.e;
+        const FEM_Space* trial_space = e_data.shape_space_1;
+        const FEM_Space* test__space = e_data.shape_space_2;
+        int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order()-1;
+
+        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+
+        Matrix<R, ref_dim> domain_basis(e_data.rows, ref_dim);
+        Matrix<R, phy_dim> phy_domain_basis(e_data.rows, phy_dim);
+
+        
+
+        Matrix<C, ref_dim> range_grad_basis(e_data.cols, ref_dim);
+        Matrix<C, phy_dim> phy_range_grad_basis(e_data.cols, phy_dim);
+
+        for(const Integration_Point& i_p : i_p_list)
+        {
+            trial_space->get_basis_v(i_p, domain_basis);
+            test__space->get_ED_basis_v(i_p, range_grad_basis);
+            
+            double abs_det_J = std::abs(e_data.get_det_J(i_p));
+            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   
+
+            phy_domain_basis = domain_basis * J_inv;
+            phy_range_grad_basis = range_grad_basis * J_inv;
+
+            element_matrix += coeff * i_p.weight * abs_det_J * phy_domain_basis * phy_range_grad_basis.transpose();
+        }
+    }
+}
+INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_V__grad_S, assemble_element_matrix, double)
+
+
+
+
+template<int phy_dim, int ref_dim, typename Mat_Type>
+void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
+{
+    constexpr int R = Mat_Type::RowsAtCompileTime;
+    constexpr int C = Mat_Type::ColsAtCompileTime;
+    
+    if constexpr  (phy_dim == ref_dim) 
+    {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+
+        const Element* e = e_data.e;
+        const FEM_Space* trial_space = e_data.shape_space_1;
+        const FEM_Space* test__space = e_data.shape_space_2;
+        int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order();
+        
+        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        
+        Matrix<R, ref_dim> domain_grad_basis(e_data.rows, ref_dim);
+        Matrix<R, phy_dim> phy_domain_grad_basis(e_data.rows, phy_dim);
+
+
+        Matrix<C, ref_dim> range_basis(e_data.cols, ref_dim);
+        Matrix<C, phy_dim> phy_range_basis(e_data.cols, phy_dim);
+        for(const Integration_Point& i_p : i_p_list)
+        {
+            trial_space->get_ED_basis_v(i_p, domain_grad_basis);
+            test__space->get_basis_v(i_p, range_basis);
+            
+            double abs_det_J = std::abs(e_data.get_det_J(i_p));
+            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   
+
+            phy_domain_grad_basis = domain_grad_basis * J_inv;
+            phy_range_basis = range_basis * J_inv;
+
+            element_matrix += coeff * i_p.weight * abs_det_J * phy_domain_grad_basis * phy_range_basis.transpose();
+        }
+    }
+}
+INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_grad_S__V, assemble_element_matrix, double)

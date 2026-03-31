@@ -189,7 +189,7 @@ bool T_Omega::assemble_system()
         if(e_data.e->get_property_id()==3) sigma = 1.;
         //std::cout<<e_data.e->get_property_id()<<std::endl;
 
-        //Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
+        Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
 
         Integrator__s_grad_S__grad_S::assemble_element_matrix(sigma, e_data, mat);
 
@@ -204,6 +204,24 @@ bool T_Omega::assemble_system()
             if(e_data.e->get_property_id()==3) sigma = 1.;
 
             Integrator__s_curl_V__curl_V::assemble_element_matrix(sigma, e_data, mat);
+            Integrator__s_V__V::assemble_element_matrix(sigma, e_data, mat);
+
+        });
+
+    }
+    //*/
+
+    //*
+    Logger::info("[T_Omega] - assemble coupling block matrix.");
+    for(Block& dof_coupling : dof_coupling_)
+    {
+        assemble_block(fe_system_.assemble_data(dof_coupling), [&](auto& e_data, auto& mat) {
+            double sigma = 0.;
+            if(e_data.e->get_property_id()==3) sigma = 1.;
+
+            
+            //Integrator__s_curl_V__curl_V::assemble_element_matrix(sigma, e_data, mat);
+            Integrator__s_grad_S__V::assemble_element_matrix(sigma, e_data, mat);
 
         });
 

@@ -1,5 +1,8 @@
 #include "math/fem/operation.h"
 
+#include "math/fem/assemble_data.h"
+
+
 using namespace simu;
 
 /**
@@ -18,12 +21,9 @@ void Operation::dof_transformation(Element_Data<phy_dim, ref_dim>& e_data, Mat_T
 {
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
-    const auto rows = element_matrix.rows();
-    const auto cols = element_matrix.cols();
 
     if (e_data.space_1 == Space::H_curl || e_data.space_1 == Space::H_div) {
-        Matrix<R, R> P_1;
-        P_1.setZero(rows, rows);
+        Matrix<R, R> P_1(e_data.rows, e_data.rows);
         if (e_data.space_1 == Space::H_curl) 
             e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_1);
         else 
@@ -33,9 +33,7 @@ void Operation::dof_transformation(Element_Data<phy_dim, ref_dim>& e_data, Mat_T
     }
 
     if (e_data.space_2 == Space::H_curl || e_data.space_2 == Space::H_div) {
-        Matrix<C, C> P_2;
-        P_2.setZero(cols, cols);
-        MatrixXd P_trial;
+        Matrix<C, C> P_2(e_data.cols, e_data.cols);
         if (e_data.space_2 == Space::H_curl) 
             e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_2);
         else 

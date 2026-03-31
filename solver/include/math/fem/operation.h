@@ -4,7 +4,6 @@
 
 #include "entity/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
-#include "math/fem/assemble_data.h"
 #include "math/fem/fem_util.h"
 
 #include "math/matrix.h"
@@ -12,6 +11,9 @@
 
 
 namespace simu {
+
+template<int phy_dim, int ref_dim>
+struct Element_Data;
 
 
 class Operation

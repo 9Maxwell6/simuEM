@@ -751,33 +751,45 @@ Block_Rack FEM_System::initialize_block_rack(size_t n_row, size_t n_col)
 
 Assemble_Data FEM_System::assemble_data(const Block& block) 
 {
-    Assemble_Data data{.integration_rule = integration_rule_};
+    const FEM_Space* space_1;
+    const FEM_Space* space_2;
 
-    data.mesh = &mesh_;
-
-    data.row_size = block.row_size;
-    data.col_size = block.col_size;
+    const std::vector<size_t> * block_row_dof;
+    const std::vector<size_t> * block_col_dof;
 
     if(block.is_base_block){
         const FEM_Space* space = get_block_space(block);
-        data.space_1 = space;
-        data.space_2 = space;
+        space_1 = space;
+        space_2 = space;
 
-        data.col_dof = get_block_dof(block);
+        const std::vector<size_t>* block_dof = get_block_dof(block);
+        block_row_dof = block_dof;
+        block_col_dof = block_dof;
 
     }else{
         const std::array<const FEM_Space*, 2>& space_list =  get_coupled_block_space(block);
-        data.space_1 = space_list[0];
-        data.space_2 = space_list[1];
+        space_1 = space_list[0];
+        space_2 = space_list[1];
+
+        const std::array<const std::vector<size_t>*, 2>& block_dof_list =  get_coupled_block_dof(block);
+        block_row_dof = block_dof_list[0];
+        block_col_dof = block_dof_list[1];
     }
 
-    const Key group_key = get_block_group_key(block);
+    const Key& group_key = get_block_group_key(block);
 
-    data.mesh_dim = dim_;
-    data.element_dim = group_key.dim;
-
-    data.elements = &mesh_.get_element_group(group_key);
-
-    return data;
+    return Assemble_Data{
+        .mesh_dim = dim_, 
+        .element_dim = static_cast<int>(group_key.dim),
+        .row_size = block.row_size,
+        .col_size = block.col_size,
+        .mesh = &mesh_,
+        .space_1 = space_1,
+        .space_2 = space_2,
+        .elements = &mesh_.get_element_group(group_key),
+        .row_dof = block_row_dof,
+        .col_dof = block_col_dof,
+        .integration_rule = integration_rule_
+    };
 
 }
