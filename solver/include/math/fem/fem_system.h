@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include "math/fem/space_collection.h"
 #include "entity/mesh/e_collection.h"
 #include "math/fem/block_rack.h"
@@ -7,11 +9,13 @@
 #include "math/fem/assemble_data.h"
 #include "math/fem/fem_util.h"
 
+
 //#include "entity/mesh/e__transformation.h"
 
 
 
 #include "utils/util_hash.h"
+#include "utils/util_petsc.h"
 
 #include <utility>
 
@@ -75,22 +79,23 @@ private:
     
     size_t block_id_;
     std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
+    std::unordered_map<Block, G_Matrix,            Block::Hash> fe_block_mat_;
 
     // for basic block
     std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
-    std::unordered_map<Block, const std::vector<size_t> *, Block::Hash> fe_block_dof_;
+    std::unordered_map<Block, const std::vector<dof_idx> *, Block::Hash> fe_block_dof_;
     //temporary, for constructing dof, should be cleared after dof table is constructed.
     std::unordered_map<Block, util::Block_Hash,    Block::Hash> fe_block_hash_;
 
     // for coupling block
     std::unordered_map<Block, std::array<Block, 2>,                       Block::Hash> coupled_block_;
     std::unordered_map<Block, std::array<const FEM_Space *, 2>,                 Block::Hash> coupled_block_space_;
-    std::unordered_map<Block, std::array<const std::vector<size_t> *, 2>, Block::Hash> coupled_block_dof_;
+    std::unordered_map<Block, std::array<const std::vector<dof_idx> *, 2>, Block::Hash> coupled_block_dof_;
     
 
     // store actual coupling block dof data, this is to avoid copy when transpose of block is applied.
-    std::unordered_map<Block, std::vector<size_t>,   Block::Hash> fe_block_dof_data_;
-    std::unordered_map<Block, std::array<std::vector<size_t>, 2>,   Block::Hash> coupled_block_dof_data_;
+    std::unordered_map<Block, std::vector<dof_idx>,   Block::Hash> fe_block_dof_data_;
+    std::unordered_map<Block, std::array<std::vector<dof_idx>, 2>,   Block::Hash> coupled_block_dof_data_;
 
     
     // usage: integration_rule_[Shape][order]    (make sure the length of outer vector >= required order)
@@ -112,6 +117,8 @@ private:
     bool generate_block_dof(Block& block);
 
     bool generate_coupling_block_dof(Block& block);
+
+    bool init_block_matrix(Block& block);
 
 
     template <typename Get_dof>
@@ -150,15 +157,26 @@ public:
 
     const FEM_Space* get_block_space(const Block& block) const;
     const Key get_block_group_key(const Block& block) const;
-    const std::vector<size_t> * get_block_dof(const Block& block) const;
+    const std::vector<dof_idx> * get_block_dof(const Block& block) const;
     const util::Block_Hash& get_block_hash(const Block& block) const;
 
     const std::array<Block, 2>& get_coupled_block(const Block& block) const;
     const std::array<const FEM_Space *, 2>& get_coupled_block_space(const Block& block) const;
-    const std::array<const std::vector<size_t> * ,2>& get_coupled_block_dof(const Block& block) const; 
+    const std::array<const std::vector<dof_idx> * ,2>& get_coupled_block_dof(const Block& block) const; 
 
     // use only after every dof table of blocks are initialized
     void delete_block_hash() { fe_block_hash_.clear(); }
+    void delete_block_matrix()
+    {
+        for (auto& [block, mat] : fe_block_mat_) 
+        {
+        #ifdef LOAD_PETSC
+            petsc_util::destroy_block_matrix(mat);
+        #else
+            mat.reset();
+        #endif
+        }
+    }
 
     // TODO:
     Block transpose_block(const Block& block);

@@ -53,6 +53,7 @@ set(EIGEN_DIR "/path/to/eigen")
 # set(USE_PETSC ON)
 # set(PETSC_DIR "/path/to/petsc")
 # set(PETSC_ARCH "arch-linux-c-debug")  # e.g., arch-linux-c-opt
+# set(MPI_DIR "/path/to/mpi")           # uncomment if petsc built with mpi
 
 
 # -----------------------------------------------------------------------------

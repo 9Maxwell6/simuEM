@@ -1,14 +1,16 @@
 #include "utils/util_hash.h"
 #include "utils/logger.h"
 
+namespace util 
+{
 
-Block_Hash_1::Block_Hash_1(size_t initial_size = 32*1024) : table(initial_size), mask(initial_size - 1)
+Block_Hash_1::Block_Hash_1(size_t initial_size) : table_1(initial_size), mask_1(initial_size - 1)
 {
     if((initial_size & (initial_size - 1)) != 0) 
     {
         initial_size = 32*1024;
-        table(initial_size);
-        mask(initial_size - 1);
+        table_1.resize(initial_size);
+        mask_1 = initial_size - 1;
         Logger::warning("Block_Hash_1 - hash table size not power of 2, use default size: 32*1024");
     }
 }
@@ -56,13 +58,13 @@ void Block_Hash_1::rehash_1(size_t new_size)
     mask_1  = new_mask;
 }
 
-Block_Hash_2::Block_Hash_2(size_t initial_size = 32*1024) : table(initial_size), mask(initial_size - 1)
+Block_Hash_2::Block_Hash_2(size_t initial_size) : table_2(initial_size), mask_2(initial_size - 1)
 {
     if((initial_size & (initial_size - 1)) != 0) 
     {
         initial_size = 32*1024;
-        table(initial_size);
-        mask(initial_size - 1);
+        table_2.resize(initial_size);
+        mask_2 = initial_size - 1;
         Logger::warning("Block_Hash_2 - hash table size not power of 2, use default size: 32*1024");
     }
 }
@@ -114,13 +116,13 @@ void Block_Hash_2::rehash_2(size_t new_size)
 }
 
 
-Block_Hash_3::Block_Hash_3(size_t initial_size = 32*1024) : table(initial_size), mask(initial_size - 1)
+Block_Hash_3::Block_Hash_3(size_t initial_size) : table_3(initial_size), mask_3(initial_size - 1)
 {
     if((initial_size & (initial_size - 1)) != 0) 
     {
         initial_size = 32*1024;
-        table(initial_size);
-        mask(initial_size - 1);
+        table_3.resize(initial_size);
+        mask_3 = initial_size - 1;
         Logger::warning("Block_Hash_3 - hash table size not power of 2, use default size: 32*1024");
     }
 }
@@ -173,13 +175,13 @@ void Block_Hash_3::rehash_3(size_t new_size)
 }
 
 
-Block_Hash_4::Block_Hash_4(size_t initial_size = 32*1024) : table(initial_size), mask(initial_size - 1)
+Block_Hash_4::Block_Hash_4(size_t initial_size) : table_4(initial_size), mask_4(initial_size - 1)
 {
     if((initial_size & (initial_size - 1)) != 0) 
     {
         initial_size = 32*1024;
-        table(initial_size);
-        mask(initial_size - 1);
+        table_4.resize(initial_size);
+        mask_4 = initial_size - 1;
         Logger::warning("Block_Hash_4 - hash table size not power of 2, use default size: 32*1024");
     }
 }
@@ -219,7 +221,7 @@ void Block_Hash_4::rehash_4(size_t new_size)
     mask_4  = new_mask;
 }
 
-bool if_exist(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
+bool Block_Hash_4::if_exist(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
 {
     size_t v[4] = {p0, p1, p2, p3};
     std::sort(v, v + 4);
@@ -229,4 +231,7 @@ bool if_exist(size_t p0, size_t p1, size_t p2, size_t p3, size_t p_dof)
         if (e.v[0] == v[0] && e.v[1] == v[1] && e.v[2] == v[2] && e.v[3] == v[3]  && e.dof==p_dof)
             return true;
     return false;
+}
+
+
 }

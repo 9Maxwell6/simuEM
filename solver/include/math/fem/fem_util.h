@@ -1,6 +1,6 @@
 #pragma once
 
-#define INSTANTIATE_OPERATION_TEMPLATE_BASE(Class, Method, ...)                                      \
+#define INSTANTIATE_ELEMENT_MAT_TEMPLATE_BASE(Class, Method, ...)                                    \
     /* Matrix<3,3> */                                                                                \
     template void Class::Method(__VA_ARGS__ Element_Data<3,3>&, Matrix<3,3>&);                       \
     template void Class::Method(__VA_ARGS__ Element_Data<3,2>&, Matrix<3,3>&);                       \
@@ -44,13 +44,26 @@
     template void Class::Method(__VA_ARGS__ Element_Data<2,1>&, MatrixXd&);                          \
     template void Class::Method(__VA_ARGS__ Element_Data<1,1>&, MatrixXd&);
 
-#define INSTANTIATE_OPERATION_TEMPLATE(Class, Method)                                                \
-    INSTANTIATE_OPERATION_TEMPLATE_BASE(Class, Method,)
+#define INSTANTIATE_ELEMENT_MAT_TEMPLATE(Class, Method)                                              \
+    INSTANTIATE_ELEMENT_MAT_TEMPLATE_BASE(Class, Method,)
 
-#define INSTANTIATE_OPERATION_TEMPLATE_ARGS(Class, Method, ...)                                      \
-    INSTANTIATE_OPERATION_TEMPLATE_BASE(Class, Method, __VA_ARGS__,)
+#define INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Class, Method, ...)                                    \
+    INSTANTIATE_ELEMENT_MAT_TEMPLATE_BASE(Class, Method, __VA_ARGS__,)
+
+#define INSTANTIATE_MAT_TEMPLATE_BASE(Class, Method, ...)                                            \
+    template void Class::Method(__VA_ARGS__ Matrix<3,3>&, G_Matrix&);                              \
+    template void Class::Method(__VA_ARGS__ Matrix<4,4>&, G_Matrix&);                              \
+    template void Class::Method(__VA_ARGS__ Matrix<4,6>&, G_Matrix&);                              \
+    template void Class::Method(__VA_ARGS__ Matrix<6,4>&, G_Matrix&);                              \
+    template void Class::Method(__VA_ARGS__ Matrix<6,6>&, G_Matrix&);                              \
+    template void Class::Method(__VA_ARGS__ MatrixXd&,    G_Matrix&);                                            
 
 
+#define INSTANTIATE_MAT_TEMPLATE(Class, Method)                                                      \
+    INSTANTIATE_MAT_TEMPLATE_BASE(Class, Method,)
+
+#define INSTANTIATE_MAT_TEMPLATE_ARGS(Class, Method, ...)                                            \
+    INSTANTIATE_MAT_TEMPLATE_BASE(Class, Method, __VA_ARGS__,)
 
 #include "entity/mesh/e_collection.h"
 #include "math/fem/space_collection.h"

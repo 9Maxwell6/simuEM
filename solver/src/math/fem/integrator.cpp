@@ -35,7 +35,7 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_S__S, assemble_element_matrix, double)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_S__S, assemble_element_matrix, double)
 
 
 
@@ -73,7 +73,7 @@ void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_grad_S__grad_S, assemble_element_matrix, double)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_grad_S__grad_S, assemble_element_matrix, double)
 
 
 
@@ -143,7 +143,7 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator_H1__s_V__grad_S, assemble_element_matrix, double)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator_H1__s_V__grad_S, assemble_element_matrix, double)
 
 
 
@@ -187,7 +187,7 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_curl_V__curl_V, assemble_element_matrix, double)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_curl_V__curl_V, assemble_element_matrix, double)
 
 
 
@@ -223,7 +223,7 @@ void Integrator__s_V__V::assemble_element_matrix(double coeff, Element_Data<phy_
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_V__V, assemble_element_matrix, double)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_V__V, assemble_element_matrix, double)
 
 
 
@@ -268,7 +268,7 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_V__grad_S, assemble_element_matrix, double)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_V__grad_S, assemble_element_matrix, double)
 
 
 
@@ -311,4 +311,4 @@ void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data
         }
     }
 }
-INSTANTIATE_OPERATION_TEMPLATE_ARGS(Integrator__s_grad_S__V, assemble_element_matrix, double)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_grad_S__V, assemble_element_matrix, double)

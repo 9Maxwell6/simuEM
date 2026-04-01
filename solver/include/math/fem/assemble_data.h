@@ -24,12 +24,16 @@ struct Assemble_Data
 
     const std::vector<Element*>* elements;
 
-    const std::vector<size_t>* row_dof;
-    const std::vector<size_t>* col_dof;
+    const std::vector<dof_idx>* row_dof;
+    const std::vector<dof_idx>* col_dof;
+
+    mutable G_Matrix* block_matrix;
 
     std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash>& integration_rule;
 
     mutable std::array<std::once_flag, Integrator::SIZE> integrator_check_flags;
+
+
     
 };
 

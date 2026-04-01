@@ -4,7 +4,7 @@
 #include "utils/logger.h"
 
 
-#include "math/matrix.h"
+#include "math/data_format.h"
 
 #include <vector>
 #include <Eigen/Dense>

@@ -2,7 +2,7 @@
 
 #include "math/fem/operation.h"
 #include "math/fem/integration.h"
-#include "math/matrix.h"
+#include "math/data_format.h"
 #include "math/fem/fem_util.h"
 
 

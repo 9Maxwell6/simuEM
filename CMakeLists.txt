@@ -145,6 +145,24 @@ if(UNIX)
     if(USE_PETSC)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PETSC)
         set(LOAD_PETSC ON)
+
+        # Check if PETSc was built with MPI
+        file(STRINGS "${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h" _petsc_mpi REGEX "#define PETSC_MPICC_SHOW")
+        if(_petsc_mpi)
+            if(DEFINED MPI_DIR)
+                set(MPI_HOME ${MPI_DIR})
+        else()
+            # Extract MPI path from PETSC_MPICC_SHOW
+            string(REGEX MATCH "-I([^ ]+)" _ "${_petsc_mpi}")
+            string(REPLACE "/include" "" _extracted_mpi_dir "${CMAKE_MATCH_1}")
+            set(MPI_HOME ${_extracted_mpi_dir})
+            message(STATUS "MPI path extracted from petscconf.h: ${MPI_HOME}")
+        endif()
+
+            find_package(MPI REQUIRED)
+            target_link_libraries(${PROJECT_NAME} PRIVATE MPI::MPI_C MPI::MPI_CXX)
+            message(STATUS "MPI found: ${MPI_HOME}")
+        endif()
     endif()
 
 

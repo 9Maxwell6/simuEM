@@ -102,6 +102,10 @@ bool FEM_System::generate_block_dof(Block& block)
         Logger::error("FEM_System::generate_block_dof - block not found: return false");
         return false;
     }
+
+    #ifdef LOAD_PETSC
+    Logger::warning("FEM_System::generate_block_dof - hash map use size_t index, while dof_idx use PetscInt.");
+    #endif
      
     //FEM_Space * fe_space = fe_block_space_.at(block);
 
@@ -196,7 +200,7 @@ bool FEM_System::generate_block_dof(Block& block)
     size_t offset_face   = bh.get_node_count() + bh.get_edge_count();
     size_t offset_volume = bh.get_node_count() + bh.get_edge_count() + bh.get_face_count();
 
-    std::vector<size_t> fe_block_dof;
+    std::vector<dof_idx> fe_block_dof;
     fe_block_dof.reserve(element_dof_list_counter);
 
     size_t volume_dof_counter = 0; // volume always unique
@@ -323,12 +327,12 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
     const FEM_Space * fe_space_1 = fe_space_list[0];
     const FEM_Space * fe_space_2 = fe_space_list[1];
 
-    const std::vector<size_t>* fe_block_dof_1 = get_block_dof(block_1);
-    const std::vector<size_t>* fe_block_dof_2 = get_block_dof(block_2);
+    const std::vector<dof_idx>* fe_block_dof_1 = get_block_dof(block_1);
+    const std::vector<dof_idx>* fe_block_dof_2 = get_block_dof(block_2);
 
 
-    std::vector<size_t> fe_shared_block_dof_1;
-    std::vector<size_t> fe_shared_block_dof_2;
+    std::vector<dof_idx> fe_shared_block_dof_1;
+    std::vector<dof_idx> fe_shared_block_dof_2;
 
     fe_shared_block_dof_1.reserve(fe_block_dof_1->size());
     fe_shared_block_dof_2.reserve(fe_block_dof_2->size());
@@ -426,11 +430,11 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
     block.col_size = block_2.col_size;
 
     // store actual dof list
-    std::array<std::vector<size_t>,2>& coupled_block_dof_data = coupled_block_dof_data_[block];
+    std::array<std::vector<dof_idx>,2>& coupled_block_dof_data = coupled_block_dof_data_[block];
     coupled_block_dof_data[0] = std::move(fe_shared_block_dof_1);
     coupled_block_dof_data[1] = std::move(fe_shared_block_dof_2);
 
-    std::array<const std::vector<size_t> * ,2>& coupled_block_dof = coupled_block_dof_[block];
+    std::array<const std::vector<dof_idx> * ,2>& coupled_block_dof = coupled_block_dof_[block];
     coupled_block_dof[0] = &coupled_block_dof_data[0];
     coupled_block_dof[1] = &coupled_block_dof_data[1];
 
@@ -569,7 +573,7 @@ const Key FEM_System::get_block_group_key(const Block& block) const
     return empty;
 }
 
-const std::vector<size_t>* FEM_System::get_block_dof(const Block& block) const
+const std::vector<dof_idx>* FEM_System::get_block_dof(const Block& block) const
 {
     auto it = fe_block_dof_.find(block);
     if (it != fe_block_dof_.end()) return it->second;
@@ -609,13 +613,13 @@ const std::array<const FEM_Space *, 2>& FEM_System::get_coupled_block_space(cons
 }
 
 
-const std::array<const std::vector<size_t> * ,2>& FEM_System::get_coupled_block_dof(const Block& block) const
+const std::array<const std::vector<dof_idx> * ,2>& FEM_System::get_coupled_block_dof(const Block& block) const
 {
     auto it = coupled_block_dof_.find(block);
     if (it != coupled_block_dof_.end()) return it->second;
 
     Logger::error("Mesh::get_coupled_block_dof - failed: block not found, return empty list of dof.");
-    static const std::array<const std::vector<size_t> * ,2> empty{};
+    static const std::array<const std::vector<dof_idx> * ,2> empty{};
     return empty;
 }
 
@@ -647,11 +651,11 @@ Block FEM_System::transpose_block(const Block& block)
         block_space_pair[0] = fe_space_2;
         block_space_pair[1] = fe_space_1;
 
-        const std::array<const std::vector<size_t> * ,2>& block_dof_list = get_coupled_block_dof(block);
-        const std::vector<size_t>* block_dof_1 = block_dof_list[0];
-        const std::vector<size_t>* block_dof_2 = block_dof_list[1];
+        const std::array<const std::vector<dof_idx> * ,2>& block_dof_list = get_coupled_block_dof(block);
+        const std::vector<dof_idx>* block_dof_1 = block_dof_list[0];
+        const std::vector<dof_idx>* block_dof_2 = block_dof_list[1];
 
-        std::array<const std::vector<size_t> *, 2>& block_dof_pair = coupled_block_dof_[new_block];
+        std::array<const std::vector<dof_idx> *, 2>& block_dof_pair = coupled_block_dof_[new_block];
         block_dof_pair[0] = block_dof_2;
         block_dof_pair[1] = block_dof_1;
 
@@ -749,20 +753,38 @@ Block_Rack FEM_System::initialize_block_rack(size_t n_row, size_t n_col)
 }
 
 
+bool FEM_System::init_block_matrix(Block& block)
+{
+    G_Matrix& mat = fe_block_mat_[block];
+#ifdef LOAD_PETSC
+
+    G_Matrix m;
+    PetscCall(MatCreate(PETSC_COMM_WORLD, &mat));
+    PetscCall(MatSetSizes(mat, PETSC_DECIDE, PETSC_DECIDE, block.row_size, block.col_size));
+    PetscCall(MatSetType(mat, MATAIJ));
+#else
+    mat = std::make_shared<Eigen::SparseMatrix<double>>(block.row_size, block.col_size);
+    // Eigen is CSC, so reserve is per-column
+    m->reserve(Eigen::VectorXi::Constant(ncols, estimated_nnz_per_row));
+    fe_block_mat_[b] = m;
+#endif
+}
+
+
 Assemble_Data FEM_System::assemble_data(const Block& block) 
 {
     const FEM_Space* space_1;
     const FEM_Space* space_2;
 
-    const std::vector<size_t> * block_row_dof;
-    const std::vector<size_t> * block_col_dof;
+    const std::vector<dof_idx> * block_row_dof;
+    const std::vector<dof_idx> * block_col_dof;
 
     if(block.is_base_block){
         const FEM_Space* space = get_block_space(block);
         space_1 = space;
         space_2 = space;
 
-        const std::vector<size_t>* block_dof = get_block_dof(block);
+        const std::vector<dof_idx>* block_dof = get_block_dof(block);
         block_row_dof = block_dof;
         block_col_dof = block_dof;
 
@@ -771,7 +793,7 @@ Assemble_Data FEM_System::assemble_data(const Block& block)
         space_1 = space_list[0];
         space_2 = space_list[1];
 
-        const std::array<const std::vector<size_t>*, 2>& block_dof_list =  get_coupled_block_dof(block);
+        const std::array<const std::vector<dof_idx>*, 2>& block_dof_list =  get_coupled_block_dof(block);
         block_row_dof = block_dof_list[0];
         block_col_dof = block_dof_list[1];
     }
