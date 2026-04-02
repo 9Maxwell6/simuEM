@@ -83,6 +83,9 @@ if(USE_PETSC)
         find_package(PkgConfig REQUIRED)
         set(ENV{PKG_CONFIG_PATH} "${PETSC_DIR}/${PETSC_ARCH}/lib/pkgconfig")
         pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc)
+        message(STATUS "PETSC_FOUND: ${PETSC_FOUND}")
+        message(STATUS "PETSC_INCLUDE_DIRS: ${PETSC_INCLUDE_DIRS}")
+        message(STATUS "PETSC_CFLAGS: ${PETSC_CFLAGS}")
     else()
         FIND_PACKAGE(PETSc REQUIRED)
     endif()
@@ -144,7 +147,9 @@ if(UNIX)
 
     if(USE_PETSC)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PETSC)
-        set(LOAD_PETSC ON)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE LOAD_PETSC)
+
+        #set(LOAD_PETSC ON)
 
         # Check if PETSc was built with MPI
         file(STRINGS "${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h" _petsc_mpi REGEX "#define PETSC_MPICC_SHOW")
@@ -158,7 +163,6 @@ if(UNIX)
             set(MPI_HOME ${_extracted_mpi_dir})
             message(STATUS "MPI path extracted from petscconf.h: ${MPI_HOME}")
         endif()
-
             find_package(MPI REQUIRED)
             target_link_libraries(${PROJECT_NAME} PRIVATE MPI::MPI_C MPI::MPI_CXX)
             message(STATUS "MPI found: ${MPI_HOME}")

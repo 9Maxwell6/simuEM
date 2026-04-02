@@ -17,6 +17,9 @@ struct Assemble_Data
     size_t row_size;
     size_t col_size;
 
+    mutable size_t col_dof_offset = 0;
+    mutable size_t row_dof_offset = 0;
+
     const Mesh* mesh;
 
     const FEM_Space* space_1;  // trial space

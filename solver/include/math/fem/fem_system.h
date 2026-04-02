@@ -118,7 +118,11 @@ private:
 
     bool generate_coupling_block_dof(Block& block);
 
-    bool init_block_matrix(Block& block);
+    // compute number of non-zero entry per row, used for block matrix pre-allocation.                                                                
+    std::vector<size_d> compute_nnz_per_row(
+        const FEM_Space* space_1, const std::vector<dof_idx>* block_row_dof, size_d block_row_size, 
+        const FEM_Space* space_2, const std::vector<dof_idx>* block_col_dof, size_d block_col_size,
+        const std::vector<Element*>* elements) const;
 
 
     template <typename Get_dof>
@@ -126,8 +130,8 @@ private:
                                                                     int n_dof_per_node, size_t node_dof_offset,
                                                                     int n_dof_per_edge, size_t edge_dof_offset, 
                                                                     int n_dof_per_face, size_t face_dof_offset);
-
     
+
     /*
     // not used
     // used for transformation from reference element to actual element in mesh.
@@ -171,7 +175,7 @@ public:
         for (auto& [block, mat] : fe_block_mat_) 
         {
         #ifdef LOAD_PETSC
-            petsc_util::destroy_block_matrix(mat);
+            petsc_util::destroy_petsc_matrix(mat);
         #else
             mat.reset();
         #endif

@@ -53,25 +53,25 @@ INSTANTIATE_ELEMENT_MAT_TEMPLATE(Operation, dof_transformation)
  * Insert entries of a local element matrix into a global matrix.
  *
  * @tparam Mat_Type        fixed or dynamic matrix type
- * @param data             data package containing global row and column indices 
+ * @param data             data package containing global row/column indices and pointer to global matrix
  * @param element_matrix   Local matrix to insert
- * @param global_matrix    Global PETSc (must be pre-allocated)
  */
 template<typename Mat_Type>
-void Operation::add_to_global(Assemble_Data& data, Mat_Type& element_matrix, G_Matrix& global_matrix)
+void Operation::add_to_global(const Assemble_Data& data, Mat_Type& element_matrix)
 {
-    constexpr int R = Mat_Type::RowsAtCompileTime;
-    constexpr int C = Mat_Type::ColsAtCompileTime;
+    const auto rows = element_matrix.rows();
+    const auto cols = element_matrix.cols();
 
 #ifdef LOAD_PETSC
     // G_Matrix: using petsc Mat.
+    PetscCallVoid(MatSetValues(*data.block_matrix, 
+                            rows, &(*data.row_dof)[data.row_dof_offset], 
+                            cols, &(*data.col_dof)[data.col_dof_offset], 
+                            element_matrix.data(), ADD_VALUES));
 
-
-    std::vector<PetscInt> petsc_rows(data.row_dof->begin(), data.row_dof->end());
-    std::vector<PetscInt> petsc_cols(data.col_dof->begin(), data.col_dof->end());
 
 #elif
     // G_Matrix: using eigen sparse matrix.
 #endif
 }
-INSTANTIATE_MAT_TEMPLATE_ARGS(Operation, add_to_global, Assemble_Data&)
+INSTANTIATE_MAT_TEMPLATE_ARGS(Operation, add_to_global, const Assemble_Data&)

@@ -753,31 +753,99 @@ Block_Rack FEM_System::initialize_block_rack(size_t n_row, size_t n_col)
 }
 
 
-bool FEM_System::init_block_matrix(Block& block)
-{
-    G_Matrix& mat = fe_block_mat_[block];
-#ifdef LOAD_PETSC
 
-    G_Matrix m;
-    PetscCall(MatCreate(PETSC_COMM_WORLD, &mat));
-    PetscCall(MatSetSizes(mat, PETSC_DECIDE, PETSC_DECIDE, block.row_size, block.col_size));
-    PetscCall(MatSetType(mat, MATAIJ));
-#else
-    mat = std::make_shared<Eigen::SparseMatrix<double>>(block.row_size, block.col_size);
-    // Eigen is CSC, so reserve is per-column
-    m->reserve(Eigen::VectorXi::Constant(ncols, estimated_nnz_per_row));
-    fe_block_mat_[b] = m;
-#endif
+/**
+ * Computes the number of nonzeros per row for a sparse matrix block arising
+ * from a bilinear form between two FEM spaces (e.g. H1 × Hcurl). This is for
+ * sparse matrix preallocation to avoid copying matrix data.
+ *
+ * Algorithm:
+ *   1. Build an inverse map (row_dof_to_elem) from each row_dof to the elements that
+ *      contain it, along with the starting offset into block_col_dof for that element.
+ *   2. For each row_dof, iterate over its elements and collect unique col_dof
+ *      using a marker array.
+ *
+ * @param space_1         FEM space for the row (test) functions.
+ * @param block_row_dof   flat global row_dof indices for all elements, concatenated.
+ * @param block_row_size  total number of unique row_dof in this block.
+ * 
+ * @param space_2         FEM space for the column (trial) functions.
+ * @param block_col_dof   flat global col_dof indices for all elements, concatenated.
+ * @param block_col_size  total number of unique col_dof in this block.
+ * 
+ * @param elements        list of mesh elements contributing to this block.
+ *
+ * @return vector of length block_row_size, where entry i is the number of
+ *         nonzero columns in row i of the sparse matrix.
+ */
+std::vector<size_d> FEM_System::compute_nnz_per_row(
+    const FEM_Space* space_1, const std::vector<dof_idx>* block_row_dof, size_d block_row_size, 
+    const FEM_Space* space_2, const std::vector<dof_idx>* block_col_dof, size_d block_col_size,
+    const std::vector<Element*>* elements) const
+{
+
+    // convert to 1-based indexing, 0 as default value.
+    std::vector<std::vector<std::pair<const Element*,dof_idx>>> row_dof_to_elem(block_row_size+1);  
+    dof_idx col_dof_offset = 0;
+    dof_idx row_dof_offset = 0;
+    for(const Element* e : *elements)
+    {
+        Basis_Shape b_shape = to_basis_shape(e->get_geometry());
+
+        const FEM_Space* shape_space_1 = space_1->get_basis_space(b_shape);
+        const FEM_Space* shape_space_2 = space_2->get_basis_space(b_shape);
+
+        int e_row_size = shape_space_1->get_n_dof();
+        int e_col_size = shape_space_2->get_n_dof();
+
+        for (dof_idx i=row_dof_offset; i<row_dof_offset+e_row_size; ++i) 
+            row_dof_to_elem[(*block_row_dof)[i]+1].push_back({e, col_dof_offset});
+
+
+        row_dof_offset += e_row_size;
+        col_dof_offset += e_col_size;
+    }
+
+    std::vector<dof_idx> marker(block_col_size, 0);
+    std::vector<size_d> nnz(block_row_size);
+
+    for(dof_idx i=1; i<=block_row_size; ++i)
+    {
+        size_d count = 0;
+        for (auto&[e, col_start] : row_dof_to_elem[i])
+        {
+            Basis_Shape b_shape = to_basis_shape(e->get_geometry());
+            const FEM_Space* shape_space_2 = space_2->get_basis_space(b_shape);
+            size_t e_col_size = shape_space_2->get_n_dof();
+            for(dof_idx j=col_start; j<col_start+e_col_size; ++j)
+            {
+                if(marker[(*block_col_dof)[j]] != i)
+                {
+                    marker[(*block_col_dof)[j]] = i;
+                    count++;
+                }
+            }
+        }
+        // convert back to 0-based indexing
+        nnz[i-1] = count;
+    }
+
+    return nnz;
 }
 
 
+/**
+ * @brief Create Assemble_Data structure, used for global matrix assemble.
+ * 
+ * @param block block matrix to be assembled.
+ */
 Assemble_Data FEM_System::assemble_data(const Block& block) 
 {
     const FEM_Space* space_1;
     const FEM_Space* space_2;
 
-    const std::vector<dof_idx> * block_row_dof;
-    const std::vector<dof_idx> * block_col_dof;
+    const std::vector<dof_idx>* block_row_dof;
+    const std::vector<dof_idx>* block_col_dof;
 
     if(block.is_base_block){
         const FEM_Space* space = get_block_space(block);
@@ -800,6 +868,22 @@ Assemble_Data FEM_System::assemble_data(const Block& block)
 
     const Key& group_key = get_block_group_key(block);
 
+    const std::vector<Element*>* elements = &mesh_.get_element_group(group_key);
+
+    // compute number of non-zero entry per row, used for preallocate the sparse block matrix.
+    std::vector<size_d> nnz = compute_nnz_per_row(space_1, block_row_dof, block.row_size, 
+                                                  space_2, block_col_dof, block.col_size,
+                                                  elements);
+    // pre-allocate block matrix
+    G_Matrix& mat = fe_block_mat_[block];
+    #ifdef LOAD_PETSC
+        petsc_util::init_petsc_matrix(block.row_size, block.col_size, nnz, mat);
+    #else
+        mat = std::make_shared<Eigen::SparseMatrix<double>>(block.row_size, block.col_size);
+        Eigen::VectorXi nnz_eigen(nnz.begin(), nnz.end());
+        mat->reserve(nnz_eigen);
+    #endif
+
     return Assemble_Data{
         .mesh_dim = dim_, 
         .element_dim = static_cast<int>(group_key.dim),
@@ -808,9 +892,10 @@ Assemble_Data FEM_System::assemble_data(const Block& block)
         .mesh = &mesh_,
         .space_1 = space_1,
         .space_2 = space_2,
-        .elements = &mesh_.get_element_group(group_key),
+        .elements = elements,
         .row_dof = block_row_dof,
         .col_dof = block_col_dof,
+        .block_matrix = &mat,
         .integration_rule = integration_rule_
     };
 

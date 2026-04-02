@@ -51,12 +51,12 @@
     INSTANTIATE_ELEMENT_MAT_TEMPLATE_BASE(Class, Method, __VA_ARGS__,)
 
 #define INSTANTIATE_MAT_TEMPLATE_BASE(Class, Method, ...)                                            \
-    template void Class::Method(__VA_ARGS__ Matrix<3,3>&, G_Matrix&);                              \
-    template void Class::Method(__VA_ARGS__ Matrix<4,4>&, G_Matrix&);                              \
-    template void Class::Method(__VA_ARGS__ Matrix<4,6>&, G_Matrix&);                              \
-    template void Class::Method(__VA_ARGS__ Matrix<6,4>&, G_Matrix&);                              \
-    template void Class::Method(__VA_ARGS__ Matrix<6,6>&, G_Matrix&);                              \
-    template void Class::Method(__VA_ARGS__ MatrixXd&,    G_Matrix&);                                            
+    template void Class::Method(__VA_ARGS__ Matrix<3,3>&);                                           \
+    template void Class::Method(__VA_ARGS__ Matrix<4,4>&);                                           \
+    template void Class::Method(__VA_ARGS__ Matrix<4,6>&);                                           \
+    template void Class::Method(__VA_ARGS__ Matrix<6,4>&);                                           \
+    template void Class::Method(__VA_ARGS__ Matrix<6,6>&);                                           \
+    template void Class::Method(__VA_ARGS__ MatrixXd&   );                                            
 
 
 #define INSTANTIATE_MAT_TEMPLATE(Class, Method)                                                      \

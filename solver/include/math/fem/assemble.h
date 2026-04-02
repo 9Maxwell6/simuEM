@@ -24,16 +24,13 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
 
         Operation::dof_transformation(e_data, local_mat);
 
-        //Operation::add_to_global(data, local_mat, )
+        Operation::add_to_global(data, local_mat);
 
     };
 
 
     auto assemble_global = [&](auto& e_data, const auto& user_operation) 
     {
-        size_t col_dof_counter = 0;
-        size_t row_dof_counter = 0;
-
         e_data.mesh = data.mesh;
 
         e_data.space_1 =  data.space_1->get_function_space();
@@ -71,8 +68,8 @@ bool assemble_block(const Assemble_Data& data, Op&& user_operation)
             else if (row_size == 6 && col_size == 6) { Matrix<6,6> mat;                     assemble_local(e_data, mat, user_operation); }
             else                                     { MatrixXd    mat(row_size, col_size); assemble_local(e_data, mat, user_operation); }
 
-            row_dof_counter += row_size;
-            col_dof_counter += col_size;
+            data.row_dof_offset += row_size;
+            data.col_dof_offset += col_size;
             
         }
     };
