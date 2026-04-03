@@ -80,6 +80,7 @@ private:
     size_t block_id_;
     std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
     std::unordered_map<Block, G_Matrix,            Block::Hash> fe_block_mat_;
+    std::unordered_map<Block, G_Vector,            Block::Hash> fe_block_vec_;
 
     // for basic block
     std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
@@ -188,7 +189,9 @@ public:
     Block_Rack initialize_block_rack(size_t n_row, size_t n_col);
 
     
-    Assemble_Data assemble_data(const Block& block);
+    Assemble_Data assemble_mat_data(const Block& block);
+    
+    Assemble_Data assemble_vec_data(const Block& block);  // block must be base_block.
 
 
 };

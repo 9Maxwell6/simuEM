@@ -31,6 +31,17 @@ namespace petsc_util{
         PetscFunctionReturn(PETSC_SUCCESS);
     }
 
+
+    PetscErrorCode init_petsc_vector(PetscInt size, Vec& vec)
+    {
+        PetscFunctionBeginUser;
+        PetscCall(VecCreate(PETSC_COMM_WORLD, &vec));
+        PetscCall(VecSetSizes(vec, PETSC_DECIDE, size));
+        PetscCall(VecSetFromOptions(vec));
+        PetscCall(VecZeroEntries(vec));
+        PetscFunctionReturn(PETSC_SUCCESS);
+    }
+
     
 
     PetscErrorCode destroy_petsc_matrix(Mat& mat)

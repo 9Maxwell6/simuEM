@@ -31,6 +31,7 @@ struct Assemble_Data
     const std::vector<dof_idx>* col_dof;
 
     mutable G_Matrix* block_matrix;
+    mutable G_Vector* block_vector;
 
     std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash>& integration_rule;
 

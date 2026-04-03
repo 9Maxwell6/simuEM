@@ -29,6 +29,7 @@ using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 
     // global matrix
     using G_Matrix = Mat;   
+    using G_Vector = Vec;
     using dof_idx = PetscInt; 
     using size_d = PetscInt;
 #else 
@@ -38,6 +39,7 @@ using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
     using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 
     using G_Matrix = std::shared_ptr<Eigen::SparseMatrix<double>>;
+    using G_Vector = std::shared_ptr<Eigen::Matrix<double, Eigen::Dynamic, 1>>;
     using dof_idx = size_t;   
     using size_d = int;
 #endif

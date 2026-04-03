@@ -10,6 +10,8 @@ namespace petsc_util
 
     PetscErrorCode init_petsc_matrix(PetscInt rows, PetscInt cols, const std::vector<PetscInt>& nnz, Mat& mat);
 
+    PetscErrorCode init_petsc_vector(PetscInt size, Vec& vec);
+
     PetscErrorCode destroy_petsc_matrix(Mat& mat);
 
 

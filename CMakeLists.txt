@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 project(simuEM VERSION 1.0.0 LANGUAGES CXX C)
 set(PROJECT_GUI "${PROJECT_NAME}_gui")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
