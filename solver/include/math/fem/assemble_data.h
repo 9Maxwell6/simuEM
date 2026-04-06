@@ -17,13 +17,13 @@ struct Assemble_Data
     size_t row_size;
     size_t col_size;
 
-    mutable size_t col_dof_offset = 0;
-    mutable size_t row_dof_offset = 0;
+    mutable size_t col_dof_offset;
+    mutable size_t row_dof_offset;
 
     const Mesh* mesh;
 
-    const FEM_Space* space_1;  // trial space
-    const FEM_Space* space_2;  // test  space
+    const FEM_Space* space_1;  // test  space
+    const FEM_Space* space_2;  // trial space
 
     const std::vector<Element*>* elements;
 
@@ -79,8 +79,8 @@ struct Element_Data
     const FEM_Space* shape_space_2;  // test  space of specific geometry shape
 
     // flag for transformation from conventional dof direction on reference element to dof direction on actual element.
-    Space space_1;
-    Space space_2;
+    const FEM_Space* space_1;
+    const FEM_Space* space_2;
 
     Basis_Shape b_shape;             // geometry shape
 

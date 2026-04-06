@@ -24,24 +24,30 @@ void Operation::dof_transformation(Element_Data<phy_dim, ref_dim>& e_data, Mat_T
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
 
-    if (e_data.space_1 == Space::H_curl || e_data.space_1 == Space::H_div) {
-        Matrix<R, R> P_1(e_data.rows, e_data.rows);
-        if (e_data.space_1 == Space::H_curl) 
-            e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_1);
-        else 
-            e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_1);
-        
-        element_matrix = P_1 * element_matrix;
+    if(e_data.space_1 != nullptr){
+        Space s_1 = e_data.space_1->get_function_space();
+        if (s_1 == Space::H_curl || s_1 == Space::H_div) {
+            Matrix<R, R> P_1(e_data.rows, e_data.rows);
+            if (s_1 == Space::H_curl) 
+                e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_1);
+            else 
+                e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_1);
+            
+            element_matrix = P_1 * element_matrix;
+        }
     }
 
-    if (e_data.space_2 == Space::H_curl || e_data.space_2 == Space::H_div) {
-        Matrix<C, C> P_2(e_data.cols, e_data.cols);
-        if (e_data.space_2 == Space::H_curl) 
-            e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_2);
-        else 
-            e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_2);
-        
-        element_matrix = element_matrix * P_2.transpose();
+    if(e_data.space_2 != nullptr){
+        Space s_2 = e_data.space_2->get_function_space();
+        if (s_2 == Space::H_curl || s_2 == Space::H_div) {
+            Matrix<C, C> P_2(e_data.cols, e_data.cols);
+            if (s_2 == Space::H_curl) 
+                e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_2);
+            else 
+                e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_2);
+            
+            element_matrix = element_matrix * P_2.transpose();
+        }
     }
 }
 INSTANTIATE_ELEMENT_MAT_TEMPLATE(Operation, dof_transformation)
@@ -57,7 +63,7 @@ INSTANTIATE_ELEMENT_MAT_TEMPLATE(Operation, dof_transformation)
  * @param element_matrix   Local matrix to insert
  */
 template<typename Mat_Type>
-void Operation::add_to_global(const Assemble_Data& data, Mat_Type& element_matrix)
+void Operation::add_to_global_mat(const Assemble_Data& data, Mat_Type& element_matrix)
 {
     const auto rows = element_matrix.rows();
     const auto cols = element_matrix.cols();
@@ -74,4 +80,4 @@ void Operation::add_to_global(const Assemble_Data& data, Mat_Type& element_matri
     // G_Matrix: using eigen sparse matrix.
 #endif
 }
-INSTANTIATE_MAT_TEMPLATE_ARGS(Operation, add_to_global, const Assemble_Data&)
+INSTANTIATE_MAT_TEMPLATE_ARGS(Operation, add_to_global_mat, const Assemble_Data&)

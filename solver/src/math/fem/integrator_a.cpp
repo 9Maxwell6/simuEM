@@ -1,4 +1,4 @@
-#include "math/fem/integrator.h"
+#include "math/fem/integrator_a.h"
 
 #include "math/fem/assemble_data.h"
 
@@ -17,8 +17,8 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
         std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
-        const FEM_Space* trial_space = e_data.shape_space_1;
-        const FEM_Space* test__space = e_data.shape_space_2;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order();
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
@@ -51,8 +51,8 @@ void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element
         std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
     
         const Element* e = e_data.e;
-        const FEM_Space* trial_space = e_data.shape_space_1;
-        const FEM_Space* test__space = e_data.shape_space_2;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order()-1;
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
@@ -89,8 +89,8 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
         std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
-        const FEM_Space* trial_space = e_data.shape_space_1;
-        const FEM_Space* test__space = e_data.shape_space_2;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order()-1;
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
@@ -109,8 +109,8 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
 
             for(const Integration_Point& i_p : i_p_list)
             {            
-                trial_space->get_basis_s(i_p, basis);
-                test__space->get_ED_basis_v(i_p, grad_basis);
+                test__space->get_basis_s(i_p, basis);
+                trial_space->get_ED_basis_v(i_p, grad_basis);
 
                 
                 double abs_det_J = std::abs(e_data.get_det_J(i_p));
@@ -159,8 +159,8 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
         std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
-        const FEM_Space* trial_space = e_data.shape_space_1;
-        const FEM_Space* test__space = e_data.shape_space_2;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order()-1;
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
@@ -203,8 +203,8 @@ void Integrator__s_V__V::assemble_element_matrix(double coeff, Element_Data<phy_
         std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
-        const FEM_Space* trial_space = e_data.shape_space_1;
-        const FEM_Space* test__space = e_data.shape_space_2;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order();
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
         
@@ -239,8 +239,8 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
         std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
-        const FEM_Space* trial_space = e_data.shape_space_1;
-        const FEM_Space* test__space = e_data.shape_space_2;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order()-1;
 
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
@@ -255,8 +255,8 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
 
         for(const Integration_Point& i_p : i_p_list)
         {
-            trial_space->get_basis_v(i_p, domain_basis);
-            test__space->get_ED_basis_v(i_p, range_grad_basis);
+            test__space->get_basis_v(i_p, domain_basis);         // row
+            trial_space->get_ED_basis_v(i_p, range_grad_basis);  // column
             
             double abs_det_J = std::abs(e_data.get_det_J(i_p));
             const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   
@@ -284,8 +284,8 @@ void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data
         std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
-        const FEM_Space* trial_space = e_data.shape_space_1;
-        const FEM_Space* test__space = e_data.shape_space_2;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order();
         
         const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
@@ -298,8 +298,8 @@ void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data
         Matrix<C, phy_dim> phy_range_basis(e_data.cols, phy_dim);
         for(const Integration_Point& i_p : i_p_list)
         {
-            trial_space->get_ED_basis_v(i_p, domain_grad_basis);
-            test__space->get_basis_v(i_p, range_basis);
+            test__space->get_ED_basis_v(i_p, domain_grad_basis);
+            trial_space->get_basis_v(i_p, range_basis);
             
             double abs_det_J = std::abs(e_data.get_det_J(i_p));
             const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   

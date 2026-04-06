@@ -184,7 +184,7 @@ bool T_Omega::assemble_system()
 
     
     Logger::info("[T_Omega] - assemble Omega-field block matrix.");
-    assemble_block(fe_system_.assemble_mat_data(dof_Omega_), [&](auto& e_data, auto& mat) {
+    assemble_mat(fe_system_.assemble_mat_data(dof_Omega_), [&](auto& e_data, auto& mat) {
         double sigma = 0.;
         if(e_data.e->get_property_id()==3) sigma = 1.;
         //std::cout<<e_data.e->get_property_id()<<std::endl;
@@ -199,7 +199,7 @@ bool T_Omega::assemble_system()
     Logger::info("[T_Omega] - assemble T-field block matrix.");
     for(Block& dof_T : dof_T_)
     {
-        assemble_block(fe_system_.assemble_mat_data(dof_T), [&](auto& e_data, auto& mat) {
+        assemble_mat(fe_system_.assemble_mat_data(dof_T), [&](auto& e_data, auto& mat) {
             double sigma = 0.;
             if(e_data.e->get_property_id()==3) sigma = 1.;
 
@@ -215,7 +215,7 @@ bool T_Omega::assemble_system()
     Logger::info("[T_Omega] - assemble coupling block matrix.");
     for(Block& dof_coupling : dof_coupling_)
     {
-        assemble_block(fe_system_.assemble_mat_data(dof_coupling), [&](auto& e_data, auto& mat) {
+        assemble_mat(fe_system_.assemble_mat_data(dof_coupling), [&](auto& e_data, auto& mat) {
             double sigma = 0.;
             if(e_data.e->get_property_id()==3) sigma = 1.;
 

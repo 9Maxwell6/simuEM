@@ -32,7 +32,7 @@ public:
     void static dof_transformation(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
 
     template<typename Mat_Type>
-    void static add_to_global(const Assemble_Data& data, Mat_Type& element_matrix);
+    void static add_to_global_mat(const Assemble_Data& data, Mat_Type& element_matrix);
 };
 
 
