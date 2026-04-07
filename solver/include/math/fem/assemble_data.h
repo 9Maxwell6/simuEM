@@ -17,8 +17,8 @@ struct Assemble_Data
     size_t row_size;
     size_t col_size;
 
-    mutable size_t col_dof_offset;
     mutable size_t row_dof_offset;
+    mutable size_t col_dof_offset;
 
     const Mesh* mesh;
 

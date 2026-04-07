@@ -37,3 +37,4 @@ void Integrator__s__S::assemble_element_vector(Field&& F, Element_Data<phy_dim, 
 }
 INSTANTIATE_ELEMENT_VEC_TEMPLATE_ARGS(Integrator__s__S, assemble_element_vector, S_Field_3d&&)
 INSTANTIATE_ELEMENT_VEC_TEMPLATE_ARGS(Integrator__s__S, assemble_element_vector, S_Field_2d&&)
+INSTANTIATE_ELEMENT_VEC_TEMPLATE_ARGS(Integrator__s__S, assemble_element_vector, S_Field_1d&&)

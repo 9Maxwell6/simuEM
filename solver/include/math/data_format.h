@@ -18,12 +18,19 @@ using Vector = Eigen::Matrix<double, R, 1>;
 
 using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 
-using S_Field_3d = std::function<double(Vector<3>)>;
-using S_Field_2d = std::function<double(Vector<2>)>;
-using S_Field_1d = std::function<double(Vector<1>)>;
-using V_Field_3d = std::function<Vector<3>(Vector<3>)>;
-using V_Field_2d = std::function<Vector<2>(Vector<2>)>;
-using V_Field_1d = std::function<Vector<1>(Vector<1>)>;
+using S_Field_3d = std::function<double(Vector<3>&)>;
+using S_Field_2d = std::function<double(Vector<2>&)>;
+using S_Field_1d = std::function<double(Vector<1>&)>;
+using V_Field_3d = std::function<  void(Vector<3>&, Vector<3>&)>;
+using V_Field_2d = std::function<  void(Vector<2>&, Vector<2>&)>;
+using V_Field_1d = std::function<  void(Vector<1>&, Vector<1>&)>;
+
+using S_Field_3d_t = std::function<double(Vector<3>&, double)>;
+using S_Field_2d_t = std::function<double(Vector<2>&, double)>;
+using S_Field_1d_t = std::function<double(Vector<1>&, double)>;
+using V_Field_3d_t = std::function<  void(Vector<3>&, double, Vector<3>&)>;
+using V_Field_2d_t = std::function<  void(Vector<2>&, double, Vector<2>&)>;
+using V_Field_1d_t = std::function<  void(Vector<1>&, double, Vector<1>&)>;
 
 
 #ifdef LOAD_PETSC
