@@ -43,8 +43,10 @@ public:
     virtual Geometry get_geometry() const = 0;
 
     virtual const size_t * get_node_idx() const = 0;
-    virtual int get_node_num() const = 0;
+    virtual int get_node_num() const = 0; // number of vertices
     virtual void set_node_idx(const size_t *ind) = 0;
+
+    virtual int get_geometry_node_num() const = 0; // number of node that define the geometry.
 
     inline size_t get_id() const {return id_;}
     inline int    get_geometry_order() const {return o_;}
@@ -62,7 +64,8 @@ public:
      */
     virtual bool compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> J) const = 0;
 
-    virtual void compute_D_shape(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const = 0;
+    virtual void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const = 0;
+    virtual void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const = 0;
 
     /**
      * @brief compute transformation matrix to correct dof direction on reference element to actual element in H_curl space.

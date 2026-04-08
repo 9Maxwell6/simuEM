@@ -22,14 +22,16 @@ private:
 
 public:
     S_Field_fespace(const FEM_Space& fe_space, 
-                  const std::vector<Element*>& element, 
-                  const std::vector<dof_idx>& dof, 
-                  const std::vector<double>& value);
+                    const std::vector<Element*>& element, 
+                    const std::vector<dof_idx>& dof, 
+                    const std::vector<double>& value);
 
     template<int phy_dim, int ref_dim>
     double eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const {
-        //
+        
     }
+
+    
 
     void reset_dof_counter() {dof_counter = 0;};
 
@@ -57,8 +59,8 @@ public:
                   const std::vector<double>& value);
 
     template<int phy_dim, int ref_dim>
-    Vector<phy_dim> eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const {
-        //
+    void eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data, Eigen::Ref<VectorXd> value) const {
+
     }
 
     void reset_dof_counter() {dof_counter = 0;};

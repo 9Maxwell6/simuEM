@@ -61,8 +61,9 @@ protected:
     //std::vector<Quadrilateral> elements_quadrilateral;  // not implemented.
     std::vector<Tetrahedron> elements_tetrahedron_;
 
-    // For higher order elements, indices of extra nodes other than vertices will stored here.
+    // TODO: For higher order elements, indices of extra nodes other than vertices will stored here.
     // not implemented.
+    // 
 
     
     //std::vector<Element*> curve;    // 1d element: contain pointers to 2d elements. e.g. in std::vector<Edge>

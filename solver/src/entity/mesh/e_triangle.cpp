@@ -80,7 +80,36 @@ bool Triangle::compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen:
    }
 }
 
-void Triangle::compute_D_shape(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
+
+void Triangle::compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const
+{
+   double x = coord.x;
+   double y = coord.y;
+   switch(o_)
+   {
+      case 1:
+         //  Barycentric coordinates λ
+         //          λ0 = 1.0 - x - y;
+         //          λ1 = x;
+         //          λ2 = y;
+         //
+         if (shape.size() != 3)
+         {
+            throw std::invalid_argument("vector must be 3x1 for p-1 H(grad) Triangle.");
+         }
+
+         shape(0) = 1.0 - x - y;  // Vertex 0
+         shape(1) = x;             // Vertex 1
+         shape(2) = y;             // Vertex 2
+         break;
+      default:
+         throw std::invalid_argument("Nodal element not available for order: " + std::to_string(o_));
+   }
+}
+
+
+
+void Triangle::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
 {
    switch (o_)
    {

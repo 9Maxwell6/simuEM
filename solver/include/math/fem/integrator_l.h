@@ -58,7 +58,7 @@ public:
     static constexpr int INTEGRATOR_ID = 0;
 
     template<typename Field, int phy_dim, int ref_dim, typename Vec_Type>
-    void static assemble_element_vector(Field&& F, Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_matrix);
+    void static assemble_element_vector(Field& F, Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_vector);
     
 };
 

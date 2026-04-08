@@ -6,6 +6,7 @@ set(Mesh mesh.cpp
          e_triangle.cpp
          e_edge.cpp
          e__transformation.cpp)
+         
 target_sources(${PROJECT_NAME} PRIVATE ${Mesh})
 
 

@@ -84,6 +84,7 @@ struct Element_Data
 
     Basis_Shape b_shape;             // geometry shape
 
+
     Matrix<phy_dim, ref_dim>      J;
     Matrix<ref_dim, phy_dim>  inv_J;
     double                    det_J;
@@ -99,6 +100,8 @@ struct Element_Data
     const Matrix<phy_dim, ref_dim>& get_J(const Ref_Coord& ref_coord);
     const Matrix<ref_dim, phy_dim>& get_inv_J(const Ref_Coord& ref_coord);
     double                          get_det_J(const Ref_Coord& ref_coord);
+
+    Vector<phy_dim> physical_point(const Ref_Coord& ref_coord) const;
 
     void reset_flag() 
     { 

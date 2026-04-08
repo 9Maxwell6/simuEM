@@ -58,7 +58,16 @@ bool Edge::compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref
    return false;
 }
 
-void Edge::compute_D_shape(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
+
+
+void Edge::compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const
+{
+   Logger::error("Edge::compute_shape - not implemented.");
+}
+
+
+
+void Edge::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
 {
    Logger::error("Edge::compute_D_shape - not implemented.");
 }

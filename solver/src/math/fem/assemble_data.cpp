@@ -62,6 +62,40 @@ double Element_Data<phy_dim, ref_dim>::get_det_J(const Ref_Coord& ref_coord)
 }
 
 
+template<int phy_dim, int ref_dim>
+Vector<phy_dim> Element_Data<phy_dim, ref_dim>::physical_point(const Ref_Coord& ref_coord) const
+{
+
+    Vector<phy_dim> phy_coord = Vector<phy_dim>::Zero();
+
+    int node_num = e->get_node_num();
+    const size_t * node_idx =  e->get_node_idx();
+
+    int geo_node_num = e->get_geometry_node_num();
+    // TODO: higher geometry order not support yet, mesh object should provide extra nodes for higher order elements.
+    // mesh->
+
+    VectorXd shape(geo_node_num);
+
+    e->compute_shape(ref_coord, shape);
+    
+
+    for(int i=0; i<node_num; ++i)
+    {
+        const Node& n = mesh->get_node(node_idx[i]);
+        if      constexpr (phy_dim == 3){ phy_coord += shape[i] * Vector<3>{n.x, n.y, n.z}; }
+        else if constexpr (phy_dim == 2){ phy_coord += shape[i] * Vector<2>{n.x, n.y};      }
+        else                            { phy_coord += shape[i] * Vector<1>{n.x};           }
+    }
+
+    for(int j=node_num; j<geo_node_num; ++j ){
+        Logger::error("Element_Data::physical_point - higher geometry order not support yet");
+    }
+
+    return phy_coord;
+
+    
+}
 
 
 

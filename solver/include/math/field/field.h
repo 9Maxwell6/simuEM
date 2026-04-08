@@ -4,6 +4,13 @@
 #include "entity/mesh/e_collection.h"
 #include "math/fem/assemble_data.h"
 #include "math/data_format.h"
+#include "math/ref_coord.h"
+
+#include "math/fem/assemble_data.h"
+
+
+#include "math/field/field_util.h"
+
 
 
 namespace simu {

@@ -78,7 +78,41 @@ bool Tetrahedron::compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eig
    }
 }
 
-void Tetrahedron::compute_D_shape(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
+
+
+void Tetrahedron::compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const
+{
+   double x = coord.x;
+   double y = coord.y;
+   double z = coord.z;
+   switch(o_)
+   {
+      case 1:
+         //  Barycentric coordinates λ
+         //          λ0 = 1.0 - x - y - z;
+         //          λ1 = x;
+         //          λ2 = y;
+         //          λ3 = z;
+         //
+         if (shape.size() != 4) 
+         {
+            throw std::invalid_argument("vector must be 4x1 for p-1 H(grad) Tetrahedron.");
+         }
+         
+
+         shape(0) = 1.0 - x - y - z;  // Vertex 0
+         shape(1) = x;                // Vertex 1
+         shape(2) = y;                // Vertex 2
+         shape(3) = z;                // Vertex 3
+         break;
+      default:
+         throw std::invalid_argument("Nodal element not available for order:  "+std::to_string(o_));
+   }
+}
+
+
+
+void Tetrahedron::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
 {
    switch (o_)
    {
