@@ -1,4 +1,5 @@
 #pragma once
+#include "math/ref_coord.h"
 
 #include "utils/logger.h"
 
@@ -7,11 +8,6 @@
 namespace simu {
 
 // integration point on reference element
-struct Ref_Coord
-{
-    double x, y, z;
-};
-
 struct Integration_Point {
     Ref_Coord coord;
     double weight;

@@ -16,7 +16,6 @@ if(ENABLE_GUI)
     fem_space.cpp
     space_H1.cpp
     space_Hcurl.cpp
-    integration.cpp
 )
 
 endif()
