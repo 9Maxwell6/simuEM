@@ -60,9 +60,9 @@ public:
      * @param J Jacobian matrix to be filled.
      * @return true if the Jacobian matrix is independent from integration points, this is for avoiding recompute same Jacobian matrix.
      */
-    virtual bool compute_Jacobian(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> J) const = 0;
+    virtual bool compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> J) const = 0;
 
-    virtual void compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> d_shape) const = 0;
+    virtual void compute_D_shape(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const = 0;
 
     /**
      * @brief compute transformation matrix to correct dof direction on reference element to actual element in H_curl space.

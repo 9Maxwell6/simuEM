@@ -27,9 +27,9 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
 
         for(const Integration_Point& i_p : i_p_list)
         {
-            trial_space->get_basis_s(i_p, basis);
+            trial_space->get_basis_s(i_p.coord, basis);
             
-            double abs_det_J = std::abs(e_data.get_det_J(i_p));
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
 
             element_matrix += coeff * i_p.weight * abs_det_J * basis * basis.transpose();
         }
@@ -62,10 +62,10 @@ void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element
 
         for(const Integration_Point& i_p : i_p_list)
         {            
-            trial_space->get_ED_basis_v(i_p, grad_basis);
+            trial_space->get_ED_basis_v(i_p.coord, grad_basis);
             
-            double abs_det_J = std::abs(e_data.get_det_J(i_p));
-            const Matrix<ref_dim, phy_dim>& inv_J = e_data.get_inv_J(i_p);
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+            const Matrix<ref_dim, phy_dim>& inv_J = e_data.get_inv_J(i_p.coord);
 
             phy_grad_basis = grad_basis*inv_J;
 
@@ -109,12 +109,12 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
 
             for(const Integration_Point& i_p : i_p_list)
             {            
-                test__space->get_basis_s(i_p, basis);
-                trial_space->get_ED_basis_v(i_p, grad_basis);
+                test__space->get_basis_s(i_p.coord, basis);
+                trial_space->get_ED_basis_v(i_p.coord, grad_basis);
 
                 
-                double abs_det_J = std::abs(e_data.get_det_J(i_p));
-                const MatrixXd& inv_J = e_data.get_inv_J(i_p);
+                double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+                const MatrixXd& inv_J = e_data.get_inv_J(i_p.coord);
 
                 phy_grad_basis = grad_basis*inv_J;
 
@@ -170,10 +170,10 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
 
         for(const Integration_Point& i_p : i_p_list)
         {            
-            trial_space->get_ED_basis_v(i_p, curl_basis);
+            trial_space->get_ED_basis_v(i_p.coord, curl_basis);
             
-            double det_J = e_data.get_det_J(i_p);
-            const Matrix<phy_dim, ref_dim>& J = e_data.get_J(i_p);            
+            double det_J = e_data.get_det_J(i_p.coord);
+            const Matrix<phy_dim, ref_dim>& J = e_data.get_J(i_p.coord);            
 
             if constexpr  (phy_dim == 3){
                 phy_curl_basis = curl_basis * J.transpose()/det_J;
@@ -212,10 +212,10 @@ void Integrator__s_V__V::assemble_element_matrix(double coeff, Element_Data<phy_
         Matrix<R, phy_dim> phy_basis(e_data.rows, phy_dim);
         for(const Integration_Point& i_p : i_p_list)
         {
-            trial_space->get_basis_v(i_p, basis);
+            trial_space->get_basis_v(i_p.coord, basis);
             
-            double abs_det_J = std::abs(e_data.get_det_J(i_p));
-            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p.coord);   
 
             phy_basis = basis * J_inv;
 
@@ -255,11 +255,11 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
 
         for(const Integration_Point& i_p : i_p_list)
         {
-            test__space->get_basis_v(i_p, domain_basis);         // row
-            trial_space->get_ED_basis_v(i_p, range_grad_basis);  // column
+            test__space->get_basis_v(i_p.coord, domain_basis);         // row
+            trial_space->get_ED_basis_v(i_p.coord, range_grad_basis);  // column
             
-            double abs_det_J = std::abs(e_data.get_det_J(i_p));
-            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p.coord);   
 
             phy_domain_basis = domain_basis * J_inv;
             phy_range_grad_basis = range_grad_basis * J_inv;
@@ -298,11 +298,11 @@ void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data
         Matrix<C, phy_dim> phy_range_basis(e_data.cols, phy_dim);
         for(const Integration_Point& i_p : i_p_list)
         {
-            test__space->get_ED_basis_v(i_p, domain_grad_basis);
-            trial_space->get_basis_v(i_p, range_basis);
+            test__space->get_ED_basis_v(i_p.coord, domain_grad_basis);
+            trial_space->get_basis_v(i_p.coord, range_basis);
             
-            double abs_det_J = std::abs(e_data.get_det_J(i_p));
-            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p);   
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p.coord);   
 
             phy_domain_grad_basis = domain_grad_basis * J_inv;
             phy_range_basis = range_basis * J_inv;

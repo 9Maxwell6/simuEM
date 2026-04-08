@@ -54,7 +54,7 @@ const size_t * Triangle::get_node_idx() const
 }
 
 
-bool Triangle::compute_Jacobian(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> J) const 
+bool Triangle::compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> J) const 
 {
    switch (o_)
    {
@@ -80,7 +80,7 @@ bool Triangle::compute_Jacobian(const Mesh& mesh, const Integration_Point& i_p, 
    }
 }
 
-void Triangle::compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> d_shape) const
+void Triangle::compute_D_shape(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
 {
    switch (o_)
    {

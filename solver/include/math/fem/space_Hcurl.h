@@ -36,12 +36,12 @@ public:
 protected:
     // following function cannot be called from Hcurl_space instance, it must be called from Hcurl_Tetrahedron for example.
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {};
 
     // Return vector proxy of Exterior Derivative of basis of the corresponding form.
-    virtual void get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {};
 };
 
 
@@ -66,11 +66,11 @@ public:
     //};
 
 
-    void get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const override;
-    void get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const override;
+    void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
+    void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
 
-    void get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const override;
-    void get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const override;
+    void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
+    void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
 
     Space get_function_space() const override {return Space::H_curl;};
 

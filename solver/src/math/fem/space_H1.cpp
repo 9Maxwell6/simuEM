@@ -74,10 +74,10 @@ H1_tetrahedron::H1_tetrahedron(int p) : H1_Space(3, p)
 
 
 
-void H1_tetrahedron::get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
-    double x = p.x;
-    double y = p.y;
-    double z = p.z;
+void H1_tetrahedron::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
+    double x = coord.x;
+    double y = coord.y;
+    double z = coord.z;
     switch(p_)
     {
         case 1:
@@ -102,10 +102,10 @@ void H1_tetrahedron::get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd
 };
 
 
-void H1_tetrahedron::get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
-    double x = p.x;
-    double y = p.y;
-    double z = p.z;
+void H1_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
+    double x = coord.x;
+    double y = coord.y;
+    double z = coord.z;
     switch(p_)
     {
         case 1:
@@ -134,12 +134,12 @@ void H1_tetrahedron::get_ED_basis_v(const Integration_Point& p, Eigen::Ref<Matri
 
 
 
-void H1_tetrahedron::get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
+void H1_tetrahedron::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
     Logger::error("H1_tetrahedron::get_basis_v - Basis functions in H(grad) are scalar-valued, call get_basis_s instead.");
     throw std::logic_error("Basis functions in H(grad) are scalar-valued, call get_basis_s instead.");
 };
 
-void H1_tetrahedron::get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
+void H1_tetrahedron::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("H1_tetrahedron::get_ED_basis_s - Exterior derivative of basis functions in H(grad) corresponds to the vector-valued grad, call get_ED_basis_v instead.");
     throw std::logic_error("Exterior derivative of basis functions in H(grad) corresponds to the vector-valued grad, call get_ED_basis_v instead.");
 };

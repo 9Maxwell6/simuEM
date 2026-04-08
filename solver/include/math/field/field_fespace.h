@@ -8,8 +8,7 @@ namespace simu {
 
 
 
-template<int phy_dim>
-class S_Field_fespace : public Field<phy_dim>
+class S_Field_fespace : public Field
 {
 
 private:
@@ -27,8 +26,8 @@ public:
                   const std::vector<dof_idx>& dof, 
                   const std::vector<double>& value);
 
-    template<int ref_dim>
-    double eval(const Integration_Point& i_p, const Element_Data<phy_dim, ref_dim>& e_data) const {
+    template<int phy_dim, int ref_dim>
+    double eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const {
         //
     }
 
@@ -39,8 +38,7 @@ public:
 
 
 
-template<int phy_dim>
-class V_Field_fespace : public Field<phy_dim>
+class V_Field_fespace : public Field
 {
 
 private:
@@ -58,8 +56,8 @@ public:
                   const std::vector<dof_idx>& dof, 
                   const std::vector<double>& value);
 
-    template<int ref_dim>
-    Vector<phy_dim> eval(const Integration_Point& i_p, const Element_Data<phy_dim, ref_dim>& e_data) const {
+    template<int phy_dim, int ref_dim>
+    Vector<phy_dim> eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const {
         //
     }
 

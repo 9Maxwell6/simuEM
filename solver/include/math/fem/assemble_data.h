@@ -96,9 +96,9 @@ struct Element_Data
     bool flag_inv_J = false;
     bool flag_det_J = false;
 
-    const Matrix<phy_dim, ref_dim>& get_J(const Integration_Point& i_p);
-    const Matrix<ref_dim, phy_dim>& get_inv_J(const Integration_Point& i_p);
-    double                          get_det_J(const Integration_Point& i_p);
+    const Matrix<phy_dim, ref_dim>& get_J(const Ref_Coord& ref_coord);
+    const Matrix<ref_dim, phy_dim>& get_inv_J(const Ref_Coord& ref_coord);
+    double                          get_det_J(const Ref_Coord& ref_coord);
 
     void reset_flag() 
     { 

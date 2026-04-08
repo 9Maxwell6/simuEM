@@ -27,9 +27,9 @@ void Integrator__s__S::assemble_element_vector(Field&& F, Element_Data<phy_dim, 
 
         for(const Integration_Point& i_p : i_p_list)
         {
-            trial_space->get_basis_s(i_p, basis);
+            trial_space->get_basis_s(i_p.coord, basis);
             
-            double abs_det_J = std::abs(e_data.get_det_J(i_p));
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
 
             //element_matrix += coeff * i_p.weight * abs_det_J * basis * basis.transpose();
         }

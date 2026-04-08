@@ -80,11 +80,11 @@ Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)
 
 
 
-void Hcurl_tetrahedron::get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const 
+void Hcurl_tetrahedron::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const 
 {
-    double x = p.x;
-    double y = p.y;
-    double z = p.z;
+    double x = coord.x;
+    double y = coord.y;
+    double z = coord.z;
 
     switch(p_)
     {
@@ -116,10 +116,10 @@ void Hcurl_tetrahedron::get_basis_v(const Integration_Point& p, Eigen::Ref<Matri
 
 };
 
-void Hcurl_tetrahedron::get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {
-    double x = p.x;
-    double y = p.y;
-    double z = p.z;
+void Hcurl_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
+    double x = coord.x;
+    double y = coord.y;
+    double z = coord.z;
     switch(p_)
     {
         case 1:
@@ -151,13 +151,13 @@ void Hcurl_tetrahedron::get_ED_basis_v(const Integration_Point& p, Eigen::Ref<Ma
 
 
 
-void Hcurl_tetrahedron::get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
+void Hcurl_tetrahedron::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_tetrahedron::get_basis_s - Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
     throw std::logic_error("Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
 };
 
 
-void Hcurl_tetrahedron::get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {
+void Hcurl_tetrahedron::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_tetrahedron::get_ED_basis_s - Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
     throw std::logic_error("Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
 };

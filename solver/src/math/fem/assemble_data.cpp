@@ -3,21 +3,21 @@
 using namespace simu;
 
 template<int phy_dim, int ref_dim>
-const Matrix<phy_dim, ref_dim>& Element_Data<phy_dim, ref_dim>::get_J(const Integration_Point& i_p)
+const Matrix<phy_dim, ref_dim>& Element_Data<phy_dim, ref_dim>::get_J(const Ref_Coord& ref_coord)
 {
     if(flag_J) return J;
 
-    flag_J = e->compute_Jacobian(*mesh, i_p, J);
+    flag_J = e->compute_Jacobian(*mesh, ref_coord, J);
 
     return J;
 }
 
 template<int phy_dim, int ref_dim>
-const Matrix<ref_dim, phy_dim>& Element_Data<phy_dim, ref_dim>::get_inv_J(const Integration_Point& i_p)
+const Matrix<ref_dim, phy_dim>& Element_Data<phy_dim, ref_dim>::get_inv_J(const Ref_Coord& ref_coord)
 {
     if(flag_inv_J) return inv_J;
 
-    if(!flag_J) flag_J = e->compute_Jacobian(*mesh, i_p, J);
+    if(!flag_J) flag_J = e->compute_Jacobian(*mesh, ref_coord, J);
     flag_inv_J = flag_J;
     
     if constexpr (phy_dim == ref_dim)
@@ -33,11 +33,11 @@ const Matrix<ref_dim, phy_dim>& Element_Data<phy_dim, ref_dim>::get_inv_J(const 
 
 
 template<int phy_dim, int ref_dim>
-double Element_Data<phy_dim, ref_dim>::get_det_J(const Integration_Point& i_p)
+double Element_Data<phy_dim, ref_dim>::get_det_J(const Ref_Coord& ref_coord)
 {
     if(flag_det_J) return det_J;
 
-    if(!flag_J) flag_J = e->compute_Jacobian(*mesh, i_p, J);
+    if(!flag_J) flag_J = e->compute_Jacobian(*mesh, ref_coord, J);
     flag_det_J = flag_J;
 
 

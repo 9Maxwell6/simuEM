@@ -6,6 +6,8 @@
 #include "math/data_format.h"
 #include "math/fem/fem_util.h"
 
+#include "math/field/field_collection.h"
+
 
 
 #include <Eigen/Dense>
@@ -55,8 +57,8 @@ private:
 public:
     static constexpr int INTEGRATOR_ID = 0;
 
-    template<typename S_Field_Type, int phy_dim, int ref_dim, typename Vec_Type>
-    void static assemble_element_vector(S_Field_Type&& F, Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_matrix);
+    template<typename Field, int phy_dim, int ref_dim, typename Vec_Type>
+    void static assemble_element_vector(Field&& F, Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_matrix);
     
 };
 

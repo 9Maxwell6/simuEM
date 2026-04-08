@@ -16,20 +16,30 @@ enum class Field_Type
     FEM_SPACE
 };
 
-template<int phy_dim>
+struct Field_Data
+{
+    const Mesh* mesh = nullptr;
+    mutable double t = 0;  // time       [s ]
+    mutable double f = 0;  // frequency  [Hz]
+    size_t element_counter = 0;
+    size_t dof_counter = 0;
+
+};
+
 class Field
 {
 
 protected:
-    const Mesh* mesh_ = nullptr;
+    Field_Data f_data;
 
-    double t_ = 0;  // time       [s ]
-    double f_ = 0;  // frequency  [Hz]
 
-    Field(const Mesh& mesh);
+    Field() = default;
+    Field(const Mesh& mesh) { f_data.mesh = &mesh; }
 
 public:
-    
+    void set_mesh(const Mesh& m)   { f_data.mesh = &m; }
+    void set_time(double t)        { f_data.t = t; }
+    void set_frequency(double f)   { f_data.f = f; }
 
 };
 

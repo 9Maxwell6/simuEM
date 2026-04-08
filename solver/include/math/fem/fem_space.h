@@ -96,11 +96,11 @@ public:
 
 
     // in case Basis_Shape is known (e.g. implementation from Hcurl_tetrahedron)
-    virtual void get_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {};
 
-    virtual void get_ED_basis_s(const Integration_Point& p, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_ED_basis_v(const Integration_Point& p, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {};
 
 
     

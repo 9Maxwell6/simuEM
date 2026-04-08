@@ -54,7 +54,7 @@ const size_t * Tetrahedron::get_node_idx() const
 }
 
 
-bool Tetrahedron::compute_Jacobian(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> J) const 
+bool Tetrahedron::compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> J) const 
 {
    switch (o_)
    {
@@ -78,7 +78,7 @@ bool Tetrahedron::compute_Jacobian(const Mesh& mesh, const Integration_Point& i_
    }
 }
 
-void Tetrahedron::compute_D_shape(const Mesh& mesh, const Integration_Point& i_p, Eigen::Ref<MatrixXd> d_shape) const
+void Tetrahedron::compute_D_shape(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const
 {
    switch (o_)
    {
