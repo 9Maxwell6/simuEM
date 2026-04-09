@@ -148,7 +148,12 @@ if(UNIX)
     endif()
 
     if(USE_PETSC)
+        set(PETSC_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/petsc_data" CACHE PATH "Directory for petsc output data")
+        file(MAKE_DIRECTORY ${PETSC_DATA_OUTPUT_DIR})
+        
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PETSC)
+
+        target_compile_definitions(${PROJECT_NAME} PRIVATE PETSC_DATA_OUTPUT_DIR="${PETSC_DATA_OUTPUT_DIR}")
         target_compile_definitions(${PROJECT_NAME} PRIVATE LOAD_PETSC)
 
         #set(LOAD_PETSC ON)

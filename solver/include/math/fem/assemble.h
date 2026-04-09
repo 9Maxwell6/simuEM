@@ -78,6 +78,8 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
             data.col_dof_offset += col_size;
             
         }
+        petsc_util::finalize_matrix(*data.block_matrix);
+        petsc_util::save_ascii_mat(*data.block_matrix, "test.txt");
     };
 
     int phy_dim = data.mesh_dim;
