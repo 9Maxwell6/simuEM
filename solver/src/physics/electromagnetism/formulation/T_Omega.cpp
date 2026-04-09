@@ -227,7 +227,39 @@ bool T_Omega::assemble_system()
 
     }
     //*/
-    fe_system_.assemble_vec_data(dof_Omega_);
+
+
+
+    V_Field_function f([](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        v(0) = std::sin(x(0));
+        v(1) = std::cos(x(1));
+        v(2) = std::cos(x(2));
+    });
+
+    Logger::info("[T_Omega] - assemble RHS vector for Omega block.");
+    assemble_vec(fe_system_.assemble_vec_data(dof_Omega_), [&](auto& e_data, auto& vec) {
+        double mu = 0.;
+        if(e_data.e->get_property_id()==3) mu = 1.;
+
+        Integrator__v__grad_S::assemble_element_vector(f, e_data, vec);
+        
+
+    });
+
+
+
+    Logger::info("[T_Omega] - assemble RHS vector for T-field block.");
+    for(Block& dof_T : dof_T_)
+    {
+        assemble_vec(fe_system_.assemble_vec_data(dof_T), [&](auto& e_data, auto& vec) {
+
+
+            Integrator__v__V::assemble_element_vector(f, e_data, vec);
+
+        });
+
+    }
+
 
     
 

@@ -4,6 +4,9 @@
 #include "math/fem/fem_space.h"
 #include "math/fem/fem_system.h"
 #include "math/fem/assemble.h"
+
+#include "math/field/field_function.h"
+
 #include "utils/util_string.h"
 
 

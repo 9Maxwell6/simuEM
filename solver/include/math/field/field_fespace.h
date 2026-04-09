@@ -27,9 +27,7 @@ public:
                     const std::vector<double>& value);
 
     template<int phy_dim, int ref_dim>
-    double eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const {
-        
-    }
+    double eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const;
 
     
 
@@ -59,9 +57,7 @@ public:
                   const std::vector<double>& value);
 
     template<int phy_dim, int ref_dim>
-    void eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data, Eigen::Ref<VectorXd> value) const {
-
-    }
+    void eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data, Eigen::Ref<VectorXd> value) const;
 
     void reset_dof_counter() {dof_counter = 0;};
 

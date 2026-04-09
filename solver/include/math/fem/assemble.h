@@ -25,7 +25,7 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
 
         user_operation(e_data, local_mat);
 
-        Operation::dof_transformation(e_data, local_mat);
+        Operation::dof_transformation_mat(e_data, local_mat);
 
         Operation::add_to_global_mat(data, local_mat);
 
@@ -107,15 +107,15 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
         return 0;
     }
 
-    auto assemble_local = [&](auto& e_data, auto& local_mat, const auto& user_operation)
+    auto assemble_local = [&](auto& e_data, auto& local_vec, const auto& user_operation)
     {        
-        local_mat.setZero();
+        local_vec.setZero();
 
-        user_operation(e_data, local_mat);
+        user_operation(e_data, local_vec);
 
-        Operation::dof_transformation(e_data, local_mat);
+        Operation::dof_transformation_vec(e_data, local_vec);
 
-        //Operation::add_to_global(data, local_mat);
+        Operation::add_to_global_vec(data, local_vec);
 
     };
 

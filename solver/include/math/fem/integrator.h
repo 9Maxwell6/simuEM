@@ -33,7 +33,7 @@ protected:
 
     //virtual  void assemble_element_matrix();
 public:
-    static constexpr int SIZE = 8;
+    static constexpr int SIZE = 10;
 
 };
 

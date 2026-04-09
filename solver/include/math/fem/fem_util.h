@@ -115,7 +115,7 @@
     template void Class::Method(__VA_ARGS__ Vector<3>&);                                             \
     template void Class::Method(__VA_ARGS__ Vector<4>&);                                             \
     template void Class::Method(__VA_ARGS__ Vector<6>&);                                             \
-    template void Class::Method(__VA_ARGS__ MatrixXd& );                                            
+    template void Class::Method(__VA_ARGS__ VectorXd& );                                            
 
 
 #define INSTANTIATE_VEC_TEMPLATE(Class, Method)                                                      \

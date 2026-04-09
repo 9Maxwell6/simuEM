@@ -73,12 +73,11 @@ Vector<phy_dim> Element_Data<phy_dim, ref_dim>::physical_point(const Ref_Coord& 
 
     int geo_node_num = e->get_geometry_node_num();
     // TODO: higher geometry order not support yet, mesh object should provide extra nodes for higher order elements.
-    // mesh->
+    // possible idea: using Bounding volume hierarchy (BVH) algorithm to quickly locate current element in mesh. then get all the higher order nodes.
 
     VectorXd shape(geo_node_num);
 
     e->compute_shape(ref_coord, shape);
-    
 
     for(int i=0; i<node_num; ++i)
     {
