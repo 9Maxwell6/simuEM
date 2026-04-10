@@ -236,9 +236,9 @@ bool FEM_System::generate_block_dof(Block& block)
     bh.set_volume_count(volume_dof_counter);
 
 
-    
-    block.row_size = fe_block_dof.size();
-    block.col_size = fe_block_dof.size();
+    size_t dof_size = bh.get_node_count() + bh.get_edge_count() + bh.get_face_count() + bh.get_volume_count();
+    block.row_size = dof_size;
+    block.col_size = dof_size;
     fe_block_dof_data_[block] = std::move(fe_block_dof);
     fe_block_hash_[block] = std::move(bh);
 

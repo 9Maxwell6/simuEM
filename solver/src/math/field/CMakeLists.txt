@@ -5,5 +5,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     field_function.cpp
     field_visualizer.cpp)
 
-target_sources(${PROJECT_GUI} PRIVATE 
-    field_visualizer.cpp)
+if(ENABLE_GUI)
+    target_sources(${PROJECT_GUI} PRIVATE 
+        field_visualizer.cpp)
+endif()

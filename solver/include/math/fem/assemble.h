@@ -80,6 +80,8 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
         }
         petsc_util::finalize_matrix(*data.block_matrix);
         petsc_util::save_ascii_mat(*data.block_matrix, "test.txt");
+        
+        exit(0);
     };
 
     int phy_dim = data.mesh_dim;

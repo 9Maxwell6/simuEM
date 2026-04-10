@@ -185,7 +185,7 @@ bool T_Omega::assemble_system()
     
     Logger::info("[T_Omega] - assemble Omega-field block matrix.");
     assemble_mat(fe_system_.assemble_mat_data(dof_Omega_), [&](auto& e_data, auto& mat) {
-        double sigma = 0.;
+        double sigma = 1.;
         if(e_data.e->get_property_id()==3) sigma = 1.;
         //std::cout<<e_data.e->get_property_id()<<std::endl;
 
@@ -200,7 +200,7 @@ bool T_Omega::assemble_system()
     for(Block& dof_T : dof_T_)
     {
         assemble_mat(fe_system_.assemble_mat_data(dof_T), [&](auto& e_data, auto& mat) {
-            double sigma = 0.;
+            double sigma = 1.;
             if(e_data.e->get_property_id()==3) sigma = 1.;
 
             Integrator__s_curl_V__curl_V::assemble_element_matrix(sigma, e_data, mat);
@@ -216,7 +216,7 @@ bool T_Omega::assemble_system()
     for(Block& dof_coupling : dof_coupling_)
     {
         assemble_mat(fe_system_.assemble_mat_data(dof_coupling), [&](auto& e_data, auto& mat) {
-            double sigma = 0.;
+            double sigma = 1.;
             if(e_data.e->get_property_id()==3) sigma = 1.;
 
             
@@ -238,7 +238,7 @@ bool T_Omega::assemble_system()
 
     Logger::info("[T_Omega] - assemble RHS vector for Omega block.");
     assemble_vec(fe_system_.assemble_vec_data(dof_Omega_), [&](auto& e_data, auto& vec) {
-        double mu = 0.;
+        double mu = 1.;
         if(e_data.e->get_property_id()==3) mu = 1.;
 
         Integrator__v__grad_S::assemble_element_vector(f, e_data, vec);
