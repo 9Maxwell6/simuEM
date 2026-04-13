@@ -9,6 +9,7 @@
 #include "math/fem/space_Hcurl.h"
 
 #include "utils/logger.h"
+#include "utils/util_la.h"
 
 #include <Eigen/Dense>
 #include <stdio.h>
@@ -16,6 +17,7 @@
 #include "entity/mesh/mesh_parser.h"
 #include "physics/electromagnetism/formulation/T_Omega.h"
 #include "physics/electromagnetism/mfem_eddy_current.h"
+
 
 using namespace simu;
 
@@ -26,6 +28,7 @@ int main(int argc, char** argv) {
     Mesh mesh = mp.load_mesh(SCRIPT_PATH "test_mesh_0_v2.2.msh");
     Logger::stop_timer("Loading mesh");
 
+    la_kernel::initialize(&argc, &argv);
 
     Logger::start_timer("Initialize T-Omega solver");
     T_Omega T_O(mesh);
@@ -34,9 +37,6 @@ int main(int argc, char** argv) {
     
 
     Logger::start_timer("Assemble T-Omega matrix system");
-    #ifdef LOAD_PETSC
-        PetscCall(PetscInitialize(&argc, &argv, 0, 0));
-    #endif
     
     T_O.assemble_system();
     Logger::stop_timer("Assemble T-Omega matrix system");
@@ -45,10 +45,7 @@ int main(int argc, char** argv) {
 
     //MFEM_Eddy_Current(SCRIPT_PATH "test_mesh_0_v2.2.msh");
 
-
-    #ifdef LOAD_PETSC
-        PetscCall(PetscFinalize());
-    #endif
+    la_kernel::finalize();
 
 
     Logger::export_to_file("simuEM.log");

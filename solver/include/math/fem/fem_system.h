@@ -6,6 +6,7 @@
 #include "entity/mesh/e_collection.h"
 #include "math/fem/block_rack.h"
 #include "entity/mesh/mesh.h"
+#include "math/data_format.h"
 #include "math/fem/assemble_data.h"
 #include "math/fem/fem_util.h"
 
@@ -16,6 +17,8 @@
 
 #include "utils/util_hash.h"
 #include "utils/util_petsc.h"
+#include "utils/util_la.h"
+
 
 #include <utility>
 
@@ -79,8 +82,8 @@ private:
     
     size_t block_id_;
     std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
-    std::unordered_map<Block, G_Matrix,            Block::Hash> fe_block_mat_;
-    std::unordered_map<Block, G_Vector,            Block::Hash> fe_block_vec_;
+    //std::unordered_map<Block, G_Matrix,            Block::Hash> fe_block_mat_;
+    //std::unordered_map<Block, G_Vector,            Block::Hash> fe_block_vec_;
 
     // for basic block
     std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
@@ -171,17 +174,7 @@ public:
 
     // use only after every dof table of blocks are initialized
     void delete_block_hash() { fe_block_hash_.clear(); }
-    void delete_block_matrix()
-    {
-        for (auto& [block, mat] : fe_block_mat_) 
-        {
-        #ifdef LOAD_PETSC
-            petsc_util::destroy_petsc_matrix(mat);
-        #else
-            mat.reset();
-        #endif
-        }
-    }
+
 
     // TODO:
     Block transpose_block(const Block& block);
@@ -189,9 +182,9 @@ public:
     Block_Rack initialize_block_rack(size_t n_row, size_t n_col);
 
     
-    Assemble_Data assemble_mat_data(const Block& block);
+    Assemble_Data assemble_mat_data(Block& block);
     
-    Assemble_Data assemble_vec_data(const Block& block);  // block must be base_block.
+    Assemble_Data assemble_vec_data(Block& block);  // block must be base_block.
 
 
 };

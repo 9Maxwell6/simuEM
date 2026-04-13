@@ -101,12 +101,16 @@ void Operation::add_to_global_mat(const Assemble_Data& data, Mat_Type& element_m
     const auto rows = element_matrix.rows();
     const auto cols = element_matrix.cols();
 
+    la_kernel::add_to_mat(element_matrix.rows(), &(*data.row_dof)[data.row_dof_offset], 
+                          element_matrix.rows(), &(*data.row_dof)[data.row_dof_offset], 
+                          element_matrix.data(), data.block_matrix);
+
 #ifdef LOAD_PETSC
     // G_Matrix: using petsc Mat.
-    PetscCallVoid(MatSetValues(*data.block_matrix, 
-                                rows, &(*data.row_dof)[data.row_dof_offset], 
-                                cols, &(*data.col_dof)[data.col_dof_offset], 
-                                element_matrix.data(), ADD_VALUES));
+    //PetscCallVoid(MatSetValues(*data.block_matrix, 
+    //                            rows, &(*data.row_dof)[data.row_dof_offset], 
+    //                            cols, &(*data.col_dof)[data.col_dof_offset], 
+    //                            element_matrix.data(), ADD_VALUES));
 
 
 #elif
@@ -130,11 +134,14 @@ void Operation::add_to_global_vec(const Assemble_Data& data, Vec_Type& element_v
 {
     const auto rows = element_vector.size();
 
+    la_kernel::add_to_vec(element_vector.size(), &(*data.row_dof)[data.row_dof_offset], element_vector.data(), data.block_vector);
+
 #ifdef LOAD_PETSC
     // G_Vector using petsc Vec.
-    PetscCallVoid(VecSetValues(*data.block_vector, 
-                                rows, &(*data.row_dof)[data.row_dof_offset], 
-                                element_vector.data(), ADD_VALUES));
+    //PetscCallVoid(VecSetValues(*data.block_vector, 
+    //                           rows, &(*data.row_dof)[data.row_dof_offset], 
+    //                            element_vector.data(), ADD_VALUES));
+    
 
 
 

@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+#include <complex>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -31,6 +32,17 @@ using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
     using G_Vector = Vec;
     using dof_idx = PetscInt; 
     using size_d = PetscInt;
+
+    using scalar_t  = PetscScalar;
+
+    #if defined(PETSC_USE_COMPLEX)
+        
+        using real_t  = PetscScalar;  // std::complex<double>
+        using cplx_t  = PetscScalar;  // std::complex<double>
+    #else
+        using real_t  = PetscScalar;  // double
+        using cplx_t  = std::complex<PetscReal>;
+    #endif
 #else 
     // local element matrix: column major 
     template<int R, int C>
@@ -41,6 +53,11 @@ using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
     using G_Vector = std::shared_ptr<Eigen::Matrix<double, Eigen::Dynamic, 1>>;
     using dof_idx = size_t;   
     using size_d = int;
+
+    using scalar_t  = double;
+
+    using real_t  = double;
+    using cplx_t  = std::complex<double>;
 #endif
 
 }

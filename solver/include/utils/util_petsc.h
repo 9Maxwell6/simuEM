@@ -5,33 +5,48 @@
 
 #include <vector>
 
-namespace petsc_util 
-{
+namespace petsc_util {
 
-PetscErrorCode init_petsc_matrix(PetscInt rows, PetscInt cols, const std::vector<PetscInt>& nnz, Mat& mat);
-
-PetscErrorCode init_petsc_vector(PetscInt size, Vec& vec);
+PetscErrorCode petsc_initialize(int* argc, char*** argv);
+PetscErrorCode petsc_finalize();
 
 
-PetscErrorCode finalize_matrix(Mat& mat);
-PetscErrorCode finalize_vector(Vec& vec);
+PetscErrorCode petsc_init_mat(PetscInt rows, PetscInt cols, const std::vector<PetscInt>& nnz, Mat& mat);
+
+PetscErrorCode petsc_init_vec(PetscInt size, Vec& vec);
+
+PetscErrorCode petsc_add_to_mat(PetscInt row_size, const PetscInt rows[],
+                                PetscInt col_size, const PetscInt cols[],
+                                const PetscScalar values[], Mat mat);
+
+PetscErrorCode petsc_add_to_vec(PetscInt row_size, const PetscInt rows[], const PetscScalar values[], Vec vec);
+
+PetscErrorCode petsc_finalize_mat(Mat mat);
+PetscErrorCode petsc_finalize_vec(Vec vec);
 
 
-PetscErrorCode destroy_petsc_matrix(Mat& mat);
+PetscErrorCode petsc_destroy_mat(Mat& mat);
+PetscErrorCode petsc_destroy_vec(Vec& vec);
 
-PetscErrorCode save_matrix(Mat& mat, const std::string& file_name);
-PetscErrorCode load_matrix(Mat& mat, const std::string& file_name);
-PetscErrorCode save_vector(Vec& vec, const std::string& file_name);
-PetscErrorCode load_vector(Vec& vec, const std::string& file_name);
+
+PetscErrorCode petsc_save_mat(Mat mat, const std::string& file_name);
+PetscErrorCode petsc_load_mat(Mat mat, const std::string& file_name);
+PetscErrorCode petsc_save_vec(Vec vec, const std::string& file_name);
+PetscErrorCode petsc_load_vec(Vec vec, const std::string& file_name);
+
+
+// resize petsc vec: need destory un-used petsc mat or vec
+PetscErrorCode petsc_resize_mat_list(std::vector<Mat>& mat_list, size_t size);
+PetscErrorCode petsc_resize_vec_list(std::vector<Vec>& vec_list, size_t size);
 
 
 
     // for debug
 
-PetscErrorCode print_matrix(Mat& mat, const std::string& name = "");
-PetscErrorCode print_vector(Mat& mat, const std::string& name = "");
-PetscErrorCode save_ascii_mat(Mat& mat, const std::string& file_name);
-PetscErrorCode save_ascii_vec(Mat& mat, const std::string& file_name);
+PetscErrorCode petsc_print_mat(Mat mat, const std::string& name = "");
+PetscErrorCode petsc_print_vec(Mat mat, const std::string& name = "");
+PetscErrorCode petsc_save_ascii_mat(Mat mat, const std::string& file_name);
+PetscErrorCode petsc_save_ascii_vec(Mat mat, const std::string& file_name);
 
 
 }

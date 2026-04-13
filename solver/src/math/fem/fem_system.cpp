@@ -839,7 +839,7 @@ std::vector<size_d> FEM_System::compute_nnz_per_row(
  * 
  * @param block block matrix to be assembled.
  */
-Assemble_Data FEM_System::assemble_mat_data(const Block& block) 
+Assemble_Data FEM_System::assemble_mat_data(Block& block) 
 {
     const FEM_Space* space_1;
     const FEM_Space* space_2;
@@ -875,14 +875,14 @@ Assemble_Data FEM_System::assemble_mat_data(const Block& block)
                                                   space_2, block_col_dof, block.col_size,
                                                   elements);
     // pre-allocate block matrix
-    G_Matrix& mat = fe_block_mat_[block];
-    #ifdef LOAD_PETSC
-        petsc_util::init_petsc_matrix(block.row_size, block.col_size, nnz, mat);
-    #else
-        mat = std::make_shared<Eigen::SparseMatrix<double>>(block.row_size, block.col_size);
-        Eigen::VectorXi nnz_eigen(nnz.begin(), nnz.end());
-        mat->reserve(nnz_eigen);
-    #endif
+    la_kernel::init_mat(block.row_size, block.col_size, nnz, block.mat);
+    //#ifdef LOAD_PETSC
+    //    petsc_util::init_petsc_matrix(block.row_size, block.col_size, nnz, block.mat);
+    //#else
+    //    block.mat = std::make_shared<Eigen::SparseMatrix<double>>(block.row_size, block.col_size);
+    //    Eigen::VectorXi nnz_eigen(nnz.begin(), nnz.end());
+    //    block.mat->reserve(nnz_eigen);
+    //#endif
 
     return Assemble_Data{
         .mesh_dim = dim_, 
@@ -895,7 +895,7 @@ Assemble_Data FEM_System::assemble_mat_data(const Block& block)
         .elements = elements,
         .row_dof = block_row_dof,
         .col_dof = block_col_dof,
-        .block_matrix = &mat,
+        .block_matrix = block.mat,
         .integration_rule = integration_rule_
     };
 
@@ -908,7 +908,7 @@ Assemble_Data FEM_System::assemble_mat_data(const Block& block)
  * 
  * @param block block with elements to be assembled.
  */
-Assemble_Data FEM_System::assemble_vec_data(const Block& block) 
+Assemble_Data FEM_System::assemble_vec_data(Block& block) 
 {
     if(!block.is_base_block){
         Logger::error("FEM_System::assemble_vec_data - block must be base block (diagonal block).");
@@ -928,13 +928,13 @@ Assemble_Data FEM_System::assemble_vec_data(const Block& block)
 
     const std::vector<Element*>* elements = &mesh_.get_element_group(group_key);
 
-    // pre-allocate block matrix
-    G_Vector& vec = fe_block_vec_[block];
-    #ifdef LOAD_PETSC
-        petsc_util::init_petsc_vector(block.row_size, vec);
-    #else
-        vec = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Zero(block.row_size));
-    #endif
+    // pre-allocate block vector
+    la_kernel::init_vec(block.row_size, block.vec);
+    //#ifdef LOAD_PETSC
+    //    petsc_util::init_petsc_vector(block.row_size, block.vec);
+    //#else
+    //    block.vec = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Zero(block.row_size));
+    //#endif
 
     return Assemble_Data{
         .mesh_dim = dim_, 
@@ -944,7 +944,7 @@ Assemble_Data FEM_System::assemble_vec_data(const Block& block)
         .space_1 = space_1,
         .elements = elements,
         .row_dof = block_row_dof,
-        .block_vector = &vec,
+        .block_vector = block.vec,
         .integration_rule = integration_rule_
     };
 

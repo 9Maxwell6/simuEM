@@ -1,6 +1,8 @@
 #pragma once
 
 #include "utils/logger.h"
+#include "utils/util_la.h"
+#include "math/data_format.h"
 
 
 #include <cstddef>
@@ -18,6 +20,9 @@ struct Block
     size_t col_size;
 
     bool is_base_block;
+
+    G_Matrix mat;
+    G_Vector vec;  // only initialized if is_base_block == true; 
 
 
     bool operator==(const Block& other) const { return id == other.id; }
@@ -45,7 +50,10 @@ private:
     size_t n_row_; 
     size_t n_col_; 
 
-    std::vector<Block*> rack_;
+    std::vector<Block*>  rack_;
+
+    std::vector<G_Matrix> lhs_;  // pointer to actual sparse matrix, block index align with rack_.
+    std::vector<G_Vector> rhs_;  // dof align with diagonal block. (total size of n_row_)
 
     std::vector<size_t> unit_row_length_;
     std::vector<size_t> unit_col_length_;
@@ -62,6 +70,12 @@ public:
     bool compute_block_offset();
 
     std::string print_block_rack() const;
+
+    void delete_data()
+    {
+        for (G_Matrix mat : lhs_) la_kernel::destroy_mat(mat);
+        for (G_Vector vec : rhs_) la_kernel::destroy_vec(vec);
+    }
 
 
     
