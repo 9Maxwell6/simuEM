@@ -52,9 +52,6 @@ private:
 
     std::vector<Block*>  rack_;
 
-    std::vector<G_Matrix> lhs_;  // pointer to actual sparse matrix, block index align with rack_.
-    std::vector<G_Vector> rhs_;  // dof align with diagonal block. (total size of n_row_)
-
     std::vector<size_t> unit_row_length_;
     std::vector<size_t> unit_col_length_;
 
@@ -71,11 +68,7 @@ public:
 
     std::string print_block_rack() const;
 
-    void delete_data()
-    {
-        for (G_Matrix mat : lhs_) la_kernel::destroy_mat(mat);
-        for (G_Vector vec : rhs_) la_kernel::destroy_vec(vec);
-    }
+    void delete_data();
 
 
     

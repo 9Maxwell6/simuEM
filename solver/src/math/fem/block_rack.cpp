@@ -7,9 +7,6 @@ Block_Rack::Block_Rack(size_t n_row, size_t n_col) : n_row_(n_row), n_col_(n_col
     rack_.resize(n_row * n_col);
     unit_row_length_.resize(n_row);
     unit_col_length_.resize(n_col);
-
-    la_kernel::resize_mat_list(lhs_, n_row * n_col);
-    la_kernel::resize_vec_list(rhs_, n_row);
     
 }
 
@@ -21,8 +18,6 @@ void Block_Rack::set_grid(size_t n_row, size_t n_col)
     unit_row_length_.resize(n_row);
     unit_col_length_.resize(n_col);
 
-    la_kernel::resize_mat_list(lhs_, n_row * n_col);
-    la_kernel::resize_vec_list(rhs_, n_row);
 }
 
 bool Block_Rack::insert_block(Block& block, size_t row, size_t col)
@@ -35,10 +30,6 @@ bool Block_Rack::insert_block(Block& block, size_t row, size_t col)
 
     unit_row_length_[row] = block.row_size;
     unit_col_length_[col] = block.col_size;
-
-    lhs_[row*n_col_ +col] = block.mat;
-
-    if(block.is_base_block) rhs_[row] = block.vec;
 
     rack_[row*n_col_ +col] = &block;
 
@@ -98,4 +89,18 @@ std::string Block_Rack::print_block_rack() const
     out << sep << '\n';
 
     return out.str();
+}
+
+
+void Block_Rack::delete_data()
+{
+    for (Block* block : rack_)
+    {
+        if(block != nullptr)
+        {
+            la_kernel::destroy_mat(block->mat);
+            if(block->is_base_block) 
+                la_kernel::destroy_vec(block->vec);
+        }
+    }
 }
