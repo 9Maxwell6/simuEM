@@ -63,6 +63,28 @@ bool Block_Rack::compute_block_offset()
     return true;
 }
 
+
+
+void Block_Rack::build_linear_system()
+{
+    std::vector<G_Matrix> block_mat_list;
+    for(Block* block : rack_)
+    {
+        block_mat_list.push_back(block->mat);
+    }
+
+    std::vector<G_Vector> block_vec_list;
+    for(Block* block : rack_)
+    {
+        if(block->is_base_block) block_vec_list.push_back(block->vec);
+    }
+
+    
+}
+
+
+
+
 std::string Block_Rack::print_block_rack() const
 {
     // get length of digits of the largest block id

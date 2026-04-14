@@ -275,9 +275,9 @@ bool FEM_System::generate_block_dof(Block& block)
  */
 bool FEM_System::generate_coupling_block_dof(Block& block)
 {
-    const std::array<Block, 2>& block_list = get_coupled_block(block);
-    const Block& block_1 = block_list[0];
-    const Block& block_2 = block_list[1];
+    const std::array<const Block*, 2>& block_list = get_coupled_block(block);
+    const Block& block_1 = *block_list[0];
+    const Block& block_2 = *block_list[1];
 
     if((!block_1.is_base_block) || (!block_2.is_base_block))
     {
@@ -533,9 +533,9 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
     block_id_++;
     Block new_block = {block_id_, 0, 0, 0, 0, false};
 
-    std::array<Block, 2>& block_pair =  coupled_block_[new_block];
-    block_pair[0] = block_1;
-    block_pair[1] = block_2;
+    std::array<const Block*, 2>& block_pair =  coupled_block_[new_block];
+    block_pair[0] = &block_1;
+    block_pair[1] = &block_2;
 
     std::array<const FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
     block_space_pair[0] = fe_space_1;
@@ -592,13 +592,13 @@ const util::Block_Hash& FEM_System::get_block_hash(const Block& block) const
     return empty;
 }
 
-const std::array<Block, 2>& FEM_System::get_coupled_block(const Block& block) const
+const std::array<const Block*, 2>& FEM_System::get_coupled_block(const Block& block) const
 {
     auto it = coupled_block_.find(block);
     if (it != coupled_block_.end()) return it->second;
 
     Logger::error("Mesh::get_coupled_block - failed: block not found, return empty list of block.");
-    static const std::array<Block, 2> empty{};
+    static const std::array<const Block*, 2> empty{};
     return empty;
 }
 
@@ -635,13 +635,13 @@ Block FEM_System::transpose_block(const Block& block)
 
     if(!block.is_base_block)
     {
-        const std::array<Block, 2>& block_list = get_coupled_block(block);
-        const Block& block_1 = block_list[0];
-        const Block& block_2 = block_list[1];
+        const std::array<const Block*, 2>& block_list = get_coupled_block(block);
+        const Block& block_1 = *block_list[0];
+        const Block& block_2 = *block_list[1];
 
-        std::array<Block, 2>& block_pair =  coupled_block_[new_block];
-        block_pair[0] = block_2;
-        block_pair[1] = block_1;
+        std::array<const Block*, 2>& block_pair =  coupled_block_[new_block];
+        block_pair[0] = &block_2;
+        block_pair[1] = &block_1;
 
         const std::array<const FEM_Space *, 2>& fe_space_list = get_coupled_block_space(block);
         const FEM_Space * fe_space_1 = fe_space_list[0];
@@ -662,9 +662,12 @@ Block FEM_System::transpose_block(const Block& block)
         auto it = fe_block_key_.find(block);
         if (it != fe_block_key_.end()) fe_block_key_[new_block] = it->second;
 
-
-
     }
+
+    // add relation between the block.
+    std::vector<Block*>& block_transpose_list = fe_block_transpose_[block];
+    block_transpose_list.push_back(&new_block);
+
     
     return new_block;
 
@@ -893,6 +896,7 @@ Assemble_Data FEM_System::assemble_mat_data(Block& block)
         .space_1 = space_1,
         .space_2 = space_2,
         .elements = elements,
+        .block_transpose = &fe_block_transpose_[block],
         .row_dof = block_row_dof,
         .col_dof = block_col_dof,
         .block_matrix = block.mat,

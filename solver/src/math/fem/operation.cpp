@@ -98,11 +98,9 @@ INSTANTIATE_ELEMENT_VEC_TEMPLATE(Operation, dof_transformation_vec)
 template<typename Mat_Type>
 void Operation::add_to_global_mat(const Assemble_Data& data, Mat_Type& element_matrix)
 {
-    const auto rows = element_matrix.rows();
-    const auto cols = element_matrix.cols();
 
     la_kernel::add_to_mat(element_matrix.rows(), &(*data.row_dof)[data.row_dof_offset], 
-                          element_matrix.rows(), &(*data.row_dof)[data.row_dof_offset], 
+                          element_matrix.cols(), &(*data.col_dof)[data.col_dof_offset], 
                           element_matrix.data(), data.block_matrix);
 
 #ifdef LOAD_PETSC

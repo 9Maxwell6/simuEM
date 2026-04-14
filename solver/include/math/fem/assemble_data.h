@@ -3,6 +3,8 @@
 #include "math/fem/space_collection.h"
 #include "entity/mesh/mesh.h"
 #include "math/fem/integrator.h"
+#include "math/fem/block.h"
+
 
 #include <mutex>
 
@@ -26,6 +28,10 @@ struct Assemble_Data
     const FEM_Space* space_2;  // trial space
 
     const std::vector<Element*>* elements;
+
+    // assembled data can be directly applied to following block matrices.
+    const std::vector<Block*>* block_transpose;
+    // TODO: add other relations. see fem_system.h - block relation
 
     const std::vector<dof_idx>* row_dof;
     const std::vector<dof_idx>* col_dof;

@@ -92,9 +92,9 @@ private:
     std::unordered_map<Block, util::Block_Hash,    Block::Hash> fe_block_hash_;
 
     // for coupling block
-    std::unordered_map<Block, std::array<Block, 2>,                       Block::Hash> coupled_block_;
-    std::unordered_map<Block, std::array<const FEM_Space *, 2>,                 Block::Hash> coupled_block_space_;
-    std::unordered_map<Block, std::array<const std::vector<dof_idx> *, 2>, Block::Hash> coupled_block_dof_;
+    std::unordered_map<Block, std::array<const Block*, 2>,                  Block::Hash> coupled_block_;
+    std::unordered_map<Block, std::array<const FEM_Space*, 2>,              Block::Hash> coupled_block_space_;
+    std::unordered_map<Block, std::array<const std::vector<dof_idx>*, 2>,   Block::Hash> coupled_block_dof_;
     
 
     // store actual coupling block dof data, this is to avoid copy when transpose of block is applied.
@@ -106,6 +106,12 @@ private:
     std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash> integration_rule_;
 
     
+    // block relation:
+    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_transpose_;   // implemented
+    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_identical_;   // not implemented
+    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_conjugate_;   // not implemented
+    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_adjoint_;     // not implemented
+    // to be added...
 
 
     // coupling between space need two block:   and dof list from each block
@@ -168,8 +174,8 @@ public:
     const std::vector<dof_idx> * get_block_dof(const Block& block) const;
     const util::Block_Hash& get_block_hash(const Block& block) const;
 
-    const std::array<Block, 2>& get_coupled_block(const Block& block) const;
-    const std::array<const FEM_Space *, 2>& get_coupled_block_space(const Block& block) const;
+    const std::array<const Block*,                 2>& get_coupled_block(const Block& block) const;
+    const std::array<const FEM_Space *,            2>& get_coupled_block_space(const Block& block) const;
     const std::array<const std::vector<dof_idx> * ,2>& get_coupled_block_dof(const Block& block) const; 
 
     // use only after every dof table of blocks are initialized

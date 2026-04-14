@@ -90,7 +90,11 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
     else if (phy_dim == 2 && ref_dim == 1) { static Element_Data<2,1> e_data; assemble_global(e_data, user_operation); }
     else if (phy_dim == 1 && ref_dim == 1) { static Element_Data<1,1> e_data; assemble_global(e_data, user_operation); }
 
+    la_kernel::finalize_mat(data.block_matrix);
 
+    for(Block* block : *data.block_transpose) la_kernel::create_transpose(data.block_matrix, block->mat);
+        
+    
 
     return true;
 }
@@ -174,6 +178,7 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
     else if (phy_dim == 1 && ref_dim == 1) { static Element_Data<1,1> e_data; assemble_global(e_data, user_operation); }
 
 
+    la_kernel::finalize_vec(data.block_vector);
 
     return true;
 }

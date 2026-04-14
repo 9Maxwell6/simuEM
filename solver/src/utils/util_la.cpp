@@ -46,6 +46,41 @@ void init_vec(size_t row_size, G_Vector& vec)
 }
 
 
+void create_transpose(const G_Matrix mat_A, G_Matrix &mat_B)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_create_transpose(mat_A, mat_B);  // no copy
+    #else
+        mat_B = std::make_shared<Eigen::SparseMatrix<scalar_t>>(mat_A->transpose());  // copy
+    #endif
+}
+
+
+
+void create_nest_mat(size_d b_row_size, size_d b_col_size, const std::vector<G_Matrix> &block_mat, G_Matrix& mat)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_create_nest_mat(b_row_size, b_col_size, block_mat, mat);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::create_nest_mat: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+void create_nest_vec(const std::vector<G_Vector>& block_vec, G_Vector &vec)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_create_nest_vec(block_vec, vec);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::create_nest_vec: default implementation not ready, only petsc version available.");
+    #endif
+    
+}
+
+
 
 void destroy_mat(G_Matrix& mat)
 {
@@ -97,6 +132,26 @@ void add_to_vec(size_d row_size, const size_d rows[], const scalar_t values[], G
     #endif
 }
 
+
+
+
+void finalize_mat(G_Matrix mat)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_finalize_mat(mat);
+    #else
+        mat->makeCompressed();      
+    #endif
+}
+
+
+
+void finalize_vec(G_Vector vec)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_finalize_vec(vec);
+    #endif
+}
 
 
 

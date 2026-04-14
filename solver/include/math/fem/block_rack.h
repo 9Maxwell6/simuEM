@@ -2,35 +2,14 @@
 
 #include "utils/logger.h"
 #include "utils/util_la.h"
+
+#include "math/fem/block.h"
 #include "math/data_format.h"
 
 
-#include <cstddef>
-#include <functional>
 
 
 namespace simu {
-
-struct Block 
-{
-    size_t id; 
-    size_t row_offset;
-    size_t col_offset;
-    size_t row_size;
-    size_t col_size;
-
-    bool is_base_block;
-
-    G_Matrix mat;
-    G_Vector vec;  // only initialized if is_base_block == true; 
-
-
-    bool operator==(const Block& other) const { return id == other.id; }
-
-    struct Hash { size_t operator()(const Block& b) const { return std::hash<size_t>{}(b.id);} };
-};
-
-
 
 /**
  * 
@@ -55,6 +34,10 @@ private:
     std::vector<size_t> unit_row_length_;
     std::vector<size_t> unit_col_length_;
 
+    G_Matrix lhs_;
+    G_Vector rhs_;
+    G_Vector   x_;    // solution
+
     
 public:
     Block_Rack(){};
@@ -69,6 +52,14 @@ public:
     std::string print_block_rack() const;
 
     void delete_data();
+
+    void build_linear_system();
+
+
+
+    //TODO
+    //void initial_guess();
+
 
 
     

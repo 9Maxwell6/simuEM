@@ -47,18 +47,18 @@ PetscErrorCode petsc_finalize()
  * 
  * TODO: currently only support sequential sparse matrix, extend it to mpi-version.
  *
- * @param rows  total number of rows.
- * @param cols  total number of columns.
- * @param nnz   number of nonzeros per row (length must equal rows).
- * @param mat   PETSc matrix to be created and preallocated.
+ * @param row_size  total number of rows.
+ * @param col_size  total number of columns.
+ * @param nnz       number of nonzeros per row (length must equal rows).
+ * @param mat       PETSc matrix to be created and preallocated.
  *
- * @return PETSc error code.
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
  */
-PetscErrorCode petsc_init_mat(PetscInt rows, PetscInt cols, const std::vector<PetscInt>& nnz, Mat& mat)
+PetscErrorCode petsc_init_mat(PetscInt row_size, PetscInt col_size, const std::vector<PetscInt>& nnz, Mat& mat)
 {
     PetscFunctionBeginUser;
     PetscCall(MatCreate(PETSC_COMM_WORLD, &mat));
-    PetscCall(MatSetSizes(mat, PETSC_DECIDE, PETSC_DECIDE, rows, cols));
+    PetscCall(MatSetSizes(mat, PETSC_DECIDE, PETSC_DECIDE, row_size, col_size));
     PetscCall(MatSetType(mat, MATAIJ));
     PetscCall(MatSeqAIJSetPreallocation(mat, 0, nnz.data()));
     PetscCall(MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE));
@@ -76,6 +76,65 @@ PetscErrorCode petsc_init_vec(PetscInt size, Vec& vec)
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+
+
+
+/**
+ * @brief Create a virtual transpose view of a matrix.
+ *
+ * @note A must be at least created.
+ *
+ * @param A  source matrix.
+ * @param B  transpose view of A.
+ * 
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_create_transpose(const Mat A, Mat &B) 
+{ 
+    PetscFunctionBeginUser; 
+    PetscCall(MatCreateTranspose(A, &B)); 
+    PetscFunctionReturn(PETSC_SUCCESS); 
+}
+
+
+
+
+
+/**
+ * @brief Create a nested block matrix from an array of sub-matrices.
+ *
+ * @param comm        MPI communicator
+ * @param b_row_size  number of block rows
+ * @param b_col_size  number of block columns
+ * @param block_mat   sub-matrices in row-major order (size brows*bcols), NULL entries allowed (treated as zero blocks)
+ * @param mat         output: the assembled nest matrix
+ * 
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, const std::vector<Mat>& block_mat, Mat& mat)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatCreateNest(PETSC_COMM_WORLD, b_row_size, NULL, b_col_size, NULL, const_cast<Mat*>(block_mat.data()), &mat));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+/**
+ * @brief Create a nested vector by concatenating sub-vectors.
+ *
+ * @param block_vec  sub-vectors to concatenate.
+ * @param vec        output: concatenated nest vector.
+ * 
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_create_nest_vec(const std::vector<Vec>& block_vec, Vec &vec)
+{
+    PetscFunctionBeginUser;
+    PetscCall(VecCreateNest(PETSC_COMM_WORLD, (PetscInt)block_vec.size(), NULL, const_cast<Vec*>(block_vec.data()), &vec));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
 
 
 

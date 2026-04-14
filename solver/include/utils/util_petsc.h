@@ -11,9 +11,15 @@ PetscErrorCode petsc_initialize(int* argc, char*** argv);
 PetscErrorCode petsc_finalize();
 
 
-PetscErrorCode petsc_init_mat(PetscInt rows, PetscInt cols, const std::vector<PetscInt>& nnz, Mat& mat);
+PetscErrorCode petsc_init_mat(PetscInt row_size, PetscInt col_size, const std::vector<PetscInt>& nnz, Mat& mat);
 
 PetscErrorCode petsc_init_vec(PetscInt size, Vec& vec);
+
+PetscErrorCode petsc_create_transpose(const Mat mat_A, Mat &mat_B);
+
+PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, const std::vector<Mat> &block_mat, Mat& mat);
+PetscErrorCode petsc_create_nest_vec(const std::vector<Vec> &block_vec, Vec &vec);
+
 
 PetscErrorCode petsc_add_to_mat(PetscInt row_size, const PetscInt rows[],
                                 PetscInt col_size, const PetscInt cols[],
