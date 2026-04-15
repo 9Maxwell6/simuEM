@@ -554,6 +554,23 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
 }
 
 
+/**
+ * @brief apply Dirichlet BC to the target block.
+ * 
+ * @param block target block where Dirichlet BC will apply to.
+ * @param group_key mesh_key to group of elements, which are the boundary of the element group in target block.
+ * 
+ * @note this function require the hash table for this block, do not use FEM_System::delete_block_hash()
+ * before using this function.
+ * 
+ * @return TODO: should return the dof list?
+ */
+void FEM_System::register_Dirichlet_BC(const Block& block, const Key& group_key)
+{
+    
+}
+
+
 const FEM_Space* FEM_System::get_block_space(const Block& block) const
 {
     auto it = fe_block_space_.find(block);
@@ -665,22 +682,9 @@ Block FEM_System::transpose_block(const Block& block)
         fe_block_dof_[new_block] = get_block_dof(block);
     }
 
-
-
     fe_block_key_[new_block] = get_block_group_key(block);
 
-
-    
     return new_block;
-
-    
-
-
-    
-
-
-    // TODO: once block has PETSc matrix, compute transpose of the matrix and link to new block
-
 }
 
 

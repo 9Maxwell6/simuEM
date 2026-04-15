@@ -184,6 +184,10 @@ public:
     Assemble_Data assemble_vec_data(Block& block);  // block must be base_block.
 
 
+
+    void register_Dirichlet_BC(const Block& block, const Key& group_key);
+
+
 };
 
 }

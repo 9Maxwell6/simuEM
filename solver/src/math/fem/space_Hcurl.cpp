@@ -117,10 +117,10 @@ void Hcurl_triangle::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd>
     switch(p_)
     {
         case 1:
+            // (2D curl operator)
             // curl [1-y  , x    ]
             // curl [y    , 1-x  ]
             // curl [-y   , x    ]
-
             if (basis.rows() != 3 || basis.cols() != 1) {
                 throw std::invalid_argument("matrix must be 3x1 for p-1 H(curl) Triangle.");
             }
