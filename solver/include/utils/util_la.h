@@ -44,6 +44,9 @@ void add_to_vec(size_d row_size, const size_d rows[], const scalar_t values[], G
 void finalize_mat(G_Matrix mat);
 void finalize_vec(G_Vector vec);
 
+bool is_ready_mat(const G_Matrix mat);
+bool is_ready_vec(const G_Vector vec);
+
 
 void resize_mat_list(std::vector<G_Matrix>& mat_list, size_t size);
 void resize_vec_list(std::vector<G_Vector>& vec_list, size_t size);

@@ -29,10 +29,6 @@ struct Assemble_Data
 
     const std::vector<Element*>* elements;
 
-    // assembled data can be directly applied to following block matrices.
-    const std::vector<Block*>* block_transpose;
-    // TODO: add other relations. see fem_system.h - block relation
-
     const std::vector<dof_idx>* row_dof;
     const std::vector<dof_idx>* col_dof;
 

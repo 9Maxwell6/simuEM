@@ -6,6 +6,8 @@
 #include "math/fem/block.h"
 #include "math/data_format.h"
 
+// for test
+#include "utils/util_petsc.h"
 
 
 
@@ -46,19 +48,21 @@ public:
     void set_grid(size_t n_row, size_t n_col);
 
     bool insert_block(Block& block, size_t row, size_t col);
-
     bool compute_block_offset();
 
-    std::string print_block_rack() const;
-
-    void delete_data();
+    bool is_block_ready(const Block* block) const;
 
     void build_linear_system();
 
+    void delete_data();
+    
 
+    std::string print_block_rack() const;
 
-    //TODO
+    //TODO:
     //void initial_guess();
+
+    //TODO: Dirichlet BC
 
 
 

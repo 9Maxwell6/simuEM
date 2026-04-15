@@ -659,14 +659,16 @@ Block FEM_System::transpose_block(const Block& block)
         block_dof_pair[0] = block_dof_2;
         block_dof_pair[1] = block_dof_1;
 
-        auto it = fe_block_key_.find(block);
-        if (it != fe_block_key_.end()) fe_block_key_[new_block] = it->second;
-
+    }else{
+        // unusual case
+        fe_block_space_[new_block] = const_cast<FEM_Space*>(get_block_space(block));
+        fe_block_dof_[new_block] = get_block_dof(block);
     }
 
-    // add relation between the block.
-    std::vector<Block*>& block_transpose_list = fe_block_transpose_[block];
-    block_transpose_list.push_back(&new_block);
+
+
+    fe_block_key_[new_block] = get_block_group_key(block);
+
 
     
     return new_block;
@@ -896,7 +898,6 @@ Assemble_Data FEM_System::assemble_mat_data(Block& block)
         .space_1 = space_1,
         .space_2 = space_2,
         .elements = elements,
-        .block_transpose = &fe_block_transpose_[block],
         .row_dof = block_row_dof,
         .col_dof = block_col_dof,
         .block_matrix = block.mat,

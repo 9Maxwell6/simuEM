@@ -30,6 +30,11 @@ PetscErrorCode petsc_add_to_vec(PetscInt row_size, const PetscInt rows[], const 
 PetscErrorCode petsc_finalize_mat(Mat mat);
 PetscErrorCode petsc_finalize_vec(Vec vec);
 
+PetscErrorCode petsc_is_ready_mat(const Mat mat, PetscBool *ready);
+PetscErrorCode petsc_is_ready_vec(const Vec vec, PetscBool *ready);
+
+
+
 
 PetscErrorCode petsc_destroy_mat(Mat& mat);
 PetscErrorCode petsc_destroy_vec(Vec& vec);
@@ -52,7 +57,7 @@ PetscErrorCode petsc_resize_vec_list(std::vector<Vec>& vec_list, size_t size);
 PetscErrorCode petsc_print_mat(Mat mat, const std::string& name = "");
 PetscErrorCode petsc_print_vec(Mat mat, const std::string& name = "");
 PetscErrorCode petsc_save_ascii_mat(Mat mat, const std::string& file_name);
-PetscErrorCode petsc_save_ascii_vec(Mat mat, const std::string& file_name);
+PetscErrorCode petsc_save_ascii_vec(Vec vec, const std::string& file_name);
 
 
 }

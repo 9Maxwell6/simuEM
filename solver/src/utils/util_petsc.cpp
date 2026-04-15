@@ -89,10 +89,10 @@ PetscErrorCode petsc_init_vec(PetscInt size, Vec& vec)
  * 
  * @return PetscErrorCode  PETSC_SUCCESS on success.
  */
-PetscErrorCode petsc_create_transpose(const Mat A, Mat &B) 
+PetscErrorCode petsc_create_transpose(const Mat mat_A, Mat &mat_B) 
 { 
     PetscFunctionBeginUser; 
-    PetscCall(MatCreateTranspose(A, &B)); 
+    PetscCall(MatCreateTranspose(mat_A, &mat_B)); 
     PetscFunctionReturn(PETSC_SUCCESS); 
 }
 
@@ -198,6 +198,29 @@ PetscErrorCode petsc_finalize_vec(Vec vec)
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+
+
+PetscErrorCode petsc_is_ready_mat(const Mat mat, PetscBool *ready)
+{
+    PetscFunctionBeginUser;
+    if (!mat) { *ready = PETSC_FALSE; PetscFunctionReturn(PETSC_SUCCESS); }
+    PetscCall(MatAssembled(mat, ready));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_is_ready_vec(const Vec vec, PetscBool *ready)
+{
+    PetscFunctionBeginUser;
+    if (!vec) { *ready = PETSC_FALSE; PetscFunctionReturn(PETSC_SUCCESS); }
+    PetscInt size;
+    PetscCall(VecGetSize(vec, &size));
+    *ready = (size > 0) ? PETSC_TRUE : PETSC_FALSE;
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
 
 
 

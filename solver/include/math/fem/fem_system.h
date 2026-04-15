@@ -105,13 +105,6 @@ private:
     // usage: integration_rule_[Shape][order]    (make sure the length of outer vector >= required order)
     std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash> integration_rule_;
 
-    
-    // block relation:
-    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_transpose_;   // implemented
-    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_identical_;   // not implemented
-    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_conjugate_;   // not implemented
-    std::unordered_map<Block, std::vector<Block*>, Block::Hash> fe_block_adjoint_;     // not implemented
-    // to be added...
 
 
     // coupling between space need two block:   and dof list from each block

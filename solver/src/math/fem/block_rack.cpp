@@ -65,21 +65,45 @@ bool Block_Rack::compute_block_offset()
 
 
 
+bool Block_Rack::is_block_ready(const Block* block) const
+{
+    if(!block){ Logger::warning("Block_Rack::is_block_ready: block not ready - nullptr."); return false; }
+
+    bool mat_ready = la_kernel::is_ready_mat(block->mat);
+
+    if(!mat_ready) Logger::warning("Block_Rack::is_block_ready: block [id="+std::to_string(block->id)+"] not ready - mat not finalized."); 
+
+    bool vec_ready = true;
+    if(block->is_base_block)
+    {
+        vec_ready = la_kernel::is_ready_vec(block->vec);
+        if(!vec_ready) Logger::warning("Block_Rack::is_block_ready: block [id="+std::to_string(block->id)+"] not ready - vec not finalized.");
+
+    }
+
+    return mat_ready && vec_ready;
+}
+
+
 void Block_Rack::build_linear_system()
 {
     std::vector<G_Matrix> block_mat_list;
-    for(Block* block : rack_)
-    {
-        block_mat_list.push_back(block->mat);
-    }
-
     std::vector<G_Vector> block_vec_list;
     for(Block* block : rack_)
     {
+        if(!is_block_ready(block)) { Logger::error("Block_Rack::build_linear_system: block_rack not ready - missing block data."); return; }
+
+        block_mat_list.push_back(block->mat);
+
         if(block->is_base_block) block_vec_list.push_back(block->vec);
     }
 
-    
+    la_kernel::create_nest_mat(n_row_, n_col_, block_mat_list, lhs_);
+    la_kernel::create_nest_vec(block_vec_list, rhs_);
+
+    petsc_util::petsc_save_ascii_mat(lhs_,"lhs.txt");
+    petsc_util::petsc_save_ascii_vec(rhs_,"rhs.txt");
+
 }
 
 

@@ -92,9 +92,6 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
 
     la_kernel::finalize_mat(data.block_matrix);
 
-    for(Block* block : *data.block_transpose) la_kernel::create_transpose(data.block_matrix, block->mat);
-        
-    
 
     return true;
 }

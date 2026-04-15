@@ -21,7 +21,6 @@ class T_Omega
 private:
     Mesh& mesh_;
     FEM_System fe_system_;
-    Block_Rack br_l;
 
     H1_Space           Omega_space_;
     Block              dof_Omega_;
@@ -33,6 +32,7 @@ private:
     std::vector<Block> dof_coupling_tp_;
 
 
+    Block_Rack br_system_;
 
 
     int dim_;

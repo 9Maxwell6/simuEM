@@ -142,14 +142,14 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
     Logger::info("[T_Omega] - delete temporary block hash.");
     fe_system_.delete_block_hash();
 
-    Block_Rack br_l = fe_system_.initialize_block_rack(2, 2);
+    br_system_ = fe_system_.initialize_block_rack(2, 2);
     
-    br_l.insert_block(dof_Omega_,          0, 0);
-    br_l.insert_block(dof_T_[0],           1, 1);
-    br_l.insert_block(dof_coupling_[0],    0, 1);
-    br_l.insert_block(dof_coupling_tp_[0], 1, 0);
-    br_l.compute_block_offset();
-    Logger::info("[T_Omega] - initialize block rack: \n"+br_l.print_block_rack());
+    br_system_.insert_block(dof_Omega_,          0, 0);
+    br_system_.insert_block(dof_T_[0],           1, 1);
+    br_system_.insert_block(dof_coupling_[0],    0, 1);
+    br_system_.insert_block(dof_coupling_tp_[0], 1, 0);
+    br_system_.compute_block_offset();
+    Logger::info("[T_Omega] - initialize block rack: \n"+br_system_.print_block_rack());
 
     
 }
@@ -213,8 +213,10 @@ bool T_Omega::assemble_system()
 
     //*
     Logger::info("[T_Omega] - assemble coupling block matrix.");
-    for(Block& dof_coupling : dof_coupling_)
+    //for(Block& dof_coupling : dof_coupling_)
+    for(int i=0; i<dof_coupling_.size(); ++i)
     {
+        Block& dof_coupling = dof_coupling_[i];
         assemble_mat(fe_system_.assemble_mat_data(dof_coupling), [&](auto& e_data, auto& mat) {
             double sigma = 1.;
             if(e_data.e->get_property_id()==3) sigma = 1.;
@@ -224,10 +226,14 @@ bool T_Omega::assemble_system()
             Integrator__s_grad_S__V::assemble_element_matrix(sigma, e_data, mat);
 
         });
+        
 
+        Block& dof_coupling_tp = dof_coupling_tp_[i];
+        dof_coupling_tp.block_transpose(dof_coupling);
     }
     //*/
 
+    
 
 
     V_Field_function f([](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
@@ -261,8 +267,12 @@ bool T_Omega::assemble_system()
     }
 
 
-    
+    Logger::info("[T_Omega] - build linear system.");
+    br_system_.build_linear_system();
 
+
+    
+    return true;
 }
 
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "utils/logger.h"
+#include "utils/util_la.h"
+
 #include "math/data_format.h"
 
 
@@ -24,6 +26,9 @@ struct Block
     bool operator==(const Block& other) const { return id == other.id; }
 
     struct Hash { size_t operator()(const Block& b) const { return std::hash<size_t>{}(b.id);} };
+
+    // matrix operation:
+    void block_transpose(const Block& block);
 };
 
 

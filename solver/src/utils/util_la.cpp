@@ -155,6 +155,36 @@ void finalize_vec(G_Vector vec)
 
 
 
+bool is_ready_mat(const G_Matrix mat)
+{
+    #ifdef LOAD_PETSC
+        // strong check
+        PetscBool ready;
+        petsc_util::petsc_is_ready_mat(mat, &ready);
+        return (ready == PETSC_TRUE);
+    #else
+        // strong check
+        return mat && mat->rows()>0 && mat->cols()>0 && mat->isCompressed();
+    #endif
+
+}
+
+
+bool is_ready_vec(const G_Vector vec)
+{
+    #ifdef LOAD_PETSC
+        // weak check
+        PetscBool ready;
+        petsc_util::petsc_is_ready_vec(vec, &ready);
+        return (ready == PETSC_TRUE);
+    #else
+        // weak check
+        return vec && vec->size() > 0;
+    #endif
+}
+
+
+
 void resize_mat_list(std::vector<G_Matrix>& mat_list, size_t size)
 {
     #ifdef LOAD_PETSC
