@@ -101,8 +101,9 @@ void Block_Rack::build_linear_system()
     la_kernel::create_nest_mat(n_row_, n_col_, block_mat_list, lhs_);
     la_kernel::create_nest_vec(block_vec_list, rhs_);
 
-    petsc_util::petsc_save_ascii_mat(lhs_,"lhs.txt");
-    petsc_util::petsc_save_ascii_vec(rhs_,"rhs.txt");
+    // for test only
+    //petsc_util::petsc_save_ascii_mat(lhs_,"lhs.txt");
+    //petsc_util::petsc_save_ascii_vec(rhs_,"rhs.txt");
 
 }
 

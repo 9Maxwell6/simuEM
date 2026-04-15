@@ -82,8 +82,6 @@ private:
     
     size_t block_id_;
     std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
-    //std::unordered_map<Block, G_Matrix,            Block::Hash> fe_block_mat_;
-    //std::unordered_map<Block, G_Vector,            Block::Hash> fe_block_vec_;
 
     // for basic block
     std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;

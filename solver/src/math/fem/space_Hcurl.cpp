@@ -60,6 +60,87 @@ const std::vector<Basis_Shape>& Hcurl_Space::get_basis_shapes() const
 
 
 
+
+/**
+ * ================================= Triangle =================================
+ * 
+ */
+
+Hcurl_triangle::Hcurl_triangle(int p) : Hcurl_Space(2, p)
+{
+    n_node_   = 3;
+    n_edge_   = 3;
+    n_face_   = 1;
+    n_volume_ = 0;
+
+
+    n_dof_            = p*(p+2);
+    n_dof_per_node_   = 0;
+    n_dof_per_edge_   = p;
+    n_dof_per_face_   = p*(p-1);
+    n_dof_per_volume_ = 0;
+}
+
+void Hcurl_triangle::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const 
+{
+    double x = coord.x;
+    double y = coord.y;
+
+    switch(p_)
+    {
+        case 1:
+            //  with Barycentric coordinates λ
+            //          λ0 = 1.0 - x - y ;
+            //          λ1 = x;
+            //          λ2 = y;
+            // => local Whitney-1 form:  W_ij = λi*∇λj - λj*∇λi,  
+            //    where i≠j are local index of triangle vertices.
+            //
+            if (basis.rows() != 3 || basis.cols() != 2) {
+                throw std::invalid_argument("matrix must be 3x2 for p-1 H(curl) Triangle.");
+            }
+
+            basis <<  1.0-y  ,    x    ,   // Edge 0: 0 -> 1
+                        y    ,  1.0-x  ,   // Edge 1: 0 -> 2
+                       -y    ,    x    ;  // Edge 2: 1 -> 2
+                     
+            break;
+        default:
+            throw std::invalid_argument("Edge element not available for order:  "+std::to_string(p_));
+    }
+
+};
+
+void Hcurl_triangle::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
+    double x = coord.x;
+    double y = coord.y;
+    switch(p_)
+    {
+        case 1:
+            // curl [1-y  , x    ]
+            // curl [y    , 1-x  ]
+            // curl [-y   , x    ]
+
+            if (basis.rows() != 3 || basis.cols() != 1) {
+                throw std::invalid_argument("matrix must be 3x1 for p-1 H(curl) Triangle.");
+            }
+
+            basis << 2.0,  // Edge 0
+                    -2.0,  // Edge 1
+                     2.0;  // Edge 2
+            break;
+        default:
+            throw std::invalid_argument("Edge element not available for order:  "+std::to_string(p_));
+    }
+    
+};
+
+
+/**
+ * =============================== Tetrahedron ===============================
+ * 
+ */
+
 Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)
 {
     n_node_   = 4;
@@ -74,11 +155,6 @@ Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)
     n_dof_per_volume_ = p*(p-1)*(p-2)/2;
 
 }
-
-
-
-
-
 
 void Hcurl_tetrahedron::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const 
 {
@@ -149,13 +225,20 @@ void Hcurl_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<Matrix
 
 
 
+void Hcurl_triangle::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
+    Logger::error("Hcurl_triangle::get_basis_s - Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
+    throw std::logic_error("Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
+};
 
+void Hcurl_triangle::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
+    Logger::error("Hcurl_triangle::get_ED_basis_s - Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
+    throw std::logic_error("Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
+};
 
 void Hcurl_tetrahedron::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_tetrahedron::get_basis_s - Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
     throw std::logic_error("Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
 };
-
 
 void Hcurl_tetrahedron::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_tetrahedron::get_ED_basis_s - Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");

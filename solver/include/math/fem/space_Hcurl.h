@@ -45,6 +45,34 @@ protected:
 };
 
 
+
+/**
+ * Reference tetrahedron:
+ * 
+ *      [x,y,z]
+ *   a0=[0,0,0]  a1=[1,0,0]  a2=[0,1,0] 
+ *
+ */
+class Hcurl_triangle : public Hcurl_Space 
+{
+    friend class Hcurl_Space;
+private:
+    Hcurl_triangle(int p = 1);
+    ~Hcurl_triangle(){};
+
+public:
+
+    void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
+    void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
+
+    void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
+    void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
+
+    
+};
+
+
+
 /**
  * Reference tetrahedron:
  * 
@@ -55,7 +83,7 @@ protected:
 class Hcurl_tetrahedron : public Hcurl_Space {
     friend class Hcurl_Space;
 private:
-    std::vector<std::vector<double>> basis_cache;
+    //std::vector<std::vector<double>> basis_cache;
 
     Hcurl_tetrahedron(int p = 1);
     ~Hcurl_tetrahedron(){};

@@ -50,6 +50,32 @@ protected:
  * Reference tetrahedron:
  * 
  *      [x,y,z]
+ *   a0=[0,0,0]  a1=[1,0,0]  a2=[0,1,0] 
+ *
+ */
+class H1_triangle : public H1_Space 
+{
+    friend class H1_Space;
+private:
+    H1_triangle(int p = 1);
+    ~H1_triangle(){};
+
+public:
+
+    void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
+    void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
+
+    void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
+    void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
+
+    
+};
+
+
+/**
+ * Reference tetrahedron:
+ * 
+ *      [x,y,z]
  *   a0=[0,0,0]  a1=[1,0,0]  a2=[0,1,0]  a3=[0,0,1]    
  *
  */
@@ -57,7 +83,7 @@ class H1_tetrahedron : public H1_Space
 {
     friend class H1_Space;
 private:
-    std::vector<std::vector<double>> basis_cache;
+    //std::vector<std::vector<double>> basis_cache;
 
     H1_tetrahedron(int p = 1);
     ~H1_tetrahedron(){};
