@@ -10,6 +10,8 @@
 #include "math/fem/assemble_data.h"
 #include "math/fem/fem_util.h"
 
+#include "math/fem/bc_dirichlet.h"
+
 
 //#include "entity/mesh/e__transformation.h"
 
@@ -55,6 +57,8 @@ namespace simu {
  *      [    .       .       .    [volumes] ]
  *
  * the mapping between 
+ * 
+ * TODO: separate dof logic from FEM_System, move all dof logic into math/dof folder.
  */
 class FEM_System
 {
@@ -156,6 +160,8 @@ public:
 
     Block register_FE_space_coupling(const Block& block_1, const Block& block_2, const Key group_key={0,0});
 
+    Dirichlet_BC register_Dirichlet_BC(const Block& block, const Key& group_key, Dirichlet_Type bc_type);
+
     // important !!!!
     // TODO: when assign dof, for each block, record dof of boundary, separate by group key.
     // [dof of element 1, dof of element 2]
@@ -183,9 +189,6 @@ public:
     
     Assemble_Data assemble_vec_data(Block& block);  // block must be base_block.
 
-
-
-    void register_Dirichlet_BC(const Block& block, const Key& group_key);
 
 
 };

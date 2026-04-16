@@ -13,6 +13,7 @@ bool Hcurl_Space::add_basis_shape(Basis_Shape g)
 {
     std::unique_ptr<Hcurl_Space> shape_;
     switch (g) {
+        case Basis_Shape::TRIANGLE:    shape_ = std::unique_ptr<Hcurl_Space>(new Hcurl_triangle(p_));    break;
         case Basis_Shape::TETRAHEDRON: shape_ = std::unique_ptr<Hcurl_Space>(new Hcurl_tetrahedron(p_)); break;
         default: 
         {

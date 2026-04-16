@@ -559,15 +559,86 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
  * 
  * @param block target block where Dirichlet BC will apply to.
  * @param group_key mesh_key to group of elements, which are the boundary of the element group in target block.
+ * @param bc_type type of Dirichlet BC - Homogeneous, Constant, Field. 
  * 
  * @note this function require the hash table for this block, do not use FEM_System::delete_block_hash()
  * before using this function.
  * 
- * @return TODO: should return the dof list?
+ * @return Dirichlet_BC: the struct contain all info needed to apply Dirichlet BC on the given block matrix.
  */
-void FEM_System::register_Dirichlet_BC(const Block& block, const Key& group_key)
+Dirichlet_BC FEM_System::register_Dirichlet_BC(const Block& block, const Key& group_key, Dirichlet_Type bc_type)
 {
+    const std::vector<Element*>& bdr_elements      = mesh_.get_element_group(group_key);
+    const std::map<Geometry, size_t>& geometry_map = mesh_.get_element_geometry_size_group(group_key);
     
+    
+
+    FEM_Space* fe_space = const_cast<FEM_Space*>(get_block_space(block));
+    for (const auto& [geometry, count] : geometry_map) fe_space->add_basis_shape(to_basis_shape(geometry));
+
+    const util::Block_Hash& bh = get_block_hash(block);
+
+    // get offset for edge/face/volume dof, node dof index start from 0 hence does not need offset.
+    size_t offset_edge   = bh.get_node_count();
+    size_t offset_face   = bh.get_node_count() + bh.get_edge_count();
+
+    std::vector<dof_idx> bc_element_global_dof;
+
+    bool error_dof_flag = false;
+
+    // lambda function for cheking if element ids are actually contained in hash 
+    // for block hash 1
+    auto get_id_handler = [&](size_t offset, auto... args) {
+        if (std::optional<size_t> id_o = bh.get_exist_id(args...)) {
+            bc_element_global_dof.push_back(offset + *id_o);
+        } else {
+            error_dof_flag = true;
+        }
+    };
+
+
+    for (auto* e : bdr_elements) 
+    {
+        const size_t* idx  = e->get_node_idx();
+        int n = e->get_node_num();
+
+        Geometry g = e->get_geometry();
+
+        FEM_Space * fe_basis_space = fe_space->get_basis_space(to_basis_shape(g));
+
+        int n_dof_per_node = fe_basis_space->get_n_dof_per_node();
+        int n_dof_per_edge = fe_basis_space->get_n_dof_per_edge();
+        int n_dof_per_face = fe_basis_space->get_n_dof_per_face();
+
+        node_edge_face_dof_handler(get_id_handler, to_basis_shape(g), idx, n, 
+                                    n_dof_per_node,  0,
+                                    n_dof_per_edge,  offset_edge, 
+                                    n_dof_per_face,  offset_face);
+    }
+
+    Dirichlet_BC bc{.bc_type=bc_type, .block=&block, .fe_space=fe_space, .bdr_elements=&bdr_elements};
+    
+
+    std::vector<dof_idx>& bc_dofs = bc.bc_dofs;
+    std::vector<dof_idx>& bc_element_dof = bc.bc_dofs;
+    // map between global block dof index and Dirichlet BC index.
+    std::unordered_map<dof_idx, dof_idx> global_to_local_index;
+    global_to_local_index.reserve(bc_element_global_dof.size());
+
+    for (dof_idx i : bc_element_global_dof) 
+    {
+        auto [it, inserted] = global_to_local_index.try_emplace(i, bc_dofs.size());
+        if(inserted) bc_dofs.push_back(i);
+        if(bc_type == Dirichlet_Type::FIELD) bc_element_dof.push_back(it->second);
+    }
+
+    if(error_dof_flag)
+        Logger::error("FEM_System::register_Dirichlet_BC - boundary element group provided by the key contain elements not shared by the provided block.");
+    
+    
+    return bc;
+
+
 }
 
 
@@ -727,6 +798,17 @@ bool FEM_System::node_edge_face_dof_handler(Get_dof&& dof_handler, Basis_Shape s
 
     switch (shape) 
     {
+        case Basis_Shape::TRIANGLE:
+            // initialize edge dof
+            for (int j = 0; j < n_dof_per_edge; ++j) dof_handler(offset_edge, node_idx[0], node_idx[1], j);
+            for (int j = 0; j < n_dof_per_edge; ++j) dof_handler(offset_edge, node_idx[0], node_idx[2], j);
+            for (int j = 0; j < n_dof_per_edge; ++j) dof_handler(offset_edge, node_idx[1], node_idx[2], j);
+
+            // initialize face dof
+            for (int j = 0; j < n_dof_per_face; ++j) dof_handler(offset_face, node_idx[0], node_idx[1], node_idx[2], j);
+
+            break;
+
         case Basis_Shape::TETRAHEDRON:
             
             // initialize edge dof
@@ -736,8 +818,6 @@ bool FEM_System::node_edge_face_dof_handler(Get_dof&& dof_handler, Basis_Shape s
             for (int j = 0; j < n_dof_per_edge; ++j) dof_handler(offset_edge, node_idx[1], node_idx[2], j);
             for (int j = 0; j < n_dof_per_edge; ++j) dof_handler(offset_edge, node_idx[1], node_idx[3], j);
             for (int j = 0; j < n_dof_per_edge; ++j) dof_handler(offset_edge, node_idx[2], node_idx[3], j);
-
-
 
             // initialize face dof
             for (int j = 0; j < n_dof_per_face; ++j) dof_handler(offset_face, node_idx[0], node_idx[1], node_idx[2], j);

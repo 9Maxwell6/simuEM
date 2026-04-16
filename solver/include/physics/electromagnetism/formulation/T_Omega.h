@@ -31,6 +31,9 @@ private:
     std::vector<Block> dof_coupling_;
     std::vector<Block> dof_coupling_tp_;
 
+    std::vector<Dirichlet_BC> bc_Omega_;
+    std::vector<Dirichlet_BC> bc_T_;
+
 
     Block_Rack br_system_;
 

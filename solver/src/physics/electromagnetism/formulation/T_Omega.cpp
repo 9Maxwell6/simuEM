@@ -87,14 +87,20 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
 
 
 
-    Logger::info("[T_Omega] - Assign space H1 to Omega-field region");
+    Logger::info("[T_Omega] - Assign space H1 to Omega-field region.");
     //Block dof_Omega = fe_system_.register_FE_space(field_Omega, new_key_Omega_field);
     dof_Omega_ = fe_system_.register_FE_space(Omega_space_, new_key_Omega_field);
+    
+    Logger::info("[T_Omega] - register Dirichlet BC to Omega-field.");
+    for(Key& key : key_Omega_field_boundary) bc_Omega_.push_back(fe_system_.register_Dirichlet_BC(dof_Omega_, key, Dirichlet_Type::HOMOGENEOUS));
+    
+
+
     Logger::block_info(dof_Omega_.id, dof_Omega_.row_offset, dof_Omega_.col_offset, dof_Omega_.row_size, dof_Omega_.col_size);
 
 
 
-    Logger::info("[T_Omega] - Assign space Hcurl to T-field region");
+    Logger::info("[T_Omega] - Assign space Hcurl to T-field region.");
     for(size_t i = 0; i < key_conductor.size(); ++i)
     {
         dof_T_.push_back(fe_system_.register_FE_space(T_space_, key_conductor[i]));
@@ -106,12 +112,14 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
     }
     //Block dof_T = fe_system_.register_FE_space(field_T, key_conductor[0]);
     
+    //Logger::info("[T_Omega] - register Dirichlet BC to T-field.");
+    //for(Key& key : key_Omega_field_boundary) bc_Omega_.push_back(_fe_system_.register_Dirichlet_BC(dof_Omega_, key, Dirichlet_Type::HOMOGENEOUS));
     
     
 
 
 
-    Logger::info("[T_Omega] - initialize coupling between T-field and Omega-field");
+    Logger::info("[T_Omega] - initialize coupling between T-field and Omega-field.");
     for(size_t i = 0; i < key_conductor_interface_layer.size(); ++i)
     {
         dof_coupling_.push_back(fe_system_.register_FE_space_coupling(dof_Omega_, dof_T_[i], key_conductor_interface_layer[i]));

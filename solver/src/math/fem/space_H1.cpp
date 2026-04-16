@@ -13,6 +13,7 @@ bool H1_Space::add_basis_shape(Basis_Shape g)
 {
     std::unique_ptr<H1_Space> shape_;
     switch (g) {
+        case Basis_Shape::TRIANGLE:    shape_ = std::unique_ptr<H1_Space>(new H1_triangle(p_));    break;
         case Basis_Shape::TETRAHEDRON: shape_ = std::unique_ptr<H1_Space>(new H1_tetrahedron(p_)); break;
         default: 
         {
@@ -39,7 +40,7 @@ FEM_Space * H1_Space::get_basis_space(Basis_Shape s) const
     auto it = shape_H1_.find(s);
     if (it != shape_H1_.end()) return it->second.get();
 
-    Logger::error("H1_tetrahedron::get_basis_space - failed: key not found, return nullptr.");
+    Logger::error("H1_Space::get_basis_space - failed: shape not found, return nullptr.");
     return nullptr;
 }
 

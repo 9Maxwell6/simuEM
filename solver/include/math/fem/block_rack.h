@@ -1,10 +1,10 @@
 #pragma once
 
-#include "utils/logger.h"
-#include "utils/util_la.h"
-
 #include "math/fem/block.h"
 #include "math/data_format.h"
+
+#include "utils/logger.h"
+#include "utils/util_la.h"
 
 // for test only
 //#include "utils/util_petsc.h"
