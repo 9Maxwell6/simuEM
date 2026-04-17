@@ -1,7 +1,7 @@
 #pragma once
-#include "entity/mesh/e_collection.h"
+#include "world/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
-#include "entity/mesh/mesh.h"
+#include "world/mesh/mesh.h"
 #include "math/fem/integrator.h"
 #include "math/fem/block.h"
 

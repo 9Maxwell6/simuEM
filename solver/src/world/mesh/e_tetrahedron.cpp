@@ -1,5 +1,5 @@
-#include "entity/mesh/mesh.h"
-#include "entity/mesh/e_tetrahedron.h"
+#include "world/mesh/mesh.h"
+#include "world/mesh/e_tetrahedron.h"
 
 using namespace simu;
 

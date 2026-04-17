@@ -1,4 +1,4 @@
-#include "entity/mesh/mesh_parser.h"
+#include "world/mesh/mesh_parser.h"
 
 #include <map>
 #include <algorithm>

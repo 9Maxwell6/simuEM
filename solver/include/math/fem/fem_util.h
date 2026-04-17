@@ -125,7 +125,7 @@
     INSTANTIATE_VEC_TEMPLATE_BASE(Class, Method, __VA_ARGS__,)
 
     
-#include "entity/mesh/e_collection.h"
+#include "world/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
 
 namespace simu {

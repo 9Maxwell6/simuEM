@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity/mesh/mesh.h"
+#include "world/mesh/mesh.h"
 #include "math/fem/integration.h"
 #include "math/data_format.h"
 #include "utils/logger.h"

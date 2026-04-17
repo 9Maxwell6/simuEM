@@ -3,9 +3,9 @@
 #include "config.h"
 
 #include "math/fem/space_collection.h"
-#include "entity/mesh/e_collection.h"
+#include "world/mesh/e_collection.h"
 #include "math/fem/block_rack.h"
-#include "entity/mesh/mesh.h"
+#include "world/mesh/mesh.h"
 #include "math/data_format.h"
 #include "math/fem/assemble_data.h"
 #include "math/fem/fem_util.h"
@@ -13,7 +13,7 @@
 #include "math/fem/bc_dirichlet.h"
 
 
-//#include "entity/mesh/e__transformation.h"
+//#include "world/mesh/e__transformation.h"
 
 
 

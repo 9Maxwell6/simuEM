@@ -14,7 +14,7 @@
 #include <Eigen/Dense>
 #include <stdio.h>
 //#include <config.h>
-#include "entity/mesh/mesh_parser.h"
+#include "world/mesh/mesh_parser.h"
 #include "physics/electromagnetism/formulation/T_Omega.h"
 #include "physics/electromagnetism/mfem_eddy_current.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity/mesh/mesh.h"
+#include "world/mesh/mesh.h"
 #include "math/fem/fem_space.h"
 #include "math/fem/fem_system.h"
 #include "math/fem/assemble.h"
@@ -11,6 +11,7 @@
 
 
 #include <functional>
+#include <unordered_map>
 
 namespace simu {
 
@@ -30,6 +31,7 @@ private:
 
     std::vector<Block> dof_coupling_;
     std::vector<Block> dof_coupling_tp_;
+
 
     std::vector<Dirichlet_BC> bc_Omega_;
     std::vector<Dirichlet_BC> bc_T_;

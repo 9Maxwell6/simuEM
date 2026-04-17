@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity/mesh/node.h"
+#include "world/mesh/node.h"
 
 #include <vector>
 #include <algorithm>

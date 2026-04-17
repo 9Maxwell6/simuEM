@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity/mesh/e_collection.h"
+#include "world/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
 
 #include "math/fem/block_rack.h"
