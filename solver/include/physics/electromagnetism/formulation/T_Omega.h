@@ -1,6 +1,8 @@
 #pragma once
 
 #include "world/mesh/mesh.h"
+#include "world/structure/structure.h"
+
 #include "math/fem/fem_space.h"
 #include "math/fem/fem_system.h"
 #include "math/fem/assemble.h"
@@ -50,6 +52,19 @@ private:
     std::vector<Key> key_conductor;                  // key to 2D/3D conducting region element groups
     std::vector<Key> key_conductor_interface_layer;  // key to 2D/3D conducting region element groups in contact with conductor boundarys.
     
+
+    std::vector<Region> O_field_;
+    std::vector<Region> T_field_;
+
+    Boundary true_boundary_;
+    std::vector<Boundary> T_boundary_;
+    std::vector<Boundary> O_boundary_;
+
+    std::vector<Region> conductor_region_;
+    std::vector<Region> conductor_outer_layer_region_;
+    std::vector<Region> insulator_region_;
+    std::vector<Region> source_region_;
+
 
 
     /**

@@ -7,17 +7,25 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
 
     dim_ = mesh.get_mesh_dimension();
 
-    for(const Key& mesh_key : mesh_.get_keys_true_boundary())
-    {
-        std::string description = mesh.get_group_description(mesh_key);
-        key_true_boundary.push_back(mesh_key);
-        key_Omega_field_boundary.push_back(mesh_key);
-        Logger::info("T_Omega - Found simulation boundary: " + description);
-    }
+
+    const Key& true_boundary_key = mesh_.get_keys_true_boundary()[0];  // there must be only one true boundary.
+    std::string true_boundary_description = mesh.get_group_description(true_boundary_key);
+    int true_boundary_id = util::extract_last_int(true_boundary_description);  // should be 0
+    true_boundary_ = Boundary{.id=true_boundary_id, 
+                              .description=true_boundary_description, 
+                              .b_group=true_boundary_key };
+
+    key_true_boundary.push_back(true_boundary_key);
+    key_Omega_field_boundary.push_back(true_boundary_key);
+    Logger::info("T_Omega - Found simulation boundary: " + true_boundary_description);
+    
+    
 
     for(const Key& mesh_key : mesh_.get_keys_internal_surface())
     {
         std::string description = mesh.get_group_description(mesh_key);
+        int id = util::extract_last_int(description);
+        T_boundary_.push_back(Boundary{.id=id, .description=description, .b_group=mesh_key });
         if(util::a_contains_b(description, {{"Conductor", "Boundary"}, {"Conducting", "Boundary"}})){
             key_conductor_interface.push_back(mesh_key);
             Logger::debug("T_Omega - Found conductor boundary: " + description);
@@ -27,20 +35,26 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
     for(const Key& mesh_key : mesh_.get_keys_domain())
     {
         std::string description = mesh.get_group_description(mesh_key);
+        int id = util::extract_last_int(description);
+        Region new_region{.id=id, .description=description, .r_group=mesh_key };
+
         if(util::a_contains_b(description, {{"Source, Current"}}))
         {
+            source_region_.push_back(new_region);
             key_source.push_back(mesh_key);
             mesh_.set_group_property_id(mesh_key, 1);
             Logger::debug("T_Omega - Found source current: " + description);
         }
         else if(util::a_contains_b(description, {{"Insulator"}, {"Insulating"}}))
         {
+            insulator_region_.push_back(new_region);
             key_insulator.push_back(mesh_key);
             mesh_.set_group_property_id(mesh_key, 2);
             Logger::debug("T_Omega - Found insulating region: " + description);
         }
         else if(util::a_contains_b(description, {{"Conductor"}, {"Conducting"}}))
         {
+            conductor_region_.push_back(new_region);
             key_conductor.push_back(mesh_key);
             mesh_.set_group_property_id(mesh_key, 3);
             Logger::debug("T_Omega - Found conductor: " + description);
@@ -56,6 +70,10 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
 
         std::string new_description_conductor_interface_layer = mesh_.get_group_description(new_key_conductor_interface_layer);
         key_conductor_interface_layer.push_back(new_key_conductor_interface_layer);
+        int conductor_interface_layer_id = util::extract_last_int(new_description_conductor_interface_layer);
+        conductor_outer_layer_region_.push_back(Region{.id=conductor_interface_layer_id, 
+                                                       .description=new_description_conductor_interface_layer, 
+                                                       .r_group=new_key_conductor_interface_layer });
         Logger::info("T_Omega - Create conductor interface layer, marked as: " + new_description_conductor_interface_layer + ", #element = " + std::to_string(mesh_.get_element_group(new_key_conductor_interface_layer).size()));
         Logger::mesh_entity(new_key_conductor_interface_layer.dim, -1, new_key_conductor_interface_layer.id, 
                                                                        mesh.get_element_group(new_key_conductor_interface_layer).size(), 
@@ -63,10 +81,15 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh), Omega_space_(mesh.
                                                                        mesh.get_element_size_group(new_key_conductor_interface_layer),
                                                                        mesh.get_group_description(new_key_conductor_interface_layer));
 
+
         Key new_key_Omega_field_inner_boundary =  mesh_.mark_new_elements(scalar_field_Omega_inner_boundary_filter(), dim_-1, new_key_conductor_interface_layer, "Omega field inner boundary | "+description);
         
         std::string new_description_Omega_field_inner_boundary = mesh_.get_group_description(new_key_Omega_field_inner_boundary);
         key_Omega_field_boundary.push_back(new_key_Omega_field_inner_boundary);
+        int Omega_field_inner_boundary_id = util::extract_last_int(new_description_Omega_field_inner_boundary);
+        O_boundary_.push_back(Boundary{.id=Omega_field_inner_boundary_id, 
+                                       .description=new_description_Omega_field_inner_boundary, 
+                                       .b_group=new_key_Omega_field_inner_boundary });
         Logger::info("T_Omega - Create Omega-field inner boundary, marked as: " + new_description_Omega_field_inner_boundary + ", #element = " + std::to_string(mesh_.get_element_group(new_key_Omega_field_inner_boundary).size()));
         Logger::mesh_entity(new_key_Omega_field_inner_boundary.dim, -1, new_key_Omega_field_inner_boundary.id, 
                                                                         mesh.get_element_group(new_key_Omega_field_inner_boundary).size(), 

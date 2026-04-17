@@ -6,28 +6,33 @@
 
 namespace simu {
 
+struct Region;
 
 struct Boundary 
 {
     int id;
-    Key* b_group;
+    std::string description;
 
-    Boundary* base_boundary; 
+    Key b_group;
 
-    std::vector<Region*>   region_list;
-    std::vector<Boundary*> sub_boundary_list;
+    const Boundary* base_boundary; 
+
+    std::vector<const Region*>   region_list;
+    std::vector<const Boundary*> sub_boundary_list;
 };
 
 
 struct Region 
 {
     int id;
-    Key* r_group;
+    std::string description;
 
-    Region* base_region;  
+    Key r_group;
 
-    std::vector<Boundary*> boundary_list;
-    std::vector<region*>   sub_region_list;
+    const Region* base_region;  
+
+    std::vector<const Boundary*> boundary_list;
+    std::vector<const Region*>   sub_region_list;
     
 };
 
