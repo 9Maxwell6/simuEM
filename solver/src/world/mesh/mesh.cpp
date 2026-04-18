@@ -80,7 +80,9 @@ const std::set<size_t>& Mesh::get_node_group(const Key& mesh_key)
         }
         return group;
     }
-
+    
+    std::cout<<mesh_key.dim<<std::endl;
+    std::cout<<mesh_key.id<<std::endl;
     Logger::error("Mesh::get_node_group - failed: key not found in mesh, return reference to empty vector<size_t>.");
     static const std::set<size_t> empty;
     return empty;

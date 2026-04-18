@@ -4,7 +4,7 @@
     #include <petsc.h>
 
 #include <vector>
-
+#include <iostream>
 namespace petsc_util {
 
 PetscErrorCode petsc_initialize(int* argc, char*** argv);
@@ -26,6 +26,12 @@ PetscErrorCode petsc_add_to_mat(PetscInt row_size, const PetscInt rows[],
                                 const PetscScalar values[], Mat mat);
 
 PetscErrorCode petsc_add_to_vec(PetscInt row_size, const PetscInt rows[], const PetscScalar values[], Vec vec);
+
+PetscErrorCode petsc_zero_row_col_mat(const std::vector<PetscInt>& dofs, PetscScalar diag_val, Mat mat, Vec x, Vec b);
+
+
+PetscErrorCode petsc_set_value_vec(const std::vector<PetscInt>& dofs, const std::vector<PetscScalar>& values, Vec vec);
+
 
 PetscErrorCode petsc_finalize_mat(Mat mat);
 PetscErrorCode petsc_finalize_vec(Vec vec);

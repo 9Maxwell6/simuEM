@@ -4,6 +4,8 @@
 #include "world/mesh/e_collection.h"
 
 #include "math/fem/block.h"
+#include "math/fem/block_rack.h"
+
 #include "math/data_format.h"
 
 #include "utils/logger.h"
@@ -51,6 +53,9 @@ struct Dirichlet_BC
     // e.g. for Field type in Hcurl, need to compute the surface linearform integral of (g⋅t) * N
     // where (g⋅t) is tangential component of user defined vector field, N is Hcurl basis function at surface.
     // void evaluate();
+
+
+    bool apply_to_system(Block_Rack& br);
 
 };
 

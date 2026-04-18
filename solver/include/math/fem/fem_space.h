@@ -33,6 +33,8 @@ struct Shape_Hash {
 class FEM_Space
 {
 protected: 
+    int dim_; // space dimension
+    int p_;   // polynomial order
 
     size_t n_node_;
     size_t n_edge_;
@@ -45,7 +47,7 @@ protected:
     int n_dof_per_face_;
     int n_dof_per_volume_;
 
-    
+    FEM_Space() = default;
     FEM_Space(int dim, int p);
     virtual ~FEM_Space() {}
 
@@ -55,9 +57,6 @@ public:
     //            int n_node, int n_edge, int n_face, int n_volume, 
     //            int n_dof, int n_dof_per_node, int n_dof_per_edge, int n_dof_per_face, int n_dof_per_volume);
     
-
-    const int dim_; // space dimension
-    const int p_;   // polynomial order
 
 
     virtual bool add_basis_shape(Basis_Shape g) = 0;

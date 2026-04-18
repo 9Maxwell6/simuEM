@@ -134,6 +134,28 @@ void add_to_vec(size_d row_size, const size_d rows[], const scalar_t values[], G
 
 
 
+void zero_row_col_mat(const std::vector<dof_idx>& dofs, scalar_t diag_val, G_Matrix mat, G_Vector x, G_Vector b)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_zero_row_col_mat(dofs, diag_val, mat, x, b);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::create_nest_mat: default implementation not ready, only petsc version available.");
+    #endif
+
+}
+
+
+void set_value_vec(const std::vector<dof_idx>& dofs, const std::vector<scalar_t>& values, G_Vector vec)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_set_value_vec(dofs, values, vec);
+    #else
+        for (std::size_t i = 0; i < dofs.size(); ++i) vec(dofs[i]) = values[i];
+    #endif
+}
+
+
 
 void finalize_mat(G_Matrix mat)
 {

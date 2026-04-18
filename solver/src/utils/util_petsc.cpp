@@ -115,6 +115,9 @@ PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, c
 {
     PetscFunctionBeginUser;
     PetscCall(MatCreateNest(PETSC_COMM_WORLD, b_row_size, NULL, b_col_size, NULL, const_cast<Mat*>(block_mat.data()), &mat));
+    // MATNEST does not support MatZeroRowsColumns(), which is essential to applying Dirichlet BC.
+    //   -> convert from MATNEST to MATAIJ
+    PetscCall(MatConvert(mat, MATAIJ, MAT_INPLACE_MATRIX, &mat));  
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -133,6 +136,35 @@ PetscErrorCode petsc_create_nest_vec(const std::vector<Vec>& block_vec, Vec &vec
 {
     PetscFunctionBeginUser;
     PetscCall(VecCreateNest(PETSC_COMM_WORLD, (PetscInt)block_vec.size(), NULL, const_cast<Vec*>(block_vec.data()), &vec));
+    // TODO do not save Vec as nest Vec, using normal vec instead.
+    /*
+    PetscInt N = 0, n = 0;
+    for (auto& v : block_vec) {
+        PetscInt ni, Ni;
+        VecGetLocalSize(v, &ni);
+        VecGetSize(v, &Ni);
+        n += ni;
+        N += Ni;
+    }
+
+    // Create flat vec
+    VecCreateMPI(PETSC_COMM_WORLD, n, N, &vec);
+
+    // Copy data block by block
+    PetscScalar *dst;
+    VecGetArray(vec, &dst);
+    PetscInt offset = 0;
+    for (auto& v : block_vec) {
+        PetscInt ni;
+        VecGetLocalSize(v, &ni);
+        const PetscScalar *src;
+        VecGetArrayRead(v, &src);
+        PetscArraycpy(dst + offset, src, ni);
+        VecRestoreArrayRead(v, &src);
+        offset += ni;
+    }
+    VecRestoreArray(vec, &dst);
+    */
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -179,6 +211,51 @@ PetscErrorCode petsc_add_to_vec(PetscInt row_size, const PetscInt rows[], const 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+
+
+
+
+/**
+ * @brief Zeros specified rows and columns of a PETSc Mat, placing a given value on the diagonal, and change the rhs accordingly.
+ *
+ * @param dofs     global indices of the rows/columns to zero.
+ * @param diag_val value to place on the diagonal of the zeroed rows.
+ * @param mat      the Mat to modify (must already be assembled).
+ * @param x        optional solution Vec for preserving symmetry (can be nullptr).
+ * @param b        optional RHS Vec to be adjusted accordingly (can be nullptr).
+ * 
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_zero_row_col_mat(const std::vector<PetscInt>& dofs, PetscScalar diag_val, Mat mat, Vec x, Vec b)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatZeroRowsColumns(mat, dofs.size(), dofs.data(), diag_val, x, b));
+    PetscCall(MatAssemblyBegin(mat, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(mat, MAT_FINAL_ASSEMBLY));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+/**
+ * @brief Sets specified entries of a PETSc Vec to given values.
+ *
+ * @param dofs   global indices of the entries to set.
+ * @param values the corresponding values to insert.
+ * @param vec    PETSc vector to set values into.
+ *
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_set_value_vec(const std::vector<PetscInt>& dofs, const std::vector<PetscScalar>& values, Vec vec)
+{
+    PetscFunctionBeginUser;
+    PetscCall(VecSetValues(vec, dofs.size(), dofs.data(), values.data(), INSERT_VALUES));
+    PetscCall(VecAssemblyBegin(vec));
+    PetscCall(VecAssemblyEnd(vec));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
 
 
 

@@ -647,7 +647,7 @@ const FEM_Space* FEM_System::get_block_space(const Block& block) const
     auto it = fe_block_space_.find(block);
     if (it != fe_block_space_.end()) return it->second;
 
-    Logger::error("Mesh::get_block_space - failed: block not found, return null pointer.");
+    Logger::error("FEM_System::get_block_space - failed: block not found, return null pointer.");
     return nullptr;
 }
 
@@ -656,7 +656,7 @@ const Key FEM_System::get_block_group_key(const Block& block) const
     auto it = fe_block_key_.find(block);
     if (it != fe_block_key_.end()) return it->second;
 
-    Logger::error("Mesh::get_block_group_key - failed: block not found, return bad key.");
+    Logger::error("FEM_System::get_block_group_key - failed: block not found, return bad key.");
     static const Key empty = {0,0};
     return empty;
 }
@@ -666,7 +666,7 @@ const std::vector<dof_idx>* FEM_System::get_block_dof(const Block& block) const
     auto it = fe_block_dof_.find(block);
     if (it != fe_block_dof_.end()) return it->second;
 
-    Logger::error("Mesh::get_block_dof - failed: block not found, return nullptr.");
+    Logger::error("FEM_System::get_block_dof - failed: block not found, return nullptr.");
     return nullptr;
 }
 
@@ -675,7 +675,7 @@ const util::Block_Hash& FEM_System::get_block_hash(const Block& block) const
     auto it = fe_block_hash_.find(block);
     if (it != fe_block_hash_.end()) return it->second;
 
-    Logger::error("Mesh::get_block_hash - failed: block not found, return empty block hash.");
+    Logger::error("FEM_System::get_block_hash - failed: block not found, return empty block hash.");
     static const util::Block_Hash empty;
     return empty;
 }
@@ -685,7 +685,7 @@ const std::array<const Block*, 2>& FEM_System::get_coupled_block(const Block& bl
     auto it = coupled_block_.find(block);
     if (it != coupled_block_.end()) return it->second;
 
-    Logger::error("Mesh::get_coupled_block - failed: block not found, return empty list of block.");
+    Logger::error("FEM_System::get_coupled_block - failed: block not found, return empty list of block.");
     static const std::array<const Block*, 2> empty{};
     return empty;
 }
@@ -695,7 +695,7 @@ const std::array<const FEM_Space *, 2>& FEM_System::get_coupled_block_space(cons
     auto it = coupled_block_space_.find(block);
     if (it != coupled_block_space_.end()) return it->second;
 
-    Logger::error("Mesh::get_coupled_block_space - failed: block not found, return empty list of fe_space.");
+    Logger::error("FEM_System::get_coupled_block_space - failed: block not found, return empty list of fe_space.");
     static const std::array<const FEM_Space *, 2> empty{};
     return empty;
 }
@@ -706,7 +706,7 @@ const std::array<const std::vector<dof_idx> * ,2>& FEM_System::get_coupled_block
     auto it = coupled_block_dof_.find(block);
     if (it != coupled_block_dof_.end()) return it->second;
 
-    Logger::error("Mesh::get_coupled_block_dof - failed: block not found, return empty list of dof.");
+    Logger::error("FEM_System::get_coupled_block_dof - failed: block not found, return empty list of dof.");
     static const std::array<const std::vector<dof_idx> * ,2> empty{};
     return empty;
 }

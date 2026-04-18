@@ -41,6 +41,10 @@ void destroy_vec(G_Vector& vec);
 void add_to_mat(size_d row_size, const size_d rows[], size_d col_size, const size_d cols[], const scalar_t values[], G_Matrix mat);
 void add_to_vec(size_d row_size, const size_d rows[], const scalar_t values[], G_Vector vec);
 
+void zero_row_col_mat(const std::vector<dof_idx>& dofs, scalar_t diag_val, G_Matrix mat, G_Vector x, G_Vector b);
+
+void set_value_vec(const std::vector<dof_idx>& dofs, const std::vector<scalar_t>& values, G_Vector vec);
+
 void finalize_mat(G_Matrix mat);
 void finalize_vec(G_Vector vec);
 

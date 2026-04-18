@@ -15,6 +15,7 @@ private:
     std::vector<Basis_Shape> basis_shapes_;
 
 public:
+    Hcurl_Space() = default;
     Hcurl_Space(int dim, int p = 1);
 
     bool add_basis_shape(Basis_Shape g) override;

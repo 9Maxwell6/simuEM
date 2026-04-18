@@ -6,6 +6,8 @@
 #include "math/fem/fem_space.h"
 #include "math/fem/fem_system.h"
 #include "math/fem/assemble.h"
+#include "math/fem/bc_dirichlet.h"
+
 
 #include "math/field/field_function.h"
 
@@ -28,15 +30,17 @@ private:
     H1_Space           Omega_space_;
     Block              dof_Omega_;
 
-    Hcurl_Space        T_space_;
-    std::vector<Block> dof_T_;
+    Hcurl_Space        T_space_1_;
+    Block              dof_T_1_;
 
-    std::vector<Block> dof_coupling_;
-    std::vector<Block> dof_coupling_tp_;
+    Block              dof_coupling_1_;
+    Block              dof_coupling_tp_1_;
 
 
-    std::vector<Dirichlet_BC> bc_Omega_;
-    std::vector<Dirichlet_BC> bc_T_;
+    Dirichlet_BC bc_Omega_out_;
+    Dirichlet_BC bc_Omega_in_;
+
+    Dirichlet_BC bc_T_1_;
 
 
     Block_Rack br_system_;
@@ -44,28 +48,20 @@ private:
 
     int dim_;
 
-    std::vector<Key> key_true_boundary;              // key to 1D/2D true boundary element groups
-    std::vector<Key> key_Omega_field_boundary;       // key to 1D/2D omega field boundary element groups
-    std::vector<Key> key_conductor_interface;        // key to 1D/2D conductor boundary element groups
-    std::vector<Key> key_source;                     // key to 2D/3D source element groups
-    std::vector<Key> key_insulator;                  // key to 2D/3D insulating region element groups
-    std::vector<Key> key_conductor;                  // key to 2D/3D conducting region element groups
-    std::vector<Key> key_conductor_interface_layer;  // key to 2D/3D conducting region element groups in contact with conductor boundarys.
+    Key key_true_boundary_;                // key to 1D/2D true boundary element groups
+
+    Key key_Omega_inner_boundary_1_;       // key to 1D/2D omega field boundary element groups
+
+
+    Key key_conductor_interface_1_;        // key to 1D/2D conductor boundary element groups
+    Key key_conductor_interface_layer_1_;  // key to 2D/3D conducting region element groups in contact with conductor boundarys.
+
+    Key key_source_;                       // key to 2D/3D source element groups
+    Key key_insulator_;                    // key to 2D/3D insulating region element groups
+    Key key_conductor_1_;                  // key to 2D/3D conducting region element groups
     
 
-    std::vector<Region> O_field_;
-    std::vector<Region> T_field_;
-
-    Boundary true_boundary_;
-    std::vector<Boundary> T_boundary_;
-    std::vector<Boundary> O_boundary_;
-
-    std::vector<Region> conductor_region_;
-    std::vector<Region> conductor_outer_layer_region_;
-    std::vector<Region> insulator_region_;
-    std::vector<Region> source_region_;
-
-
+    Key key_Omega_;
 
     /**
      * @brief Wapper of lambda filter function used for Mesh::mark_elements, it will checks if 
@@ -78,24 +74,21 @@ private:
      * @return (lambda function return) true  If at least one element in conductor_interface is covered by the target element,
      * otherwise return false.
      */
-    std::function<bool(Element*)> conductor_interface_layer_filter() {
-        return [this](Element* e) -> bool {
+    std::function<bool(Element*)> conductor_interface_layer_filter(Key& key_conductor_interface) {
+        return [this, &key_conductor_interface](Element* e) -> bool {
             const size_t * e_ids = e->get_node_idx();
             int e_size = e->get_node_num();
             //std::cout<<e_ids[0]<<" "<< e_ids[1]<<" " << e_ids[2]<<" "<< e_ids[3]<<" " <<std::endl;
-            for(Key& key: this->key_conductor_interface)
-            {    
-                for (Element* ie : this->mesh_.get_element_group(key))
-                {
-                    const size_t * ie_ids = ie->get_node_idx();
-                    int ie_size = ie->get_node_num();
+            for (Element* ie : this->mesh_.get_element_group(key_conductor_interface))
+            {
+                const size_t * ie_ids = ie->get_node_idx();
+                int ie_size = ie->get_node_num();
 
-                    for (size_t i = 0; i < ie_size; ++i) 
+                for (size_t i = 0; i < ie_size; ++i) 
+                {
+                    for (size_t j = 0; j < e_size; ++j) 
                     {
-                        for (size_t j = 0; j < e_size; ++j) 
-                        {
-                            if (ie_ids[i] == e_ids[j]) { return true; }
-                        }
+                        if (ie_ids[i] == e_ids[j]) { return true; }
                     }
                 }
             }
@@ -114,27 +107,24 @@ private:
      * @param e (lambda function return) pointer to the target element.
      * @return (lambda function return) pointer to the surface element if exist, otherwise return nullptr.
      */
-    std::function<std::vector<Element *>(Element*)> scalar_field_Omega_inner_boundary_filter() {
-        return [this](Element* e) -> std::vector<Element *> {
+    std::function<std::vector<Element *>(Element*)> scalar_field_Omega_inner_boundary_filter(Key& key_conductor_interface) {
+        return [this, &key_conductor_interface](Element* e) -> std::vector<Element *> {
             const size_t * e_ids = e->get_node_idx();
             int e_size = e->get_node_num();
-
-            for(Key& key: this->key_conductor_interface)
-            {    
-                std::vector<size_t> exclude_ids;
-                // get all node index on conductor interface
-                for (size_t id : this->mesh_.get_node_group(key))
-                {
-                    for (size_t i = 0; i < e_size; ++i) 
-                    {      
-                        if (id == e_ids[i]) { exclude_ids.push_back(id); }                 
-                    }
-                }
-                if(exclude_ids.size()!=0) {
-                    std::vector<Element *> new_element = this->mesh_.create_sub_element(e, exclude_ids, dim_-1);
-                    if(new_element.size()!=0) return new_element;
+            std::vector<size_t> exclude_ids;
+            // get all node index on conductor interface
+            for (size_t id : this->mesh_.get_node_group(key_conductor_interface))
+            {
+                for (size_t i = 0; i < e_size; ++i) 
+                {      
+                    if (id == e_ids[i]) { exclude_ids.push_back(id); }                 
                 }
             }
+            if(exclude_ids.size()!=0) {
+                std::vector<Element *> new_element = this->mesh_.create_sub_element(e, exclude_ids, dim_-1);
+                if(new_element.size()!=0) return new_element;
+            }
+            
             return {};
         };
     }

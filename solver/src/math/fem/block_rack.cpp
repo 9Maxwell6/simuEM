@@ -89,17 +89,24 @@ void Block_Rack::build_linear_system()
 {
     std::vector<G_Matrix> block_mat_list;
     std::vector<G_Vector> block_vec_list;
+    size_t total_col_size = 0;
     for(Block* block : rack_)
     {
         if(!is_block_ready(block)) { Logger::error("Block_Rack::build_linear_system: block_rack not ready - missing block data."); return; }
 
         block_mat_list.push_back(block->mat);
 
-        if(block->is_base_block) block_vec_list.push_back(block->vec);
+        if(block->is_base_block){ 
+            block_vec_list.push_back(block->vec); 
+            total_col_size += block->col_size;
+        }
     }
-
+    
     la_kernel::create_nest_mat(n_row_, n_col_, block_mat_list, lhs_);
     la_kernel::create_nest_vec(block_vec_list, rhs_);
+
+    la_kernel::init_vec(total_col_size, x_);
+    la_kernel::finalize_vec(x_);
 
     // for test only
     //petsc_util::petsc_save_ascii_mat(lhs_,"lhs.txt");

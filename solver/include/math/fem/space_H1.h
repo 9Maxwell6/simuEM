@@ -14,6 +14,7 @@ private:
     std::vector<Basis_Shape> basis_shapes_;
 
 public:
+    H1_Space() = default;
     H1_Space(int dim, int p = 1);
 
     bool add_basis_shape(Basis_Shape g) override;
