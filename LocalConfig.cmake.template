@@ -49,6 +49,8 @@ set(EIGEN_DIR "/path/to/eigen")
 # PETSc Configuration
 #  - if MPI version of MFEM is used, 
 #    then MPI version of PETSc must be built with openMPI 
+#  - PETSc should be built with Hypre library, see:
+#    https://computing.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods
 # -----------------------------------------------------------------------------
 # set(USE_PETSC ON)
 # set(PETSC_DIR "/path/to/petsc")

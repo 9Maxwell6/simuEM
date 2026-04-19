@@ -109,6 +109,9 @@ add_subdirectory(solver)
 # Cross-platform linking
 if(UNIX)
 
+    find_package(OpenMP REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+
     set_target_properties(${PROJECT_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
     )

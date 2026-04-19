@@ -67,9 +67,10 @@ public:
         KSPSetType(ksp, KSPCG);
 
         // Optionally configure the preconditioner (e.g., Jacobi)
-        //PC pc;
-        //PCSetType(pc, PCHYPRE);
-        //PCHYPRESetType(pc, "boomeramg");
+        PC pc;
+        KSPGetPC(ksp, &pc);    // <-- add this line
+        PCSetType(pc, PCHYPRE);
+        PCHYPRESetType(pc, "boomeramg");
 
         // Optionally set tolerances
         KSPSetTolerances(ksp, 1e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);

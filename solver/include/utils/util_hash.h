@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <optional>
-
+#include <cstdint>
 
 namespace util 
 {
