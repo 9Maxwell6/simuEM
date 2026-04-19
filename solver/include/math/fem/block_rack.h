@@ -57,7 +57,7 @@ public:
 
     void solve(){
         // for text
-         KSP ksp;
+        KSP ksp;
         KSPCreate(PETSC_COMM_WORLD, &ksp);
 
         // Set the operator (matrix A)
@@ -67,9 +67,9 @@ public:
         KSPSetType(ksp, KSPCG);
 
         // Optionally configure the preconditioner (e.g., Jacobi)
-        PC pc;
-        KSPGetPC(ksp, &pc);
-        PCSetType(pc, PCJACOBI);  // or PCNONE for no preconditioner
+        //PC pc;
+        //PCSetType(pc, PCHYPRE);
+        //PCHYPRESetType(pc, "boomeramg");
 
         // Optionally set tolerances
         KSPSetTolerances(ksp, 1e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);

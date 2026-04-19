@@ -89,6 +89,7 @@ void Block_Rack::build_linear_system()
 {
     std::vector<G_Matrix> block_mat_list;
     std::vector<G_Vector> block_vec_list;
+    size_t total_row_size = 0;
     size_t total_col_size = 0;
     for(Block* block : rack_)
     {
@@ -98,7 +99,9 @@ void Block_Rack::build_linear_system()
 
         if(block->is_base_block){ 
             block_vec_list.push_back(block->vec); 
+            total_row_size += block->row_size;
             total_col_size += block->col_size;
+            
         }
     }
     

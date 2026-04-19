@@ -135,36 +135,31 @@ PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, c
 PetscErrorCode petsc_create_nest_vec(const std::vector<Vec>& block_vec, Vec &vec)
 {
     PetscFunctionBeginUser;
-    PetscCall(VecCreateNest(PETSC_COMM_WORLD, (PetscInt)block_vec.size(), NULL, const_cast<Vec*>(block_vec.data()), &vec));
-    // TODO do not save Vec as nest Vec, using normal vec instead.
-    /*
-    PetscInt N = 0, n = 0;
+    //PetscCall(VecCreateNest(PETSC_COMM_WORLD, (PetscInt)block_vec.size(), NULL, const_cast<Vec*>(block_vec.data()), &vec));
+    PetscInt local_size = 0;
     for (auto& v : block_vec) {
-        PetscInt ni, Ni;
-        VecGetLocalSize(v, &ni);
-        VecGetSize(v, &Ni);
-        n += ni;
-        N += Ni;
+        PetscInt n;
+        PetscCall(VecGetLocalSize(v, &n));
+        local_size += n;
     }
 
-    // Create flat vec
-    VecCreateMPI(PETSC_COMM_WORLD, n, N, &vec);
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &vec));
+    PetscCall(VecSetSizes(vec, local_size, PETSC_DECIDE));
+    PetscCall(VecSetFromOptions(vec));
 
-    // Copy data block by block
     PetscScalar *dst;
-    VecGetArray(vec, &dst);
+    PetscCall(VecGetArray(vec, &dst));
     PetscInt offset = 0;
     for (auto& v : block_vec) {
-        PetscInt ni;
-        VecGetLocalSize(v, &ni);
+        PetscInt n;
+        PetscCall(VecGetLocalSize(v, &n));
         const PetscScalar *src;
-        VecGetArrayRead(v, &src);
-        PetscArraycpy(dst + offset, src, ni);
-        VecRestoreArrayRead(v, &src);
-        offset += ni;
+        PetscCall(VecGetArrayRead(v, &src));
+        PetscCall(PetscArraycpy(dst + offset, src, n));
+        PetscCall(VecRestoreArrayRead(v, &src));
+        offset += n;
     }
-    VecRestoreArray(vec, &dst);
-    */
+    PetscCall(VecRestoreArray(vec, &dst));
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
