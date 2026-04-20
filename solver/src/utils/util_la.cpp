@@ -151,7 +151,7 @@ void set_value_vec(const std::vector<dof_idx>& dofs, const std::vector<scalar_t>
     #ifdef LOAD_PETSC
         petsc_util::petsc_set_value_vec(dofs, values, vec);
     #else
-        for (std::size_t i = 0; i < dofs.size(); ++i) vec(dofs[i]) = values[i];
+        for (std::size_t i = 0; i < dofs.size(); ++i) (*vec)(dofs[i]) = values[i];
     #endif
 }
 
