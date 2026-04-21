@@ -36,19 +36,19 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
         if(util::a_contains_b(description, {{"Source, Current"}}))
         {   
             key_source_ = mesh_key;
-            mesh_.set_group_property_id(mesh_key, 1);
+            mesh_.set_group_property_id(mesh_key, Domain::SOURCE);
             Logger::debug("T_Omega - Found source current: " + description);
         }
         else if(util::a_contains_b(description, {{"Insulator"}, {"Insulating"}}))
         {
             key_insulator_=mesh_key;
-            mesh_.set_group_property_id(mesh_key, 2);
+            mesh_.set_group_property_id(mesh_key, Domain::EMPTY);
             Logger::debug("T_Omega - Found insulating region: " + description);
         }
         else if(util::a_contains_b(description, {{"Conductor", "1"}, {"Conducting", "1"}}))
         {
             key_conductor_1_ = mesh_key;
-            mesh_.set_group_property_id(mesh_key, 3);
+            mesh_.set_group_property_id(mesh_key, Domain::CONDUCTOR);
             Logger::debug("T_Omega - Found conductor: " + description);
         }
     }
@@ -193,24 +193,28 @@ bool T_Omega::assemble_system()
     
     Logger::info("[T_Omega] - assemble Omega-field block matrix.");
     assemble_mat(fe_system_.assemble_mat_data(dof_Omega_), [&](auto& e_data, auto& mat) {
-        double sigma = 1.;
-        if(e_data.e->get_property_id()==3) sigma = 1.;
+        double mu = 0.;
+        size_t property_id = e_data.e->get_property_id();
+        if(property_id == Domain::CONDUCTOR) mu = 1.;
+        else if(property_id == Domain::EMPTY) mu = 2.;
         //std::cout<<e_data.e->get_property_id()<<std::endl;
 
-        Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
+        //Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
 
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(sigma, e_data, mat);
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
 
     });
 
     //*
     Logger::info("[T_Omega] - assemble T-field block matrix.");
     assemble_mat(fe_system_.assemble_mat_data(dof_T_1_), [&](auto& e_data, auto& mat) {
-        double sigma = 1.;
-        if(e_data.e->get_property_id()==3) sigma = 1.;
+        double sigma = 0.;
+        double mu = 0.;
+        size_t property_id = e_data.e->get_property_id();
+        if(property_id == Domain::CONDUCTOR) { mu = 1.; sigma = 1.; }
 
-        Integrator__s_curl_V__curl_V::assemble_element_matrix(sigma, e_data, mat);
-        Integrator__s_V__V::assemble_element_matrix(sigma, e_data, mat);
+        Integrator__s_curl_V__curl_V::assemble_element_matrix(1/sigma, e_data, mat);
+        Integrator__s_V__V::assemble_element_matrix(-mu, e_data, mat);
 
     });
 
@@ -220,12 +224,12 @@ bool T_Omega::assemble_system()
     //*
     Logger::info("[T_Omega] - assemble coupling block matrix.");
     assemble_mat(fe_system_.assemble_mat_data(dof_coupling_1_), [&](auto& e_data, auto& mat) {
-        double sigma = 1.;
-        if(e_data.e->get_property_id()==3) sigma = 1.;
+        double mu = 0.;
+        size_t property_id = e_data.e->get_property_id();
+        if(property_id == Domain::CONDUCTOR) mu = 1.;
+        else if(property_id == Domain::EMPTY) mu = 2.;
 
-        
-        //Integrator__s_curl_V__curl_V::assemble_element_matrix(sigma, e_data, mat);
-        Integrator__s_grad_S__V::assemble_element_matrix(sigma, e_data, mat);
+        Integrator__s_grad_S__V::assemble_element_matrix(mu, e_data, mat);
 
     });
     
@@ -233,32 +237,63 @@ bool T_Omega::assemble_system()
     
     //*/
 
-    
+    double pi = CONST::PI;
 
+    // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
+    V_Field_function f_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        v(0) =  (2*pi*pi-1)*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(  pi*x(2)  )
+               -(2*pi*pi  )*std::cos(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::sin(  pi*x(2)  )
+               -(3*pi*pi  )*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(3*pi*x(2)  )
+               -(     pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
 
-    V_Field_function f([](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        v(0) = std::sin(x(0));
-        v(1) = std::cos(x(1));
-        v(2) = std::cos(x(2));
+        v(1) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(  pi*x(2)  )
+               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::cos(2*pi*x(1)  )*std::sin(  pi*x(2)  )
+               -(3*pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(3*pi*x(2)  )
+               -(     pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+
+        v(2) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(  pi*x(2)  )
+               -(2*pi*pi  )*std::sin(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::cos(  pi*x(2)  )
+               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(3*pi*x(2)  )
+               -(     pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
+
+    });
+
+    // 3D vector field.  Hs = -∇Ω
+    V_Field_function f_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        v(0) = (      pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+        v(1) = (      pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+        v(2) = (      pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
     });
 
     Logger::info("[T_Omega] - assemble RHS vector for Omega block.");
     assemble_vec(fe_system_.assemble_vec_data(dof_Omega_), [&](auto& e_data, auto& vec) {
-        double mu = 1.;
-        if(e_data.e->get_property_id()==3) mu = 1.;
-
-        Integrator__v__grad_S::assemble_element_vector(f, e_data, vec);
-        
-
+        double mu = 0.;
+        size_t property_id = e_data.e->get_property_id();
+        if(property_id == Domain::CONDUCTOR){
+            mu = 1.;
+            Integrator__v__grad_S::assemble_element_vector(f_conductor, e_data, vec);
+            vec = -mu*vec;
+        }else if(property_id == Domain::EMPTY){
+            mu = 2.;
+            Integrator__v__grad_S::assemble_element_vector(f_empty, e_data, vec);
+            vec = -mu*vec;
+        }        
     });
 
 
 
     Logger::info("[T_Omega] - assemble RHS vector for T-field block.");
     assemble_vec(fe_system_.assemble_vec_data(dof_T_1_), [&](auto& e_data, auto& vec) {
-
-
-        Integrator__v__V::assemble_element_vector(f, e_data, vec);
+        double mu = 0.;
+        size_t property_id = e_data.e->get_property_id();
+        if(property_id == Domain::CONDUCTOR){
+            mu = 1.;
+            Integrator__v__V::assemble_element_vector(f_conductor, e_data, vec);
+            vec = mu*vec;
+        }else if(property_id == Domain::EMPTY){
+            Logger::error("[T_Omega] - T-field only defined inside conductor!");
+        }  
+        
 
     });
 
@@ -273,10 +308,82 @@ bool T_Omega::assemble_system()
     bc_Omega_in_.apply_to_system(br_system_);
     bc_T_1_.apply_to_system(br_system_);
 
-    br_system_.solve();
-
     
     return true;
 }
 
+
+
+
+bool T_Omega::solve_system()
+{
+    const G_Matrix lhs = br_system_.get_lhs();
+    const G_Vector rhs = br_system_.get_rhs();
+    const G_Vector x   = br_system_.get_x();
+
+    bool successful_flag = false;
+#ifdef LOAD_PETSC
+    // for text
+    KSP ksp;
+    KSPCreate(PETSC_COMM_WORLD, &ksp);
+
+    // Set the operator (matrix A)
+    KSPSetOperators(ksp, lhs, lhs);
+
+    // Set solver type
+    //KSPSetType(ksp, KSPMINRES);
+    KSPSetType(ksp, KSPGMRES);
+
+    // Optionally configure the preconditioner (e.g., Jacobi)
+    PC pc;
+    KSPGetPC(ksp, &pc);    // <-- add this line
+    //PCSetType(pc, PCHYPRE);
+    //PCHYPRESetType(pc, "boomeramg");
+
+    //PCSetType(pc, PCNONE);
+
+    PCSetType(pc, PCSOR);           // SOR family (includes SGS)
+    PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP);
+    PCSORSetOmega(pc, 1.0);
+
+    // Optionally set tolerances
+    KSPSetTolerances(ksp, 1e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
+
+    // Allow command-line overrides (e.g., -ksp_type, -pc_type)
+    KSPSetFromOptions(ksp);
+
+    // Solve
+    KSPSolve(ksp, rhs, x);
+
+    // Check convergence
+    KSPConvergedReason reason;
+    KSPGetConvergedReason(ksp, &reason);
+    if (reason < 0) {
+        PetscPrintf(PETSC_COMM_WORLD, "KSP did not converge: reason %d\n", reason);
+    } else {
+        PetscInt its;
+        KSPGetIterationNumber(ksp, &its);
+        PetscPrintf(PETSC_COMM_WORLD, "Converged in %d iterations\n", its);
+        successful_flag = true;
+    }
+    petsc_util::petsc_save_ascii_mat(lhs, "lhs_mat.txt");
+    petsc_util::petsc_save_ascii_vec(x, "x_vec.txt");
+    petsc_util::petsc_save_ascii_vec(rhs, "rhs_vec.txt");
+    // Clean up
+    KSPDestroy(&ksp);
+
+#else
+    Logger::error("[T_Omega] - this solver require petsc support!");
+#endif
+
+    return successful_flag;
+}
+
+
+
+
+bool T_Omega::compute_L2_error()
+{
+    
+}
 

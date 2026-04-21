@@ -12,6 +12,8 @@
 #include "math/field/field_function.h"
 
 #include "utils/util_string.h"
+#include "utils/util_constant.h"
+
 
 
 #include <functional>
@@ -19,6 +21,13 @@
 
 namespace simu {
 
+enum Domain 
+{
+    EMPTY = 1,
+    CONDUCTOR = 2,
+    INSULATOR = 3,
+    SOURCE = 4
+};
 
 class T_Omega
 {
@@ -135,6 +144,10 @@ public:
     T_Omega(Mesh& mesh);
 
     bool assemble_system();
+
+    bool solve_system();
+
+    bool compute_L2_error();
 
 };
 

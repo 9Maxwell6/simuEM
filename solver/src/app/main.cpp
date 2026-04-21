@@ -42,6 +42,9 @@ int main(int argc, char** argv) {
     Logger::stop_timer("Assemble T-Omega matrix system");
 
 
+    Logger::start_timer("Solve T-Omega matrix system");
+    T_O.solve_system();
+    Logger::stop_timer("Solve T-Omega matrix system");
 
     //MFEM_Eddy_Current(SCRIPT_PATH "test_mesh_0_v2.2.msh");
 
