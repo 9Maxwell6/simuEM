@@ -5,7 +5,9 @@
 
 #include "math/fem/fem_space.h"
 #include "math/fem/fem_system.h"
-#include "math/fem/assemble.h"
+#include "math/fem/assemble_mat.h"
+#include "math/fem/assemble_vec.h"
+
 #include "math/fem/bc_dirichlet.h"
 
 

@@ -384,6 +384,34 @@ bool T_Omega::solve_system()
 
 bool T_Omega::compute_L2_error()
 {
+    double pi = CONST::PI;
     
+    // manufactured solution
+    // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
+    V_Field_function x_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        v(0) =  (2*pi*pi-1)*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(  pi*x(2)  )
+               -(2*pi*pi  )*std::cos(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::sin(  pi*x(2)  )
+               -(3*pi*pi  )*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(3*pi*x(2)  )
+               -(     pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+
+        v(1) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(  pi*x(2)  )
+               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::cos(2*pi*x(1)  )*std::sin(  pi*x(2)  )
+               -(3*pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(3*pi*x(2)  )
+               -(     pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+
+        v(2) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(  pi*x(2)  )
+               -(2*pi*pi  )*std::sin(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::cos(  pi*x(2)  )
+               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(3*pi*x(2)  )
+               -(     pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
+
+    });
+
+    // 3D vector field.  Hs = -∇Ω
+    V_Field_function x_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        v(0) = (      pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+        v(1) = (      pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+        v(2) = (      pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
+    });
+
 }
 
