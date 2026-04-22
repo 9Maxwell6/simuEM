@@ -1,5 +1,8 @@
 #include "physics/electromagnetism/formulation/T_Omega.h"
 
+// for test
+#include <fstream>
+
 using namespace simu;
 
 T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
@@ -385,32 +388,131 @@ bool T_Omega::solve_system()
 bool T_Omega::compute_L2_error()
 {
     double pi = CONST::PI;
-    
+
     // manufactured solution
     // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
     V_Field_function x_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        v(0) =  (2*pi*pi-1)*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(  pi*x(2)  )
-               -(2*pi*pi  )*std::cos(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::sin(  pi*x(2)  )
-               -(3*pi*pi  )*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(3*pi*x(2)  )
-               -(     pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+        v(0) =         std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(  pi*x(2)  )
+               +(pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
 
-        v(1) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(  pi*x(2)  )
-               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::cos(2*pi*x(1)  )*std::sin(  pi*x(2)  )
-               -(3*pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(3*pi*x(2)  )
-               -(     pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
+        v(1) =         std::sin(pi*x(0)  )*std::cos(2*pi*x(1)  )*std::sin(  pi*x(2)  )
+               +(pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
 
-        v(2) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(  pi*x(2)  )
-               -(2*pi*pi  )*std::sin(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::cos(  pi*x(2)  )
-               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(3*pi*x(2)  )
-               -(     pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
+        v(2) =         std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(3*pi*x(2)  )
+               +(pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
+             
+
+
 
     });
 
     // 3D vector field.  Hs = -∇Ω
     V_Field_function x_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        v(0) = (      pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-        v(1) = (      pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-        v(2) = (      pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
+        v(0) = (pi/3)*std::sin(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
+        v(1) = (pi/3)*std::cos(pi*x(0)/3)*std::sin(pi*x(1)/3)*std::cos(pi*x(2)/3);
+        v(2) = (pi/3)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::sin(pi*x(2)/3);
+    });
+
+    Logger::info("[T_Omega] - compute L2 error.");
+    integrate_element(br_system_, fe_system_, [&](Element_Data<3, 3>& e_data, scalar_t& result) {
+        scalar_t local_integral = 0.;
+
+        const std::vector<const FEM_Space*>& space_list = *e_data.space_list;
+        const std::vector<std::vector<scalar_t>>& dof_value_list = *e_data.dof_value_list; 
+
+        // compute T - grad Omega
+        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, 3);
+
+        Matrix<4, 3> H1_grad_basis;
+        Matrix<4, 3> H1_phy_grad_basis;
+
+        Matrix<6, 3> Hcurl_basis;
+        Matrix<6, 3> Hcurl_phy_basis;
+
+        Matrix<6, 6> dof_transform;
+
+        Vector<3> solved_field = Vector<3>::Zero();
+        Vector<3> solution_field = Vector<3>::Zero();
+
+        Vector<3> temp;
+
+        e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, dof_transform);
+
+        for(const Integration_Point& i_p : i_p_list)
+        {
+            solved_field.setZero();
+            solution_field.setZero();
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+            const Matrix<3, 3>& J_inv = e_data.get_inv_J(i_p.coord); 
+
+            for(int i=0; i<space_list.size(); ++i)
+            {
+                const FEM_Space* space = space_list[i];
+                const std::vector<scalar_t>& dof_value = dof_value_list[i];
+                if(space->get_function_space()==Space::H_1){
+
+                    space->get_ED_basis_v(i_p.coord, H1_grad_basis);
+                    H1_phy_grad_basis = H1_grad_basis * J_inv;
+
+                    for (int j = 0; j < dof_value.size(); ++j) {
+                        solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                    }
+                    for(int j = 0; j < dof_value.size(); ++j){
+
+                    }
+
+                }else if(space->get_function_space()==Space::H_curl){
+
+                    space->get_basis_v(i_p.coord, Hcurl_basis);
+                    Hcurl_phy_basis = dof_transform*Hcurl_basis * J_inv;
+                    for (int j = 0; j < dof_value.size(); ++j) {
+                        solved_field += dof_value[j] * Hcurl_phy_basis.row(j).transpose();
+                    }
+                }
+            }
+
+            size_t property_id = e_data.e->get_property_id();
+            if(property_id == Domain::CONDUCTOR){
+                x_conductor.eval(i_p.coord, e_data, temp);
+                solution_field += temp;
+            }else if(property_id == Domain::EMPTY){
+                x_empty.eval(i_p.coord, e_data, temp);
+                solution_field += temp;
+            }   
+
+            Vector<3> node_phys = e_data.physical_point(i_p.coord);
+            std::cout<<property_id<<std::endl;
+            std::cout<<"ref coord: "<<i_p.coord.x << ", "<<i_p.coord.y << ", "<<i_p.coord.z << ", "<<std::endl;
+            std::cout<<"phy coord: "<<node_phys(0) << ", "<<node_phys(1) << ", "<<node_phys(2) << ", "<<std::endl;
+            std::cout<<"my result: " <<solved_field.transpose()<<std::endl;
+            std::cout<<"solution: "  <<solution_field.transpose()<<std::endl;
+            std::cout<<"=============================="<<std::endl;
+
+
+            std::string filepath = std::string(DEBUG_DATA_OUTPUT_DIR) + "/debug.txt";
+            std::ofstream file(filepath, std::ios::app); // append mode, or use ios::out to overwrite
+
+            file << property_id << std::endl;
+            file << "ref coord: " << i_p.coord.x << ", " << i_p.coord.y << ", " << i_p.coord.z << ", " << std::endl;
+            file << "phy coord: " << node_phys(0) << ", " << node_phys(1) << ", " << node_phys(2) << ", " << std::endl;
+            file << "my result: " <<solved_field.transpose() << std::endl;
+            file << "solution: "  <<solution_field.transpose() << std::endl;
+            file << "==============================" << std::endl;
+
+            file.close();
+
+            
+
+
+
+            
+              
+
+
+            //element_matrix += coeff * i_p.weight * abs_det_J * phy_domain_grad_basis * phy_range_basis.transpose();
+        }
+
+        result += local_integral;
     });
 
 }

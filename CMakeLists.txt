@@ -198,6 +198,12 @@ if(UNIX)
     )
 
 
+    # for debug
+    set(DEBUG_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/debug_data" CACHE PATH "Directory for debug output data")
+    file(MAKE_DIRECTORY ${DEBUG_DATA_OUTPUT_DIR})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG_DATA_OUTPUT_DIR="${DEBUG_DATA_OUTPUT_DIR}")
+
+
 
 elseif(WIN32)
 

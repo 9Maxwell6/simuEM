@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/fem/assemble_data.h"
+#include "math/fem/element_data.h"
 #include "math/fem/operation_collection.h"
 #include "math/fem/fem_util.h"
 

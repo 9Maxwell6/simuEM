@@ -10,7 +10,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     integration.cpp
     integrator_a.cpp
     integrator_l.cpp
-    assemble_data.cpp)
+    element_data.cpp)
 
 
 if(ENABLE_GUI)

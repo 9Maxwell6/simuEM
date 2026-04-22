@@ -62,14 +62,20 @@ public:
     std::string print_block_rack() const;
 
 
+    size_t get_n_row() const { return n_row_; }
+    size_t get_n_col() const { return n_col_; }
+
     const G_Matrix get_lhs() const { return lhs_; }
     const G_Vector get_x()   const { return x_;   }
     const G_Vector get_rhs() const { return rhs_; }
 
+    const std::vector<Block*>& get_rack() const { return rack_; }
     //TODO:
     //void initial_guess();
 
     //TODO: Dirichlet BC
+
+    
 
 };
 

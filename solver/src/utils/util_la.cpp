@@ -156,6 +156,16 @@ void set_value_vec(const std::vector<dof_idx>& dofs, const std::vector<scalar_t>
 }
 
 
+void extract_vec(G_Vector vec, std::vector<scalar_t> &out)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_extract_vec(vec, out);
+    #else
+        out.assign(vec->data(), vec->data() + vec->size());
+    #endif
+}
+
+
 
 void finalize_mat(G_Matrix mat)
 {

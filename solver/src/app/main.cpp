@@ -46,6 +46,11 @@ int main(int argc, char** argv) {
     T_O.solve_system();
     Logger::stop_timer("Solve T-Omega matrix system");
 
+
+    Logger::start_timer("Compute L2 error.");
+    T_O.compute_L2_error();
+    Logger::stop_timer("Compute L2 error.");
+
     //MFEM_Eddy_Current(SCRIPT_PATH "test_mesh_0_v2.2.msh");
 
     la_kernel::finalize();

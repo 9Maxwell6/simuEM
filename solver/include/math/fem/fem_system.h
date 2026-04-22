@@ -105,7 +105,7 @@ private:
 
     
     // usage: integration_rule_[Shape][order]    (make sure the length of outer vector >= required order)
-    std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash> integration_rule_;
+    mutable std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash> integration_rule_;
 
 
 
@@ -175,8 +175,18 @@ public:
     const std::array<const FEM_Space *,            2>& get_coupled_block_space(const Block& block) const;
     const std::array<const std::vector<dof_idx> * ,2>& get_coupled_block_dof(const Block& block) const; 
 
+    const FEM_Space* get_block_row_space(const Block& block) const;
+    const FEM_Space* get_block_col_space(const Block& block) const;
+    const std::vector<dof_idx>* get_block_row_dof(const Block& block) const;
+    const std::vector<dof_idx>* get_block_col_dof(const Block& block) const;
+
+    
+    std::vector<const std::vector<Integration_Point>*>* get_integration_rule(Basis_Shape b_shape) const { return &integration_rule_[b_shape]; }
+
     // use only after every dof table of blocks are initialized
     void delete_block_hash() { fe_block_hash_.clear(); }
+
+    const Mesh& get_mesh() const { return mesh_; }
 
 
     // TODO:

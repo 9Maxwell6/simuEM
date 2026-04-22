@@ -3,6 +3,8 @@
 #ifdef LOAD_PETSC
     #include <petsc.h>
 
+#include "math/data_format.h"
+
 #include <vector>
 #include <iostream>
 namespace petsc_util {
@@ -32,6 +34,7 @@ PetscErrorCode petsc_zero_row_col_mat(const std::vector<PetscInt>& dofs, PetscSc
 
 PetscErrorCode petsc_set_value_vec(const std::vector<PetscInt>& dofs, const std::vector<PetscScalar>& values, Vec vec);
 
+PetscErrorCode petsc_extract_vec(Vec vec, std::vector<simu::scalar_t> &out);
 
 PetscErrorCode petsc_finalize_mat(Mat mat);
 PetscErrorCode petsc_finalize_vec(Vec vec);

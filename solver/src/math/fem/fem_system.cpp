@@ -713,6 +713,30 @@ const std::array<const std::vector<dof_idx> * ,2>& FEM_System::get_coupled_block
 
 
 
+const FEM_Space* FEM_System::get_block_row_space(const Block& block) const
+{
+    if(block.is_base_block){ return get_block_space(block); }
+    else                   { return get_coupled_block_space(block)[0]; }
+}
+
+const FEM_Space* FEM_System::get_block_col_space(const Block& block) const
+{
+    if(block.is_base_block){ return get_block_space(block); }
+    else                   { return get_coupled_block_space(block)[1]; }
+}
+
+const std::vector<dof_idx>* FEM_System::get_block_row_dof(const Block& block) const
+{
+    if(block.is_base_block){ return get_block_dof(block); }
+    else                   { return get_coupled_block_dof(block)[0]; }
+}
+
+const std::vector<dof_idx>* FEM_System::get_block_col_dof(const Block& block) const
+{
+    if(block.is_base_block){ return get_block_dof(block); }
+    else                   { return get_coupled_block_dof(block)[1]; }
+}
+
 
 Block FEM_System::transpose_block(const Block& block)
 {

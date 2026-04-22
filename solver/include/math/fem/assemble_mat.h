@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/fem/assemble_data.h"
+#include "math/fem/element_data.h"
 #include "math/fem/operation_collection.h"
 #include "math/fem/fem_util.h"
 
@@ -9,10 +10,10 @@
 namespace simu {
 
 
-
 template<typename Op>
 bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
 {
+    
     if(data.block_matrix == nullptr)
     {
         Logger::error("assemble_mat: global matrix not initialized, call FEM_System::assemble_mat_data first.");

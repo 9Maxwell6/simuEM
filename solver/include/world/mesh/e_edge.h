@@ -35,6 +35,8 @@ public:
 
     int get_geometry_node_num() const override { return o_ + 1; };
 
+    int get_element_dim() const override { return 1; }
+
     void set_node_idx(const size_t *idx);
     void set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3);
     

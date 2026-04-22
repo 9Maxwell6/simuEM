@@ -48,6 +48,8 @@ public:
 
     virtual int get_geometry_node_num() const = 0; // number of node that define the geometry.
 
+    virtual int get_element_dim() const = 0;  // dimension of reference element.
+
     inline size_t get_id() const {return id_;}
     inline int    get_geometry_order() const {return o_;}
     inline size_t get_property_id() const {return property_id_;}

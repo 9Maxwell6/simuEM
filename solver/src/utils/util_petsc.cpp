@@ -254,6 +254,22 @@ PetscErrorCode petsc_set_value_vec(const std::vector<PetscInt>& dofs, const std:
 
 
 
+
+PetscErrorCode petsc_extract_vec(Vec vec, std::vector<simu::scalar_t> &out)
+{
+    PetscFunctionBeginUser;
+    const PetscScalar *raw;
+    PetscInt           local_size;
+    PetscCall(VecGetLocalSize(vec, &local_size));
+    PetscCall(VecGetArrayRead(vec, &raw));
+    out.assign(raw, raw + local_size);
+    PetscCall(VecRestoreArrayRead(vec, &raw));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
 PetscErrorCode petsc_finalize_mat(Mat mat) 
 {
     PetscFunctionBeginUser;

@@ -10,6 +10,8 @@
 
 #include "math/fem/bc_dirichlet.h"
 
+#include "math/fem/post_processing.h"
+
 
 #include "math/field/field_function.h"
 
