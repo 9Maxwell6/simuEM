@@ -620,7 +620,7 @@ Dirichlet_BC FEM_System::register_Dirichlet_BC(const Block& block, const Key& gr
     
 
     std::vector<dof_idx>& bc_dofs = bc.bc_dofs;
-    std::vector<dof_idx>& bc_element_dof = bc.bc_dofs;
+    std::vector<dof_idx>& bc_element_dof = bc.bc_element_dof;
     // map between global block dof index and Dirichlet BC index.
     std::unordered_map<dof_idx, dof_idx> global_to_local_index;
     global_to_local_index.reserve(bc_element_global_dof.size());

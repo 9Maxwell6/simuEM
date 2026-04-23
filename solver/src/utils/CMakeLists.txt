@@ -3,7 +3,7 @@ set(Utils logger.cpp
           util_petsc.cpp
           util_la.cpp)
           
-target_sources(${PROJECT_NAME} PRIVATE ${Utils})
+target_sources(simu_core PRIVATE ${Utils})
 
 if(ENABLE_GUI)
     target_sources(${PROJECT_GUI} PRIVATE ${Utils})

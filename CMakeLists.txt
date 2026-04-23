@@ -95,13 +95,23 @@ if(USE_PETSC)
 endif()
 # ===============================================================================
 
-# Build options
-option(BUILD_TESTS "Build test suite" ON)
-option(BUILD_EXAMPLES "Build example applications" ON)
 
+
+
+
+file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/solver/*.cpp"
+)
+
+list(FILTER CORE_SOURCES EXCLUDE REGEX ".*/main\\.cpp$")
+list(FILTER CORE_SOURCES EXCLUDE REGEX ".*/main_GUI\\.cpp$")
+
+add_library(simu_core STATIC ${CORE_SOURCES})
 
 # Collect source files
 add_subdirectory(solver)
+
+
 
 
 
@@ -110,7 +120,7 @@ add_subdirectory(solver)
 if(UNIX)
 
     find_package(OpenMP REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries(simu_core PUBLIC OpenMP::OpenMP_CXX)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
@@ -121,9 +131,6 @@ if(UNIX)
     
     
     if(ENABLE_GUI)
-        set_target_properties( ${PROJECT_GUI} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-        )
         #target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan)
 
         set_target_properties(${PROJECT_GUI} PROPERTIES
@@ -137,13 +144,12 @@ if(UNIX)
 
 
     if(USE_MFEM)
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${MFEM_LIBRARIES})
+        target_link_libraries(simu_core PUBLIC ${MFEM_LIBRARIES})
         set(LOAD_MFEM ON)
     endif()
 
     if(USE_GMSH)
-        target_link_libraries(${PROJECT_NAME} PRIVATE gmsh)
-        #target_link_libraries(${PROJECT_NAME} PUBLIC gmsh)
+        target_link_libraries(simu_core PUBLIC gmsh)
         set(LOAD_GMSH ON)
         if(ENABLE_GUI)
             target_link_libraries(${PROJECT_GUI} PRIVATE gmsh)
@@ -154,10 +160,10 @@ if(UNIX)
         set(PETSC_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/petsc_data" CACHE PATH "Directory for petsc output data")
         file(MAKE_DIRECTORY ${PETSC_DATA_OUTPUT_DIR})
         
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PETSC)
+        target_link_libraries(simu_core PUBLIC PkgConfig::PETSC)
 
-        target_compile_definitions(${PROJECT_NAME} PRIVATE PETSC_DATA_OUTPUT_DIR="${PETSC_DATA_OUTPUT_DIR}")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE LOAD_PETSC)
+        target_compile_definitions(simu_core PUBLIC PETSC_DATA_OUTPUT_DIR="${PETSC_DATA_OUTPUT_DIR}")
+        target_compile_definitions(simu_core PUBLIC LOAD_PETSC)
 
         #set(LOAD_PETSC ON)
 
@@ -174,7 +180,7 @@ if(UNIX)
             message(STATUS "MPI path extracted from petscconf.h: ${MPI_HOME}")
         endif()
             find_package(MPI REQUIRED)
-            target_link_libraries(${PROJECT_NAME} PRIVATE MPI::MPI_C MPI::MPI_CXX)
+            target_link_libraries(simu_core PUBLIC MPI::MPI_C MPI::MPI_CXX)
             message(STATUS "MPI found: ${MPI_HOME}")
         endif()
     endif()
@@ -185,23 +191,31 @@ if(UNIX)
         ${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in
         ${CMAKE_CURRENT_BINARY_DIR}/config/config.h 
     )
-    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/config")
-    target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_DIR})
+
+    target_include_directories(simu_core PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/config")
+    target_include_directories(simu_core PUBLIC ${EIGEN_DIR})
 
     if(ENABLE_GUI)
         target_include_directories(${PROJECT_GUI} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/config")
         target_include_directories(${PROJECT_GUI} PRIVATE ${EIGEN_DIR})
     endif()
 
-    target_compile_definitions(${PROJECT_NAME} PRIVATE 
-        SCRIPT_PATH="${CMAKE_SOURCE_DIR}/scripts/"
-    )
+    #target_compile_definitions(${PROJECT_NAME} PRIVATE 
+    #    SCRIPT_PATH="${CMAKE_SOURCE_DIR}/scripts/"
+    #)
+
+    target_compile_definitions(simu_core PUBLIC RUNTIME_OUTPUT_PATH="${CMAKE_BINARY_DIR}/bin/")
+    target_compile_definitions(${PROJECT_GUI} PRIVATE RUNTIME_OUTPUT_PATH="${CMAKE_BINARY_DIR}/bin/")
+
+
+    target_compile_definitions(simu_core PUBLIC SCRIPT_PATH="${CMAKE_SOURCE_DIR}/scripts/")
 
 
     # for debug
     set(DEBUG_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/debug_data" CACHE PATH "Directory for debug output data")
     file(MAKE_DIRECTORY ${DEBUG_DATA_OUTPUT_DIR})
-    target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG_DATA_OUTPUT_DIR="${DEBUG_DATA_OUTPUT_DIR}")
+
+    target_compile_definitions(simu_core PUBLIC DEBUG_DATA_OUTPUT_DIR="${DEBUG_DATA_OUTPUT_DIR}")
 
 
 
@@ -231,7 +245,11 @@ endif()
 
 
 # Optional: Add tests and examples
-if(BUILD_TESTS)
+if(BUILD_TEST)
+    set(TEST_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/test_data" CACHE PATH "Directory for test output data")
+    file(MAKE_DIRECTORY ${TEST_DATA_OUTPUT_DIR})
+
+    target_compile_definitions(simu_core PUBLIC TEST_DATA_OUTPUT_DIR="${TEST_DATA_OUTPUT_DIR}")
     add_subdirectory(tests)
 endif()
 

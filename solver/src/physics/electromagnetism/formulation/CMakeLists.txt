@@ -1,3 +1,3 @@
 
-target_sources(${PROJECT_NAME} PRIVATE 
+target_sources(simu_core PRIVATE 
     T_Omega.cpp)

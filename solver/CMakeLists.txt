@@ -9,9 +9,10 @@ add_subdirectory(src/utils)
 
 
 
-# Include directories
-target_include_directories(${PROJECT_NAME} PRIVATE include)
+
 
 if(ENABLE_GUI)
     target_include_directories(${PROJECT_GUI} PRIVATE include)
 endif()
+
+target_include_directories(simu_core PUBLIC include)

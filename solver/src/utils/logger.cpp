@@ -105,7 +105,7 @@ void Logger::stop_timer(const std::string& label)
 
 void Logger::export_to_file(const std::string& filename)
 {
-    std::ofstream file(filename);
+    std::ofstream file(RUNTIME_OUTPUT_PATH + filename);
     if (file.is_open()) {
         file << buffer.str();
         file.close();

@@ -71,6 +71,8 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
 
                     size_t col_size = shape_space->get_n_dof();
 
+                    const std::vector<dof_idx>* col_dof_list = fe_system.get_block_col_dof(*block);
+
                     if(e_record.count(e) == 0){
                         // new element
                         std::vector<Element_DoF>& e_dof_list = element_map[e];
@@ -82,7 +84,7 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                     }
                     col_dof_offset += col_size;
                 }
-                
+
             }
 
             for(size_t j=0; j<n_col; ++j)
@@ -99,6 +101,8 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
 
                 e_data.i_r_list = fe_system.get_integration_rule(e_data.b_shape);
 
+                e_data.reset_flag();
+
 
                 std::vector<const FEM_Space*> space_list;
                 std::vector<std::vector<scalar_t>> dof_value_list;
@@ -114,8 +118,10 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                     space_list.push_back(fe_system.get_block_col_space(*e_dof.block)->get_basis_space(e_data.b_shape));
 
                     std::vector<scalar_t> block_dof_value;
-                    for(size_t idx=0; idx<e_dof.dof_size; ++idx) block_dof_value.push_back(x[(*col_dof_list)[e_dof.dof_offset + idx]]);
-                    
+                    for(size_t idx=0; idx<e_dof.dof_size; ++idx)
+                    {
+                        block_dof_value.push_back(x[e_dof.block->col_offset + (*col_dof_list)[e_dof.dof_offset + idx]]);
+                    }
                     dof_value_list.push_back(std::move(block_dof_value));
                 }
 
@@ -124,7 +130,6 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                 
                 user_operation(e_data, result);
             }
-
 
             
             
@@ -140,9 +145,13 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
     
     int phy_dim = fe_system.get_mesh().get_mesh_dimension();
 
+
+    // TODO: extend to 1D and 2D
     if      (phy_dim == 3) { static Element_Data<3,3> e_data; return global_integral(e_data, br_system, fe_system, user_operation); }
     //else if (phy_dim == 2) { static Element_Data<2,2> e_data; return global_integral(e_data, br_system, fe_system, user_operation); }
     //else if (phy_dim == 1) { static Element_Data<1,1> e_data; return global_integral(e_data, br_system, fe_system, user_operation); }
+
+    return 0.;
 
 }
 

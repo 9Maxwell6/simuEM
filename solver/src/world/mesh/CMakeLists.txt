@@ -4,10 +4,9 @@ set(Mesh mesh.cpp
          element.cpp
          e_tetrahedron.cpp
          e_triangle.cpp
-         e_edge.cpp
-         e__transformation.cpp)
+         e_edge.cpp)
          
-target_sources(${PROJECT_NAME} PRIVATE ${Mesh})
+target_sources(simu_core PRIVATE ${Mesh})
 
 
 

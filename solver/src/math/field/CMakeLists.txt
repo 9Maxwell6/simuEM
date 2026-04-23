@@ -1,4 +1,4 @@
-target_sources(${PROJECT_NAME} PRIVATE 
+target_sources(simu_core PRIVATE 
     field.cpp
     field_constant.cpp
     field_fespace.cpp

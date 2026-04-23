@@ -1,4 +1,4 @@
-target_sources(${PROJECT_NAME} PRIVATE 
+target_sources(simu_core PRIVATE 
     block_rack.cpp
     block.cpp
     bc_dirichlet.cpp

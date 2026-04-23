@@ -59,8 +59,6 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
     // mark all elements in conductors' boundary. (in 3D mesh, they are the 3D elements at boundary layer inside conductor)
     
     std::string description = mesh_.get_group_description(key_conductor_1_);
-    std::cout<<key_conductor_interface_1_.dim<<std::endl;
-    std::cout<<key_conductor_interface_1_.id<<std::endl;
     key_conductor_interface_layer_1_ =  mesh_.mark_elements(conductor_interface_layer_filter(key_conductor_interface_1_), key_conductor_1_, "Conductor Outerlayer | "+description);
 
     std::string new_description_conductor_interface_layer = mesh_.get_group_description(key_conductor_interface_layer_1_);
@@ -240,7 +238,7 @@ bool T_Omega::assemble_system()
     
     //*/
 
-    double pi = CONST::PI;
+    const double pi = CONST::PI;
 
     // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
     V_Field_function f_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
@@ -387,7 +385,7 @@ bool T_Omega::solve_system()
 
 bool T_Omega::compute_L2_error()
 {
-    double pi = CONST::PI;
+    const double pi = CONST::PI;
 
     // manufactured solution
     // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
@@ -412,6 +410,10 @@ bool T_Omega::compute_L2_error()
         v(1) = (pi/3)*std::cos(pi*x(0)/3)*std::sin(pi*x(1)/3)*std::cos(pi*x(2)/3);
         v(2) = (pi/3)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::sin(pi*x(2)/3);
     });
+
+    std::string filepath = std::string(DEBUG_DATA_OUTPUT_DIR) + "/debug.txt";
+    std::ofstream file(filepath, std::ios::trunc);  
+    
 
     Logger::info("[T_Omega] - compute L2 error.");
     integrate_element(br_system_, fe_system_, [&](Element_Data<3, 3>& e_data, scalar_t& result) {
@@ -455,7 +457,7 @@ bool T_Omega::compute_L2_error()
                     H1_phy_grad_basis = H1_grad_basis * J_inv;
 
                     for (int j = 0; j < dof_value.size(); ++j) {
-                        solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                        solved_field += dof_value[j] * H1_phy_grad_basis.row(j).transpose();
                     }
                     for(int j = 0; j < dof_value.size(); ++j){
 
@@ -481,25 +483,17 @@ bool T_Omega::compute_L2_error()
             }   
 
             Vector<3> node_phys = e_data.physical_point(i_p.coord);
-            std::cout<<property_id<<std::endl;
-            std::cout<<"ref coord: "<<i_p.coord.x << ", "<<i_p.coord.y << ", "<<i_p.coord.z << ", "<<std::endl;
-            std::cout<<"phy coord: "<<node_phys(0) << ", "<<node_phys(1) << ", "<<node_phys(2) << ", "<<std::endl;
-            std::cout<<"my result: " <<solved_field.transpose()<<std::endl;
-            std::cout<<"solution: "  <<solution_field.transpose()<<std::endl;
-            std::cout<<"=============================="<<std::endl;
 
 
-            std::string filepath = std::string(DEBUG_DATA_OUTPUT_DIR) + "/debug.txt";
-            std::ofstream file(filepath, std::ios::app); // append mode, or use ios::out to overwrite
-
-            file << property_id << std::endl;
+            file <<"property id: "<<property_id<<std::endl;
+            file <<"element id: "<<e_data.e->get_id()<<std::endl;
             file << "ref coord: " << i_p.coord.x << ", " << i_p.coord.y << ", " << i_p.coord.z << ", " << std::endl;
             file << "phy coord: " << node_phys(0) << ", " << node_phys(1) << ", " << node_phys(2) << ", " << std::endl;
             file << "my result: " <<solved_field.transpose() << std::endl;
             file << "solution: "  <<solution_field.transpose() << std::endl;
             file << "==============================" << std::endl;
 
-            file.close();
+            
 
             
 
@@ -514,6 +508,10 @@ bool T_Omega::compute_L2_error()
 
         result += local_integral;
     });
+
+    file.close();
+
+    return 0.;
 
 }
 

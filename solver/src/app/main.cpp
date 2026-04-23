@@ -23,12 +23,30 @@ using namespace simu;
 
 int main(int argc, char** argv) {
 
+    std::vector<char*> petsc_argv_list;
+    petsc_argv_list.push_back(argv[0]);
+
+    std::string mesh_file = "test_mesh_0_v2.2.msh";
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+
+        if (arg.rfind("--mesh=", 0) == 0) {
+            mesh_file = arg.substr(7);
+        }else{
+            petsc_argv_list.push_back(argv[i]);  // leave it for PETSc
+        }
+    }
+
     Logger::start_timer("Loading mesh");
     Mesh_Parser mp(Mesh_Format::GMSH);
-    Mesh mesh = mp.load_mesh(SCRIPT_PATH "test_mesh_0_v2.2.msh");
+    Mesh mesh = mp.load_mesh(SCRIPT_PATH + mesh_file);
     Logger::stop_timer("Loading mesh");
 
-    la_kernel::initialize(&argc, &argv);
+
+    char** petsc_argv = petsc_argv_list.data();
+    int petsc_argc = petsc_argv_list.size();
+    la_kernel::initialize(&petsc_argc, &petsc_argv);
 
     Logger::start_timer("Initialize T-Omega solver");
     T_Omega T_O(mesh);

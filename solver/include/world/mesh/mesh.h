@@ -260,13 +260,13 @@ public:
 
         if (dim < 0 || dim > dim_)
         {
-            Logger::error("Mesh::mark_elements - failed: impossible dimension "+std::to_string(dim) + ", return bad key.\n");
+            Logger::error("Mesh::mark_new_elements - failed: impossible dimension "+std::to_string(dim) + ", return bad key.\n");
             return {static_cast<uint32_t>(dim), 0};
         }
 
 
         auto it = element_group.find(search_key);
-        if (it == element_group.end()) Logger::info("Mesh::mark_elements - search_key not found: search from all elements with the same dimension of mesh.");
+        if (it == element_group.end()) Logger::info("Mesh::mark_new_elements - search_key not found: search from all elements with the same dimension of mesh.");
 
         // Determine which group of elements to search
         const std::vector<Element*>& search_pool = (it != element_group.end()) ? it->second : elements_;
@@ -275,7 +275,7 @@ public:
 
         if (search_pool.empty())
         {
-            Logger::error("Mesh::mark_elements - failed: search pool is empty for key {dim="+ std::to_string(search_key.dim)+", id=" +std::to_string(search_key.id) + "}, return bad key.\n");
+            Logger::error("Mesh::mark_new_elements - failed: search pool is empty for key {dim="+ std::to_string(search_key.dim)+", id=" +std::to_string(search_key.id) + "}, return bad key.\n");
             return {static_cast<uint32_t>(dim), 0};
         }
 
