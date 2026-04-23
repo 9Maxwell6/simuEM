@@ -1,4 +1,4 @@
-#include "visualizer/app_window.h"
+#include "app_window.h"
 
 void APP_Window::run(){
     initWindow();

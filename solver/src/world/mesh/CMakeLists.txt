@@ -10,8 +10,3 @@ target_sources(simu_core PRIVATE ${Mesh})
 
 
 
-if(ENABLE_GUI)
-    target_sources(${PROJECT_GUI} PRIVATE ${Mesh})
-endif()
-
-

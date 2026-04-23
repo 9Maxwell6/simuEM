@@ -1,0 +1,1 @@
+add_executable(${PROJECT_GUI} main_GUI.cpp)

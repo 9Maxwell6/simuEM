@@ -104,7 +104,6 @@ file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
 )
 
 list(FILTER CORE_SOURCES EXCLUDE REGEX ".*/main\\.cpp$")
-list(FILTER CORE_SOURCES EXCLUDE REGEX ".*/main_GUI\\.cpp$")
 
 add_library(simu_core STATIC ${CORE_SOURCES})
 
@@ -132,11 +131,13 @@ if(UNIX)
     
     if(ENABLE_GUI)
         #target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan)
+        add_subdirectory(visualizer)
 
         set_target_properties(${PROJECT_GUI} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         )
         target_link_libraries(${PROJECT_GUI} PRIVATE glfw vulkan dl pthread X11 Xxf86vm Xrandr Xi)
+        target_compile_definitions(${PROJECT_GUI} PRIVATE RUNTIME_OUTPUT_PATH="${CMAKE_BINARY_DIR}/bin/")
     endif()
 
 
@@ -151,9 +152,6 @@ if(UNIX)
     if(USE_GMSH)
         target_link_libraries(simu_core PUBLIC gmsh)
         set(LOAD_GMSH ON)
-        if(ENABLE_GUI)
-            target_link_libraries(${PROJECT_GUI} PRIVATE gmsh)
-        endif()
     endif()
 
     if(USE_PETSC)
@@ -195,17 +193,13 @@ if(UNIX)
     target_include_directories(simu_core PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/config")
     target_include_directories(simu_core PUBLIC ${EIGEN_DIR})
 
-    if(ENABLE_GUI)
-        target_include_directories(${PROJECT_GUI} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/config")
-        target_include_directories(${PROJECT_GUI} PRIVATE ${EIGEN_DIR})
-    endif()
+
 
     #target_compile_definitions(${PROJECT_NAME} PRIVATE 
     #    SCRIPT_PATH="${CMAKE_SOURCE_DIR}/scripts/"
     #)
 
     target_compile_definitions(simu_core PUBLIC RUNTIME_OUTPUT_PATH="${CMAKE_BINARY_DIR}/bin/")
-    target_compile_definitions(${PROJECT_GUI} PRIVATE RUNTIME_OUTPUT_PATH="${CMAKE_BINARY_DIR}/bin/")
 
 
     target_compile_definitions(simu_core PUBLIC SCRIPT_PATH="${CMAKE_SOURCE_DIR}/scripts/")

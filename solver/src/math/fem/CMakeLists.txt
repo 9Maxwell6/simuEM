@@ -12,12 +12,3 @@ target_sources(simu_core PRIVATE
     integrator_l.cpp
     element_data.cpp)
 
-
-if(ENABLE_GUI)
-    target_sources(${PROJECT_GUI} PRIVATE 
-    fem_space.cpp
-    space_H1.cpp
-    space_Hcurl.cpp
-)
-
-endif()
