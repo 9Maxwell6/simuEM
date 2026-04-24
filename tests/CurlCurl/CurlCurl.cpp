@@ -210,7 +210,7 @@ bool CurlCurl::solve_system()
 
 
 
-bool CurlCurl::compute_L2_error()
+scalar_t CurlCurl::compute_L2_error()
 {
     double pi = CONST::PI;
 
@@ -227,7 +227,7 @@ bool CurlCurl::compute_L2_error()
     
 
     Logger::info("[CurlCurl] - compute L2 error.");
-    integrate_element(br_system_, fe_system_, [&](Element_Data<3, 3>& e_data, scalar_t& result) {
+    scalar_t l2_error = integrate_element(br_system_, fe_system_, [&](Element_Data<3, 3>& e_data, scalar_t& result) {
         scalar_t local_integral = 0.;
 
         const std::vector<const FEM_Space*>& space_list = *e_data.space_list;
@@ -246,7 +246,8 @@ bool CurlCurl::compute_L2_error()
         e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, dof_transform);
 
         
-                        
+        Vector<3> last_solve_f; // for test
+        Vector<3> last_exact_f; // for test
 
         Vector<3> temp;
 
@@ -280,42 +281,30 @@ bool CurlCurl::compute_L2_error()
                     Logger::error("CurlCurl::compute_L2_error - integrate_element: detect non Hcurl space, not expected.");
                 }
             }
+
+            u_exact.eval(i_p.coord, e_data, solution_field);
+
+            last_solve_f = solved_field;
+            last_exact_f = solution_field;
+
+            double diff_sq = (solved_field - solution_field).squaredNorm();
+            local_integral += i_p.weight * abs_det_J * diff_sq;
             
-            u_exact.eval(i_p.coord, e_data, temp);
-            solution_field += temp;
-
-
-            Vector<3> node_phys = e_data.physical_point(i_p.coord);
-
-            size_t property_id = e_data.e->get_property_id();
-            file <<"property id: "<<property_id<<std::endl;
-            file <<"element id: "<<e_data.e->get_id()<<std::endl;
-            file << "ref coord: " << i_p.coord.x << ", " << i_p.coord.y << ", " << i_p.coord.z << ", " << std::endl;
-            file << "phy coord: " << node_phys(0) << ", " << node_phys(1) << ", " << node_phys(2) << ", " << std::endl;
-            file << "my result: " <<solved_field.transpose()  << std::endl;
-            file << "solution: "  <<solution_field.transpose()<< std::endl;
-            file << "==============================" << std::endl;
-
-            
-            
-
-            
-
-
-
-            
-              
-
-
-            //element_matrix += coeff * i_p.weight * abs_det_J * phy_domain_grad_basis * phy_range_basis.transpose();
         }
 
         result += local_integral;
+
+        Vector<3> node_phys = e_data.physical_point(i_p_list.back().coord);
+        size_t property_id = e_data.e->get_property_id();
+        file <<"e id: "<<e_data.e->get_id()<<";   p id: "<<property_id<<std::endl;
+        file << "phy coord: " << node_phys(0) << ", " << node_phys(1) << ", " << node_phys(2) << ", " << std::endl;
+        file << "my result: " <<last_solve_f.transpose()  << std::endl;
+        file << "solution: "  <<last_exact_f.transpose()<< std::endl;
+        file << "==============================" << std::endl;
     });
 
     file.close();
-
-    return 0.;
+    return l2_error;
 }
 
 
@@ -331,7 +320,7 @@ int main(int argc, char** argv) {
     std::vector<char*> petsc_argv_list;
     petsc_argv_list.push_back(argv[0]);
 
-    std::string mesh_file = "test_cube.msh";
+    std::string mesh_file = "test_cube_0.msh";
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -343,38 +332,64 @@ int main(int argc, char** argv) {
         }
     }
 
-    Logger::start_timer("Loading mesh");
-    Mesh_Parser mp(Mesh_Format::GMSH);
-    Mesh mesh = mp.load_mesh(SCRIPT_PATH + mesh_file);
-    Logger::stop_timer("Loading mesh");
-
-
     char** petsc_argv = petsc_argv_list.data();
     int petsc_argc = petsc_argv_list.size();
     la_kernel::initialize(&petsc_argc, &petsc_argv);
 
-    Logger::start_timer("Initialize CurlCurl solver");
-    CurlCurl P(mesh);
-    Logger::stop_timer("Initialize CurlCurl solver");
 
+    const std::vector<std::pair<std::string, double>> mesh_sweep = {
+        {"test_cube_0.geo", 0.500000000},
+        {"test_cube_1.geo", 0.353553391},
+        {"test_cube_2.geo", 0.250000000},
+        {"test_cube_3.geo", 0.176776695},
+        {"test_cube_4.geo", 0.125000000},
+        {"test_cube_5.geo", 0.088388348},
+    };
+
+    const std::string dat_path = TEST_DATA_OUTPUT_DIR + std::string("/curlcurl_l2.dat");
+    std::ofstream l2_convergence(dat_path);
+    l2_convergence << "# h                        L2_error\n";
+    l2_convergence << std::scientific << std::setprecision(15);
     
 
-    Logger::start_timer("Assemble CurlCurl matrix system");
+    for (const auto& [mesh_file, h] : mesh_sweep) {
+        scalar_t l2_error;
+        {
+            Logger::start_timer("Loading mesh");
+            Mesh_Parser mp(Mesh_Format::GMSH);
+            Mesh mesh = mp.load_mesh(SCRIPT_PATH + mesh_file);
+            Logger::stop_timer("Loading mesh");
+
+            Logger::start_timer("Initialize CurlCurl solver");
+            CurlCurl P(mesh);
+            Logger::stop_timer("Initialize CurlCurl solver");
+
+            Logger::start_timer("Assemble CurlCurl matrix system");
+            P.assemble_system();
+            Logger::stop_timer("Assemble CurlCurl matrix system");
+
+            Logger::start_timer("Solve CurlCurl matrix system");
+            P.solve_system();
+            Logger::stop_timer("Solve CurlCurl matrix system");
+
+            Logger::start_timer("Compute L2 error.");
+            l2_error = P.compute_L2_error();
+            Logger::stop_timer("Compute L2 error.");
+        }
+
+        std::ostringstream ss;
+        ss << std::scientific << std::setprecision(15) << l2_error;
+        Logger::info("[CurlCurl] h = " + std::to_string(h) + "  L2 error: " + ss.str());
+
+        l2_convergence << h << "  " << l2_error << "\n";
+        l2_convergence.flush();   // persist after every run — a crash on the
+                            // finest mesh won't lose the earlier points
+    }
+
+    l2_convergence.close();
+
+
     
-    P.assemble_system();
-    Logger::stop_timer("Assemble CurlCurl matrix system");
-
-
-    Logger::start_timer("Solve CurlCurl matrix system");
-    P.solve_system();
-    Logger::stop_timer("Solve CurlCurl matrix system");
-
-
-    Logger::start_timer("Compute L2 error.");
-    P.compute_L2_error();
-    Logger::stop_timer("Compute L2 error.");
-
-    //MFEM_Eddy_Current(SCRIPT_PATH "test_mesh_0_v2.2.msh");
 
     la_kernel::finalize();
 

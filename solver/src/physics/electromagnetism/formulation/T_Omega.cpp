@@ -383,7 +383,7 @@ bool T_Omega::solve_system()
 
 
 
-bool T_Omega::compute_L2_error()
+scalar_t T_Omega::compute_L2_error()
 {
     const double pi = CONST::PI;
 
@@ -416,7 +416,7 @@ bool T_Omega::compute_L2_error()
     
 
     Logger::info("[T_Omega] - compute L2 error.");
-    integrate_element(br_system_, fe_system_, [&](Element_Data<3, 3>& e_data, scalar_t& result) {
+    scalar_t l2_error = integrate_element(br_system_, fe_system_, [&](Element_Data<3, 3>& e_data, scalar_t& result) {
         scalar_t local_integral = 0.;
 
         const std::vector<const FEM_Space*>& space_list = *e_data.space_list;
@@ -435,6 +435,9 @@ bool T_Omega::compute_L2_error()
 
         Vector<3> solved_field = Vector<3>::Zero();
         Vector<3> solution_field = Vector<3>::Zero();
+
+        Vector<3> last_solve_f; // for test
+        Vector<3> last_exact_f; // for test
 
         Vector<3> temp;
 
@@ -456,7 +459,7 @@ bool T_Omega::compute_L2_error()
                     space->get_ED_basis_v(i_p.coord, H1_grad_basis);
                     H1_phy_grad_basis = H1_grad_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
-                        solved_field += dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                        solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
                     }
 
 
@@ -479,36 +482,29 @@ bool T_Omega::compute_L2_error()
                 solution_field += temp;
             }   
 
-            Vector<3> node_phys = e_data.physical_point(i_p.coord);
+            last_solve_f = solved_field;
+            last_exact_f = solution_field;
 
+            double diff_sq = (solved_field - solution_field).squaredNorm();
+            local_integral += i_p.weight * abs_det_J * diff_sq;
 
-            file <<"property id: "<<property_id<<std::endl;
-            file <<"element id: "<<e_data.e->get_id()<<std::endl;
-            file << "ref coord: " << i_p.coord.x << ", " << i_p.coord.y << ", " << i_p.coord.z << ", " << std::endl;
-            file << "phy coord: " << node_phys(0) << ", " << node_phys(1) << ", " << node_phys(2) << ", " << std::endl;
-            file << "my result: " <<solved_field.transpose() << std::endl;
-            file << "solution: "  <<solution_field.transpose() << std::endl;
-            file << "==============================" << std::endl;
-
-            
-
-            
-
-
-
-            
-              
-
-
-            //element_matrix += coeff * i_p.weight * abs_det_J * phy_domain_grad_basis * phy_range_basis.transpose();
         }
 
         result += local_integral;
+
+        Vector<3> node_phys = e_data.physical_point(i_p_list.back().coord);
+        size_t property_id = e_data.e->get_property_id();
+        file <<"e id: "<<e_data.e->get_id()<<";   p id: "<<property_id<<std::endl;
+        file << "phy coord: " << node_phys(0) << ", " << node_phys(1) << ", " << node_phys(2) << ", " << std::endl;
+        file << "my result: " <<last_solve_f.transpose()  << std::endl;
+        file << "solution: "  <<last_exact_f.transpose()<< std::endl;
+        file << "==============================" << std::endl;
+
     });
 
     file.close();
 
-    return 0.;
+    return l2_error;
 
 }
 

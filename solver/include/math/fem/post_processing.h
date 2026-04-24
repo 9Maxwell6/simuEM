@@ -129,13 +129,9 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                 e_data.dof_value_list = &dof_value_list;
                 
                 user_operation(e_data, result);
+
             }
-
-            
-            
-
         }
-
         return result;
 
     };

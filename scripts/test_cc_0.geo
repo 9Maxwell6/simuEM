@@ -18,8 +18,8 @@ outer_y = 0.0;
 outer_z = 0.0;
 
 // Mesh size
-lc_inner = 0.3;   // Finer mesh on conductor
-lc_outer = 0.9;   // Coarser mesh in space
+lc_inner = 0.5;   // Finer mesh on conductor
+lc_outer = 0.5;   // Coarser mesh in space
 
 // ============================================================
 // Inner Cube (Conductor)

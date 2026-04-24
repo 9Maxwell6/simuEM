@@ -155,7 +155,7 @@ if(UNIX)
     endif()
 
     if(USE_PETSC)
-        set(PETSC_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/petsc_data" CACHE PATH "Directory for petsc output data")
+        set(PETSC_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/data_petsc" CACHE PATH "Directory for petsc output data")
         file(MAKE_DIRECTORY ${PETSC_DATA_OUTPUT_DIR})
         
         target_link_libraries(simu_core PUBLIC PkgConfig::PETSC)
@@ -204,9 +204,11 @@ if(UNIX)
 
     target_compile_definitions(simu_core PUBLIC SCRIPT_PATH="${CMAKE_SOURCE_DIR}/scripts/")
 
+    target_compile_definitions(simu_core PUBLIC DATA_OUTPUT_DIR="${CMAKE_SOURCE_DIR}/data")
+
 
     # for debug
-    set(DEBUG_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/debug_data" CACHE PATH "Directory for debug output data")
+    set(DEBUG_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/data_debug" CACHE PATH "Directory for debug output data")
     file(MAKE_DIRECTORY ${DEBUG_DATA_OUTPUT_DIR})
 
     target_compile_definitions(simu_core PUBLIC DEBUG_DATA_OUTPUT_DIR="${DEBUG_DATA_OUTPUT_DIR}")
@@ -240,7 +242,7 @@ endif()
 
 # Optional: Add tests and examples
 if(BUILD_TEST)
-    set(TEST_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/test_data" CACHE PATH "Directory for test output data")
+    set(TEST_DATA_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/data/data_test" CACHE PATH "Directory for test output data")
     file(MAKE_DIRECTORY ${TEST_DATA_OUTPUT_DIR})
 
     target_compile_definitions(simu_core PUBLIC TEST_DATA_OUTPUT_DIR="${TEST_DATA_OUTPUT_DIR}")

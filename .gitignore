@@ -1,4 +1,6 @@
 .vscode
 build
 LocalConfig.cmake
-data
+data/data_debug
+data/data_test
+data/data_petsc

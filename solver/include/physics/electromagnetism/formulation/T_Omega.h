@@ -151,7 +151,7 @@ public:
 
     bool solve_system();
 
-    bool compute_L2_error();
+    scalar_t compute_L2_error();
 
 };
 

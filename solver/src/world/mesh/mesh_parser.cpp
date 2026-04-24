@@ -210,6 +210,15 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     Mesh mesh;
     mesh.dim_ = gmsh::model::getDimension();
 
+
+    std::string ext = std::filesystem::path(filename).extension().string();
+    if(ext == ".geo"){
+        gmsh::model::mesh::generate(mesh.dim_);
+    }
+
+
+    
+
     // initialize element counter
     count_element_gmsh();
     initialize_mesh(mesh);
@@ -219,7 +228,6 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     std::vector<double> coords;
     std::vector<double> parametric; // unused
 
-    gmsh::model::mesh::generate(mesh.dim_);
     gmsh::model::mesh::getNodes(node_tags, coords, parametric);
     mesh.n_node_ = node_tags.size();
 
@@ -275,7 +283,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
 
             Element * element;
             create_mesh_element(element, mesh, type, element_node_tags, element_id, 0, order);
-            
+
             mesh.elements_.push_back(element);
         }
     }

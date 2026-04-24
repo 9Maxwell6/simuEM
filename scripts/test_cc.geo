@@ -19,7 +19,7 @@ outer_z = 0.0;
 
 // Mesh size
 lc_inner = 0.3;   // Finer mesh on conductor
-lc_outer = 0.9;   // Coarser mesh in space
+lc_outer = 0.3;   // Coarser mesh in space
 
 // ============================================================
 // Inner Cube (Conductor)
@@ -149,7 +149,7 @@ Physical Volume("Conductor 1", 1) = {1};
 Physical Volume("Insulating region", 2) = {2};
 
 // Interface surface between conductor and space
-Physical Surface("Conductor Boundary", 10) = {1, 2, 3, 4, 5, 6};
+Physical Surface("Conductor Boundary 1", 10) = {1, 2, 3, 4, 5, 6};
 
 // Outer boundary (for boundary conditions)
 Physical Surface("True Boundary", 20) = {7, 8, 9, 10, 11, 12};
