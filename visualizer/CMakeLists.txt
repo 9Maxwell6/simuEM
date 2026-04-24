@@ -1,6 +1,5 @@
-add_subdirectory(src/app)
-add_subdirectory(src/renderer)
-add_subdirectory(src/ui)
+add_subdirectory(src)
+
 
 
 
