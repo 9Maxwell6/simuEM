@@ -456,7 +456,7 @@ bool T_Omega::compute_L2_error()
                     space->get_ED_basis_v(i_p.coord, H1_grad_basis);
                     H1_phy_grad_basis = H1_grad_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
-                        solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                        solved_field += dof_value[j] * H1_phy_grad_basis.row(j).transpose();
                     }
 
 
