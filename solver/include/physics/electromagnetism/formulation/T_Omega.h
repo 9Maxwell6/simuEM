@@ -30,7 +30,8 @@ enum Domain
     EMPTY = 1,
     CONDUCTOR = 2,
     INSULATOR = 3,
-    SOURCE = 4
+    SOURCE = 4,
+    CONDUCTOR_OUTER_LAYER = 5
 };
 
 class T_Omega

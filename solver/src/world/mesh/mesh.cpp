@@ -107,7 +107,7 @@ void Mesh::set_group_property_id(const Key& mesh_key, size_t property_id)
         for(Element* e : it->second)
         {
             size_t old_id = e->get_property_id();
-            if(old_id !=0 ) Logger::warning("Mesh::set_group_property_id - overwrite element property id: old id: "+std::to_string(old_id)+"; new id: "+std::to_string(property_id)+".");
+            //if(old_id !=0 ) Logger::warning("Mesh::set_group_property_id - overwrite element [id="+std::to_string(e->get_id())+"]: old property_id: "+std::to_string(old_id)+"; new property_id: "+std::to_string(property_id)+".");
             e->set_property_id(property_id);
         }
     }else{

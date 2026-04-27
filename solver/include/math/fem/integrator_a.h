@@ -202,10 +202,10 @@ private:
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
-        if((s_1 != Space::H_curl || s_2 != Space::H_1) && (s_1 != Space::H_div || s_2 != Space::H_1) )
+        if((s_1 != Space::H_1 || s_2 != Space::H_curl) && (s_1 != Space::H_1 || s_2 != Space::H_div) )
         {
-            Logger::error("Integrator__s_V__grad_S: require H_curl -> H_1 or H_div -> H_1.");
-            throw std::invalid_argument("Integrator__s_V__grad_S: require H_curl -> H_1 or H_div -> H_1.");
+            Logger::error("Integrator__s_V__grad_S: require H_1 -> H_curl or H_1 -> H_div.");
+            throw std::invalid_argument("Integrator__s_V__grad_S: require H_1 -> H_curl or H_1 -> H_div.");
         }
     }
 
@@ -232,10 +232,10 @@ private:
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
-        if((s_1 != Space::H_1 || s_2 != Space::H_curl) && (s_1 != Space::H_1 || s_2 != Space::H_div) )
+        if((s_1 != Space::H_curl || s_2 != Space::H_1) && (s_1 != Space::H_div || s_2 != Space::H_1) )
         {
-            Logger::error("Integrator__s_grad_S__V: require H_1 -> H_curl or H_1 -> H_div.");
-            throw std::invalid_argument("Integrator__s_grad_S__V: require H_1 -> H_curl or H_1 -> H_div.");
+            Logger::error("Integrator__s_grad_S__V: require H_curl -> H_1 or H_div -> H_1.");
+            throw std::invalid_argument("Integrator__s_grad_S__V: require H_curl -> H_1 or H_div -> H_1.");
         }
     }
 

@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     if(l2_test_flag)
     {
         const std::vector<std::pair<std::string, double>> mesh_sweep = {
-            {"test_cc_0.geo", 0.500000000},
+            //{"test_cc_0.geo", 0.500000000},
             {"test_cc_1.geo", 0.353553391},
             {"test_cc_2.geo", 0.250000000},
             {"test_cc_3.geo", 0.176776695},

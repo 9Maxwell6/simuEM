@@ -228,8 +228,54 @@ INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_V__V, assemble_element_matri
 
 
 
+
+
 template<int phy_dim, int ref_dim, typename Mat_Type>
 void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
+{
+    constexpr int R = Mat_Type::RowsAtCompileTime;
+    constexpr int C = Mat_Type::ColsAtCompileTime;
+    
+    if constexpr  (phy_dim == ref_dim) 
+    {
+        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+
+        const Element* e = e_data.e;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
+        int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order();
+        
+        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        
+        Matrix<R, ref_dim> domain_grad_basis(e_data.rows, ref_dim);
+        Matrix<R, phy_dim> phy_domain_grad_basis(e_data.rows, phy_dim);
+
+
+        Matrix<C, ref_dim> range_basis(e_data.cols, ref_dim);
+        Matrix<C, phy_dim> phy_range_basis(e_data.cols, phy_dim);
+        for(const Integration_Point& i_p : i_p_list)
+        {
+            test__space->get_ED_basis_v(i_p.coord, domain_grad_basis);
+            trial_space->get_basis_v(i_p.coord, range_basis);
+            
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p.coord);   
+
+            phy_domain_grad_basis = domain_grad_basis * J_inv;
+            phy_range_basis = range_basis * J_inv;
+
+            element_matrix += coeff * i_p.weight * abs_det_J * phy_domain_grad_basis * phy_range_basis.transpose();
+        }
+    }
+}
+INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_V__grad_S, assemble_element_matrix, double)
+
+
+
+
+
+template<int phy_dim, int ref_dim, typename Mat_Type>
+void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
 {
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
@@ -268,47 +314,7 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
         }
     }
 }
-INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_V__grad_S, assemble_element_matrix, double)
-
-
-
-
-template<int phy_dim, int ref_dim, typename Mat_Type>
-void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
-{
-    constexpr int R = Mat_Type::RowsAtCompileTime;
-    constexpr int C = Mat_Type::ColsAtCompileTime;
-    
-    if constexpr  (phy_dim == ref_dim) 
-    {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
-
-        const Element* e = e_data.e;
-        const FEM_Space* test__space = e_data.shape_space_1;
-        const FEM_Space* trial_space = e_data.shape_space_2;
-        int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order();
-        
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
-        
-        Matrix<R, ref_dim> domain_grad_basis(e_data.rows, ref_dim);
-        Matrix<R, phy_dim> phy_domain_grad_basis(e_data.rows, phy_dim);
-
-
-        Matrix<C, ref_dim> range_basis(e_data.cols, ref_dim);
-        Matrix<C, phy_dim> phy_range_basis(e_data.cols, phy_dim);
-        for(const Integration_Point& i_p : i_p_list)
-        {
-            test__space->get_ED_basis_v(i_p.coord, domain_grad_basis);
-            trial_space->get_basis_v(i_p.coord, range_basis);
-            
-            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
-            const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p.coord);   
-
-            phy_domain_grad_basis = domain_grad_basis * J_inv;
-            phy_range_basis = range_basis * J_inv;
-
-            element_matrix += coeff * i_p.weight * abs_det_J * phy_domain_grad_basis * phy_range_basis.transpose();
-        }
-    }
-}
 INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator__s_grad_S__V, assemble_element_matrix, double)
+
+
+

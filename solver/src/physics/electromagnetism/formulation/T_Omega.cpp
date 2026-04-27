@@ -69,7 +69,8 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
                                                                     mesh.get_element_geometry_size_group(key_conductor_interface_layer_1_).size(),
                                                                     mesh.get_element_size_group(key_conductor_interface_layer_1_),
                                                                     mesh.get_group_description(key_conductor_interface_layer_1_));
-
+    
+    mesh_.set_group_property_id(key_conductor_interface_layer_1_, Domain::CONDUCTOR_OUTER_LAYER);
 
     key_Omega_inner_boundary_1_ =  mesh_.mark_new_elements(scalar_field_Omega_inner_boundary_filter(key_conductor_interface_1_), dim_-1, key_conductor_interface_layer_1_, "Omega field inner boundary | "+description);
     
@@ -194,10 +195,10 @@ bool T_Omega::assemble_system()
     
     Logger::info("[T_Omega] - assemble Omega-field block matrix.");
     assemble_mat(fe_system_.assemble_mat_data(dof_Omega_), [&](auto& e_data, auto& mat) {
-        double mu = 0.;
+        double mu = 1.;
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR) mu = 1.;
-        else if(property_id == Domain::EMPTY) mu = 2.;
+        else if(property_id == Domain::EMPTY) mu = 1.;
         //std::cout<<e_data.e->get_property_id()<<std::endl;
 
         //Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
@@ -209,8 +210,8 @@ bool T_Omega::assemble_system()
     //*
     Logger::info("[T_Omega] - assemble T-field block matrix.");
     assemble_mat(fe_system_.assemble_mat_data(dof_T_1_), [&](auto& e_data, auto& mat) {
-        double sigma = 0.;
-        double mu = 0.;
+        double sigma = 1.;
+        double mu = 1.;
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR) { mu = 1.; sigma = 1.; }
 
@@ -225,12 +226,13 @@ bool T_Omega::assemble_system()
     //*
     Logger::info("[T_Omega] - assemble coupling block matrix.");
     assemble_mat(fe_system_.assemble_mat_data(dof_coupling_1_), [&](auto& e_data, auto& mat) {
-        double mu = 0.;
+        double mu = 1.;
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR) mu = 1.;
-        else if(property_id == Domain::EMPTY) mu = 2.;
+        else if(property_id == Domain::EMPTY) mu = 1.;
 
-        Integrator__s_grad_S__V::assemble_element_matrix(mu, e_data, mat);
+        //Integrator__s_grad_S__V::assemble_element_matrix(mu, e_data, mat);
+        Integrator__s_V__grad_S::assemble_element_matrix(mu, e_data, mat);
 
     });
     
@@ -240,76 +242,112 @@ bool T_Omega::assemble_system()
 
     const double pi = CONST::PI;
 
-    // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
-    /*
-    V_Field_function f_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        v(0) =  (2*pi*pi-1)*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(  pi*x(2)  )
-               -(2*pi*pi  )*std::cos(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::sin(  pi*x(2)  )
-               -(3*pi*pi  )*std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(3*pi*x(2)  )
-               -(     pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-
-        v(1) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(  pi*x(2)  )
-               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::cos(2*pi*x(1)  )*std::sin(  pi*x(2)  )
-               -(3*pi*pi  )*std::sin(pi*x(0)  )*std::cos(  pi*x(1)  )*std::sin(3*pi*x(2)  )
-               -(     pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-
-        v(2) = -(  pi*pi  )*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(  pi*x(2)  )
-               -(2*pi*pi  )*std::sin(pi*x(0)  )*std::sin(2*pi*x(1)  )*std::cos(  pi*x(2)  )
-               +(2*pi*pi-1)*std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(3*pi*x(2)  )
-               -(     pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
-
-    });
-    */
-    
     double sigma = 1.;
     double mu = 1.;
-    // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
-    V_Field_function f_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        /*
-        v(0) =  (pi*pi)*std::sin(pi*x(0))*(std::sin(pi*x(1))*std::sin(2*pi*x(2)) + std::sin(2*pi*x(1))*std::sin(pi*x(2)))
-               -(pi/3)*std::sin(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
+    // 3D vector field.  Hs = ∇×∇×T - T
+    V_Field_function f_T_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        auto sx = std::sin(2*pi*x(0));
+        auto sy = std::sin(2*pi*x(1));
+        auto sz = std::sin(2*pi*x(2));
 
-        v(1) =  (5*pi*pi-1)*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(2*pi*x(2))
-               -(2*pi*pi  )*std::cos(pi*x(0))*std::cos(2*pi*x(1))*std::sin(pi*x(2))
-               -(pi/3)*std::cos(pi*x(0)/3)*std::sin(pi*x(1)/3)*std::cos(pi*x(2)/3);
+        auto cx = std::cos(2*pi*x(0));
+        auto cy = std::cos(2*pi*x(1));
+        auto cz = std::cos(2*pi*x(2));
 
-        v(2) =  (5*pi*pi-1)*std::cos(pi*x(0))*std::sin(2*pi*x(1))*std::cos(pi*x(2))
-               -(2*pi*pi  )*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(2*pi*x(2))
-               -(pi/3)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::sin(pi*x(2)/3);
-        */
+        auto ex = std::exp(x(0));
+        auto ey = std::exp(x(1));
+        auto ez = std::exp(x(2));
 
-        v(0) =  (pi*pi/sigma)*std::sin(pi*x(0))*(std::sin(pi*x(1))*std::sin(2*pi*x(2)) + std::sin(2*pi*x(1))*std::sin(pi*x(2)))
-                -(mu*pi/3)*std::sin(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
+        // component 0
+        v(0) = 2.0*pi*cx*(ey*sz + ez*sy) - ex*sy*sz*(1.0 - 8*pi*pi);
 
-        v(1) =  (5*pi*pi/sigma - mu)*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(2*pi*x(2))
-               -(2*pi*pi/sigma    )*std::cos(pi*x(0))*std::cos(2*pi*x(1))*std::sin(pi*x(2))
-               -(mu*pi/3)*std::cos(pi*x(0)/3)*std::sin(pi*x(1)/3)*std::cos(pi*x(2)/3);
+        // component 1
+        v(1) = 2.0*pi*cy*(ex*sz + ez*sx) - ey*sx*sz*(1.0 - 8*pi*pi);
 
-        v(2) =  (5*pi*pi/sigma - mu)*std::cos(pi*x(0))*std::sin(2*pi*x(1))*std::cos(pi*x(2))
-               -(2*pi*pi/sigma    )*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(2*pi*x(2))
-               -(mu*pi/3)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::sin(pi*x(2)/3);
+        // component 2
+        v(2) = 2.0*pi*cz*(ex*sy + ey*sx) - ez*sx*sy*(1.0 - 8*pi*pi);
 
     });
 
-    // 3D vector field.  Hs = -∇Ω
+    // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
+    V_Field_function f_T_conductor_outer_layer([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        auto sx = std::sin(2*pi*x(0));
+        auto sy = std::sin(2*pi*x(1));
+        auto sz = std::sin(2*pi*x(2));
+
+        auto cx = std::cos(2*pi*x(0));
+        auto cy = std::cos(2*pi*x(1));
+        auto cz = std::cos(2*pi*x(2));
+
+        auto Sx = std::sin(pi*x(0));
+        auto Sy = std::sin(pi*x(1));
+        auto Sz = std::sin(pi*x(2));
+
+        auto Cx = std::cos(pi*x(0));
+        auto Cy = std::cos(pi*x(1));
+        auto Cz = std::cos(pi*x(2));
+
+        auto ex = std::exp(x(0));
+        auto ey = std::exp(x(1));
+        auto ez = std::exp(x(2));
+
+        // component 0
+        v(0) = 2.0*pi*cx*(ey*sz + ez*sy) - ex*sy*sz*(1.0 - 8*pi*pi) - pi*Sx*Cy*Cz;
+
+        // component 1
+        v(1) = 2.0*pi*cy*(ex*sz + ez*sx) - ey*sx*sz*(1.0 - 8*pi*pi) - pi*Cx*Sy*Cz;
+
+        // component 2
+        v(2) = 2.0*pi*cz*(ex*sy + ey*sx) - ez*sx*sy*(1.0 - 8*pi*pi) - pi*Cx*Cy*Sz;
+
+    });
+
+    // 3D vector field.  Hs = T - ∇Ω
+    V_Field_function f_Omega_conductor_outer_layer([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        auto sx = std::sin(2*pi*x(0));
+        auto sy = std::sin(2*pi*x(1));
+        auto sz = std::sin(2*pi*x(2));
+
+        auto cx = std::cos(2*pi*x(0));
+        auto cy = std::cos(2*pi*x(1));
+        auto cz = std::cos(2*pi*x(2));
+
+        auto Sx = std::sin(pi*x(0));
+        auto Sy = std::sin(pi*x(1));
+        auto Sz = std::sin(pi*x(2));
+
+        auto Cx = std::cos(pi*x(0));
+        auto Cy = std::cos(pi*x(1));
+        auto Cz = std::cos(pi*x(2));
+
+        auto ex = std::exp(x(0));
+        auto ey = std::exp(x(1));
+        auto ez = std::exp(x(2));
+
+        // component 0
+        v(0) = ex*sy*sz + pi*Sx*Cy*Cz;
+        // component 1
+        v(1) = sx*ey*sz + pi*Cx*Sy*Cz;
+        // component 2
+        v(2) = sx*sy*ez + pi*Cx*Cy*Sz;
+
+    });
+
+    // 3D vector field.  Hs = ∇Ω
     V_Field_function f_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        v(0) = (      pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-        v(1) = (      pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-        v(2) = (      pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
+        v(0) = -pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
+        v(1) = -pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
+        v(2) = -pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
     });
 
     Logger::info("[T_Omega] - assemble RHS vector for Omega block.");
     assemble_vec(fe_system_.assemble_vec_data(dof_Omega_), [&](auto& e_data, auto& vec) {
-        double mu = 0.;
         size_t property_id = e_data.e->get_property_id();
-        if(property_id == Domain::CONDUCTOR){
-            mu = 1.;
-            Integrator__v__grad_S::assemble_element_vector(f_conductor, e_data, vec);
-            vec = -mu*vec;
+        if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
+            Integrator__v__grad_S::assemble_element_vector(f_Omega_conductor_outer_layer, e_data, vec);
+            
         }else if(property_id == Domain::EMPTY){
-            mu = 2.;
             Integrator__v__grad_S::assemble_element_vector(f_empty, e_data, vec);
-            vec = -mu*vec;
         }        
     });
 
@@ -317,12 +355,11 @@ bool T_Omega::assemble_system()
 
     Logger::info("[T_Omega] - assemble RHS vector for T-field block.");
     assemble_vec(fe_system_.assemble_vec_data(dof_T_1_), [&](auto& e_data, auto& vec) {
-        double mu = 0.;
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR){
-            mu = 1.;
-            Integrator__v__V::assemble_element_vector(f_conductor, e_data, vec);
-            vec = mu*vec;
+            Integrator__v__V::assemble_element_vector(f_T_conductor, e_data, vec);
+        }else if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
+            Integrator__v__V::assemble_element_vector(f_T_conductor_outer_layer, e_data, vec);
         }else if(property_id == Domain::EMPTY){
             Logger::error("[T_Omega] - T-field only defined inside conductor!");
         }  
@@ -423,37 +460,27 @@ scalar_t T_Omega::compute_L2_error()
     double mu = 1.;
 
     // manufactured solution
-    // 3D vector field.  Tr = ∇×∇×T - T + ∇Ω
+    // 3D vector field.  u = T - ∇Ω
     V_Field_function x_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        /*
-        v(0) =         std::cos(pi*x(0)  )*std::sin(  pi*x(1)  )*std::sin(  pi*x(2)  )
-               +(pi/3)*std::sin(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-
-        v(1) =         std::sin(pi*x(0)  )*std::cos(2*pi*x(1)  )*std::sin(  pi*x(2)  )
-               +(pi/3)*std::cos(pi*x(0)/3)*std::sin(  pi*x(1)/3)*std::cos(  pi*x(2)/3);
-
-        v(2) =         std::sin(pi*x(0)  )*std::sin(  pi*x(1)  )*std::cos(3*pi*x(2)  )
-               +(pi/3)*std::cos(pi*x(0)/3)*std::cos(  pi*x(1)/3)*std::sin(  pi*x(2)/3);
-        */
-
-        v(0) =  (pi/3)*std::sin(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
-
-        v(1) =  std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(2*pi*x(2))
-               +(pi/3)*std::cos(pi*x(0)/3)*std::sin(pi*x(1)/3)*std::cos(pi*x(2)/3);
-
-        v(2) =  std::cos(pi*x(0))*std::sin(2*pi*x(1))*std::cos(pi*x(2))
-               +(pi/3)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::sin(pi*x(2)/3);
-             
-
-
+        v(0) = std::exp(x(0))*std::sin(2*pi*x(1))*std::sin(2*pi*x(2));
+        v(1) = std::sin(2*pi*x(0))*std::exp(x(1))*std::sin(2*pi*x(2));
+        v(2) = std::sin(2*pi*x(0))*std::sin(2*pi*x(1))*std::exp(x(2));
 
     });
 
-    // 3D vector field.  Hs = -∇Ω
+    // 3D vector field.  u = T - ∇Ω
+    V_Field_function x_conductor_outer_layer([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+        v(0) = std::exp(x(0))*std::sin(2*pi*x(1))*std::sin(2*pi*x(2)) + pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
+        v(1) = std::sin(2*pi*x(0))*std::exp(x(1))*std::sin(2*pi*x(2)) + pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
+        v(2) = std::sin(2*pi*x(0))*std::sin(2*pi*x(1))*std::exp(x(2)) + pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
+
+    });
+
+    // 3D vector field.  u = -∇Ω
     V_Field_function x_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        v(0) = (pi/3)*std::sin(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
-        v(1) = (pi/3)*std::cos(pi*x(0)/3)*std::sin(pi*x(1)/3)*std::cos(pi*x(2)/3);
-        v(2) = (pi/3)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::sin(pi*x(2)/3);
+        v(0) = pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
+        v(1) = pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
+        v(2) = pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
     });
 
     std::string filepath = std::string(DEBUG_DATA_OUTPUT_DIR) + "/debug.txt";
@@ -504,7 +531,7 @@ scalar_t T_Omega::compute_L2_error()
                     space->get_ED_basis_v(i_p.coord, H1_grad_basis);
                     H1_phy_grad_basis = H1_grad_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
-                        solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                        solved_field += dof_value[j] * H1_phy_grad_basis.row(j).transpose();
                     }
 
 
@@ -521,6 +548,9 @@ scalar_t T_Omega::compute_L2_error()
             size_t property_id = e_data.e->get_property_id();
             if(property_id == Domain::CONDUCTOR){
                 x_conductor.eval(i_p.coord, e_data, temp);
+                solution_field += temp;
+            }else if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
+                x_conductor_outer_layer.eval(i_p.coord, e_data, temp);
                 solution_field += temp;
             }else if(property_id == Domain::EMPTY){
                 x_empty.eval(i_p.coord, e_data, temp);

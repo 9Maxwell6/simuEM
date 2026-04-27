@@ -91,7 +91,7 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                 for(Element* e : mesh.get_element_group(fe_system.get_block_group_key(*rack[i*n_row+j]))) e_record.insert(e);
             
 
-
+            int ccc = 0;
             for (const auto& [e, e_dof_list] : element_map) {
 
                 e_data.mesh = &mesh;
