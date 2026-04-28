@@ -90,6 +90,7 @@ int main(int argc, char** argv)
             {"test_cc_3.geo", 0.176776695},
             {"test_cc_4.geo", 0.125000000},
             {"test_cc_5.geo", 0.088388348},
+            {"test_cc_6.geo", 0.062500000}
         };
 
         const std::string dat_path = DATA_OUTPUT_DIR + std::string("/T_Omega_l2.dat");

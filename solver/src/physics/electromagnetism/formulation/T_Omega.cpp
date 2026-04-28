@@ -302,7 +302,7 @@ bool T_Omega::assemble_system()
 
     });
 
-    // 3D vector field.  Hs = T - ∇Ω
+    // 3D vector field.  -Hs = T - ∇Ω
     V_Field_function f_Omega_conductor_outer_layer([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         auto sx = std::sin(2*pi*x(0));
         auto sy = std::sin(2*pi*x(1));
@@ -324,20 +324,22 @@ bool T_Omega::assemble_system()
         auto ey = std::exp(x(1));
         auto ez = std::exp(x(2));
 
-        // component 0
+        //v(0) = -2.0*pi*cx*(ey*sz + ez*sy) + ex*sy*sz*(1.0 - 8*pi*pi) + pi*Sx*Cy*Cz;
+        //v(1) = -2.0*pi*cy*(ex*sz + ez*sx) + ey*sx*sz*(1.0 - 8*pi*pi) + pi*Cx*Sy*Cz;
+        //v(2) = -2.0*pi*cz*(ex*sy + ey*sx) + ez*sx*sy*(1.0 - 8*pi*pi) + pi*Cx*Cy*Sz;
+
         v(0) = ex*sy*sz + pi*Sx*Cy*Cz;
-        // component 1
-        v(1) = sx*ey*sz + pi*Cx*Sy*Cz;
-        // component 2
-        v(2) = sx*sy*ez + pi*Cx*Cy*Sz;
+        v(1) = ey*sx*sz + pi*Cx*Sy*Cz;
+        v(2) = ez*sx*sy + pi*Cx*Cy*Sz;
+
 
     });
 
-    // 3D vector field.  Hs = ∇Ω
+    // 3D vector field.  -Hs = -∇Ω
     V_Field_function f_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
-        v(0) = -pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
-        v(1) = -pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
-        v(2) = -pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
+        v(0) = pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
+        v(1) = pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
+        v(2) = pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
     });
 
     Logger::info("[T_Omega] - assemble RHS vector for Omega block.");
@@ -460,7 +462,7 @@ scalar_t T_Omega::compute_L2_error()
     double mu = 1.;
 
     // manufactured solution
-    // 3D vector field.  u = T - ∇Ω
+    // 3D vector field.  u = T
     V_Field_function x_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         v(0) = std::exp(x(0))*std::sin(2*pi*x(1))*std::sin(2*pi*x(2));
         v(1) = std::sin(2*pi*x(0))*std::exp(x(1))*std::sin(2*pi*x(2));
@@ -531,7 +533,7 @@ scalar_t T_Omega::compute_L2_error()
                     space->get_ED_basis_v(i_p.coord, H1_grad_basis);
                     H1_phy_grad_basis = H1_grad_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
-                        solved_field += dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                        solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
                     }
 
 

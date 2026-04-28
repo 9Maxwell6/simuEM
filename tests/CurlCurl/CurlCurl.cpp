@@ -344,6 +344,7 @@ int main(int argc, char** argv) {
         {"test_cube_3.geo", 0.176776695},
         {"test_cube_4.geo", 0.125000000},
         {"test_cube_5.geo", 0.088388348},
+        {"test_cube_6.geo", 0.062500000},
     };
 
     const std::string dat_path = TEST_DATA_OUTPUT_DIR + std::string("/curlcurl_l2.dat");
