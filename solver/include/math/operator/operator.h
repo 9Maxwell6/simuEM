@@ -4,7 +4,7 @@
 
 #include "world/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
-#include "math/fem/fem_util.h"
+#include "math/operator/operator_util.h"
 
 
 #include "math/data_format.h"
@@ -22,10 +22,10 @@ template<int phy_dim, int ref_dim>
 struct Element_Data;
 
 
-class Operation
+class Operator
 {
 protected:
-    Operation();
+    Operator();
 
 public:
     template<int phy_dim, int ref_dim, typename Mat_Type>

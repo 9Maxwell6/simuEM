@@ -1,4 +1,4 @@
-#include "math/fem/operation.h"
+#include "math/operator/operator.h"
 
 #include "math/fem/assemble_data.h"
 #include "math/fem/element_data.h"
@@ -20,7 +20,7 @@ using namespace simu;
  * 
  */
 template<int phy_dim, int ref_dim, typename Mat_Type>
-void Operation::dof_transformation_mat(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
+void Operator::dof_transformation_mat(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
 {
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
@@ -48,7 +48,7 @@ void Operation::dof_transformation_mat(Element_Data<phy_dim, ref_dim>& e_data, M
         element_matrix = element_matrix * P_2.transpose();
     }
 }
-INSTANTIATE_ELEMENT_MAT_TEMPLATE(Operation, dof_transformation_mat)
+INSTANTIATE_ELEMENT_MAT_TEMPLATE(Operator, dof_transformation_mat)
 
 
 
@@ -67,7 +67,7 @@ INSTANTIATE_ELEMENT_MAT_TEMPLATE(Operation, dof_transformation_mat)
  * 
  */
 template<int phy_dim, int ref_dim, typename Vec_Type>
-void Operation::dof_transformation_vec(Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_vector)
+void Operator::dof_transformation_vec(Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_vector)
 {
     constexpr int R = Vec_Type::RowsAtCompileTime;
 
@@ -83,7 +83,7 @@ void Operation::dof_transformation_vec(Element_Data<phy_dim, ref_dim>& e_data, V
         element_vector = P_1 * element_vector;
     }
 }
-INSTANTIATE_ELEMENT_VEC_TEMPLATE(Operation, dof_transformation_vec)
+INSTANTIATE_ELEMENT_VEC_TEMPLATE(Operator, dof_transformation_vec)
 
 
 
@@ -97,7 +97,7 @@ INSTANTIATE_ELEMENT_VEC_TEMPLATE(Operation, dof_transformation_vec)
  * @param element_matrix   Local matrix to insert
  */
 template<typename Mat_Type>
-void Operation::add_to_global_mat(const Assemble_Data& data, Mat_Type& element_matrix)
+void Operator::add_to_global_mat(const Assemble_Data& data, Mat_Type& element_matrix)
 {
 
     la_kernel::add_to_mat(element_matrix.rows(), &(*data.row_dof)[data.row_dof_offset], 
@@ -114,10 +114,10 @@ void Operation::add_to_global_mat(const Assemble_Data& data, Mat_Type& element_m
 
 #elif
     // G_Matrix: using eigen sparse matrix.
-    Logger::error("Operation::add_to_global_mat - Eigen::SparseMatrix assemble not available yet.");
+    Logger::error("Operator::add_to_global_mat - Eigen::SparseMatrix assemble not available yet.");
 #endif
 }
-INSTANTIATE_MAT_TEMPLATE_ARGS(Operation, add_to_global_mat, const Assemble_Data&)
+INSTANTIATE_MAT_TEMPLATE_ARGS(Operator, add_to_global_mat, const Assemble_Data&)
 
 
 
@@ -129,7 +129,7 @@ INSTANTIATE_MAT_TEMPLATE_ARGS(Operation, add_to_global_mat, const Assemble_Data&
  * @param element_vector   Local vertor to insert
  */
 template<typename Vec_Type>
-void Operation::add_to_global_vec(const Assemble_Data& data, Vec_Type& element_vector)
+void Operator::add_to_global_vec(const Assemble_Data& data, Vec_Type& element_vector)
 {
     const auto rows = element_vector.size();
 
@@ -148,7 +148,7 @@ void Operation::add_to_global_vec(const Assemble_Data& data, Vec_Type& element_v
 
 #elif
     // G_Vector: using eigen vectorXd.
-    Logger::error("Operation::add_to_global_vec - Eigen global vector assemble not available yet.");
+    Logger::error("Operator::add_to_global_vec - Eigen global vector assemble not available yet.");
 #endif
 }
-INSTANTIATE_VEC_TEMPLATE_ARGS(Operation, add_to_global_vec, const Assemble_Data&)
+INSTANTIATE_VEC_TEMPLATE_ARGS(Operator, add_to_global_vec, const Assemble_Data&)

@@ -2,7 +2,7 @@
 
 #include "math/fem/assemble_data.h"
 #include "math/fem/element_data.h"
-#include "math/fem/operation_collection.h"
+#include "math/operator/operator_collection.h"
 #include "math/fem/fem_util.h"
 
 
@@ -26,9 +26,9 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
 
         user_operation(e_data, local_mat);
 
-        Operation::dof_transformation_mat(e_data, local_mat);
+        Operator::dof_transformation_mat(e_data, local_mat);
 
-        Operation::add_to_global_mat(data, local_mat);
+        Operator::add_to_global_mat(data, local_mat);
 
     };
 

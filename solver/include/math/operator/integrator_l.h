@@ -1,10 +1,10 @@
 #pragma once
 
-#include "math/fem/operation.h"
-#include "math/fem/integration.h"
-#include "math/fem/integrator.h"
+#include "math/operator/operator.h"
+#include "math/operator/integration.h"
+#include "math/operator/integrator.h"
 #include "math/data_format.h"
-#include "math/fem/fem_util.h"
+#include "math/operator/operator_util.h"
 
 #include "math/field/field_collection.h"
 

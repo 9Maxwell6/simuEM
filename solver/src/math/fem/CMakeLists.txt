@@ -6,9 +6,5 @@ target_sources(simu_core PRIVATE
     fem_system.cpp
     space_H1.cpp
     space_Hcurl.cpp
-    operation.cpp
-    integration.cpp
-    integrator_a.cpp
-    integrator_l.cpp
     element_data.cpp)
 

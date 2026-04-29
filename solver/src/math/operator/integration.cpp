@@ -1,4 +1,4 @@
-#include "math/fem/integration.h"
+#include "math/operator/integration.h"
 #include "math/fem/fem_space.h"
 
 #include <stdexcept>

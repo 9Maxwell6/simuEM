@@ -2,7 +2,7 @@
 #include "world/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
 #include "world/mesh/mesh.h"
-#include "math/fem/integrator.h"
+#include "math/operator/integrator.h"
 #include "math/fem/block.h"
 
 

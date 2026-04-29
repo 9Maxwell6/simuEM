@@ -2,8 +2,9 @@
 
 #include "math/fem/assemble_data.h"
 #include "math/fem/element_data.h"
-#include "math/fem/operation_collection.h"
 #include "math/fem/fem_util.h"
+#include "math/operator/operator_collection.h"
+
 
 
 
@@ -26,9 +27,9 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
 
         user_operation(e_data, local_vec);
 
-        Operation::dof_transformation_vec(e_data, local_vec);
+        Operator::dof_transformation_vec(e_data, local_vec);
 
-        Operation::add_to_global_vec(data, local_vec);
+        Operator::add_to_global_vec(data, local_vec);
 
     };
 

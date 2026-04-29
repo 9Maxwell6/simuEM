@@ -1,7 +1,7 @@
 #pragma once
 
-#include "math/fem/operation.h"
-#include "math/fem/integration.h"
+#include "math/operator/operator.h"
+#include "math/operator/integration.h"
 #include "math/data_format.h"
 #include "math/fem/fem_util.h"
 
@@ -23,7 +23,7 @@ namespace simu {
  * and each block will contain a flag array, 
  * 
  */
-class Integrator : public Operation
+class Integrator : public Operator
 {
 
 protected:
