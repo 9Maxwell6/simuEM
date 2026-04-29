@@ -14,7 +14,7 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
 
     if constexpr  (phy_dim == ref_dim && R == C) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -48,7 +48,7 @@ void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element
 
     if constexpr  (phy_dim == ref_dim && R == C) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
     
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -86,7 +86,7 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -156,7 +156,7 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
 
     if constexpr  (((phy_dim == 3 && (ref_dim == 3 || ref_dim ==2)) || (phy_dim == 2 && (phy_dim == ref_dim))) && R == C) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -200,7 +200,7 @@ void Integrator__s_V__V::assemble_element_matrix(double coeff, Element_Data<phy_
 
     if constexpr  (phy_dim == ref_dim && R == C) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -238,7 +238,7 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
     
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -282,7 +282,7 @@ void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
 
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;

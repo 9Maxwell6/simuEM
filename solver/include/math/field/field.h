@@ -2,13 +2,10 @@
 
 #include "world/mesh/mesh.h"
 #include "world/mesh/e_collection.h"
-#include "math/fem/assemble_data.h"
-#include "math/fem/element_data.h"
 
 #include "math/data_format.h"
 #include "math/ref_coord.h"
 
-#include "math/fem/assemble_data.h"
 
 
 #include "math/field/field_util.h"

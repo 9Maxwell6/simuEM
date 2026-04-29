@@ -2,6 +2,8 @@
 
 #include "math/field/field.h"
 
+#include "math/fem/element_data.h"
+
 #include <variant>
 
 namespace simu {

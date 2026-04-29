@@ -2,13 +2,14 @@
 #include "world/mesh/e_collection.h"
 #include "math/fem/space_collection.h"
 #include "world/mesh/mesh.h"
-#include "math/operator/integrator.h"
+#include "math/operator/operator_collection.h"
 #include "math/fem/block.h"
 
 
-#include <mutex>
+
 
 namespace simu {
+
 
 
 struct Assemble_Data
@@ -37,7 +38,9 @@ struct Assemble_Data
 
     std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash>& integration_rule;
 
-    mutable std::array<std::once_flag, Integrator::SIZE> integrator_check_flags;
+    // to check if the constraints of each operator applied is satisfied.
+    // e.g. FEM_Space space_1 must be Hcurl space.
+    mutable Check_Flag check;
 
 
     

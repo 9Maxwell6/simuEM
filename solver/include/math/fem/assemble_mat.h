@@ -40,7 +40,7 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
         e_data.space_1 =  data.space_1;
         e_data.space_2 =  data.space_2;
 
-        e_data.integrator_check = &data.integrator_check_flags;
+        e_data.check = &data.check;
 
         data.row_dof_offset = 0;
         data.col_dof_offset = 0;

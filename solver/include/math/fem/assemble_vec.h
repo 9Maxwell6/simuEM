@@ -42,7 +42,7 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
 
         //space_1->get_function_space();
 
-        e_data.integrator_check = &data.integrator_check_flags;
+        e_data.check = &data.check;
 
         data.row_dof_offset = 0;
         data.col_dof_offset = 0;

@@ -14,7 +14,7 @@ void Integrator__s__S::assemble_element_vector(Field& F, Element_Data<phy_dim, r
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -49,7 +49,7 @@ void Integrator__v__grad_S::assemble_element_vector(Field& F, Element_Data<phy_d
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -91,7 +91,7 @@ void Integrator__v__V::assemble_element_vector(Field& F, Element_Data<phy_dim, r
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once((*e_data.integrator_check)[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
