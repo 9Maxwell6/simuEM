@@ -83,19 +83,36 @@ public:
      * @brief convert reference coordinate defined on edge to the coordinate of each edge of the reference element.
      * 
      * @param edge_coord reference coordinate on edge.
-     * @param e_coord_mat output matrix, with each column represnets one edge of the reference element, 
-     *                                   with each row being the reference coordinate on that edge.
+     * @param e_coord_mat output matrix, with each row represnets a reference coordinate on one edge of the reference element, 
      */
-    virtual void edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const = 0;
+    virtual void edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_coord) const = 0;
 
     /**
      * @brief convert reference coordinate defined on face to the coordinate of each face of the reference element.
      * 
      * @param face_coord reference coordinate on edge.
-     * @param e_coord_mat output matrix, with each column represnets one face of the reference element, 
-     *                                   with each row being the reference coordinate on that face.
+     * @param e_coord_mat output matrix, with each row represnets a reference coordinate on one face of the reference element, 
      */
-    virtual void face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& e_coord_mat) const = 0;
+    virtual void face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> e_coord_mat) const = 0;
+
+    /**
+     * @brief compute the tangent vector along each edge, with magnitude equal to the length of the reference edge,
+     *        and store them to output matrix.
+     * 
+     * @param t output matrix, with each row represnets one tangent on one edge of the reference element, 
+     */
+    virtual void tangent(Eigen::Ref<MatrixXd> t) const = 0;
+
+
+    /**
+     * @brief compute the outward normal vector of each surface, with magnitude equal to the area of the reference face,
+     *        and store them to output matrix.
+     * 
+     * @param n output matrix, with each row represnets one tangent on one edge of the reference element, 
+     * 
+     * @note for 2D elements, like triangle, normal is normal vector of each edge.
+     */
+    virtual void normal(Eigen::Ref<MatrixXd> n) const = 0;
     
     
 

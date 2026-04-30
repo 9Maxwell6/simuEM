@@ -98,9 +98,9 @@ void Triangle::compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape)
             throw std::invalid_argument("vector must be 3x1 for p-1 H(grad) Triangle.");
          }
 
-         shape(0) = 1.0 - x - y;  // Vertex 0
-         shape(1) = x;             // Vertex 1
-         shape(2) = y;             // Vertex 2
+         shape(0) = 1.0 - x - y;  // vertex 0
+         shape(1) = x;            // vertex 1
+         shape(2) = y;            // vertex 2
          break;
       default:
          throw std::invalid_argument("Nodal element not available for order: " + std::to_string(o_));
@@ -127,7 +127,7 @@ void Triangle::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_sh
 
 
 
-void Triangle::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const
+void Triangle::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_coord) const
 {
    double x = edge_coord.x;
    // mapping: (1-x)*pi + x*pj
@@ -139,7 +139,7 @@ void Triangle::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coo
               1-x, x;
 }
 
-void Triangle::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& f_coord) const
+void Triangle::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> f_coord) const
 {
    double x = face_coord.x;
    double y = face_coord.y;
@@ -148,3 +148,22 @@ void Triangle::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& f_coo
    f_coord << x, y;
 }
 
+
+
+
+void Triangle::tangent(Eigen::Ref<MatrixXd> t) const
+{
+   // 3 edges, 2D
+   t << 1,  0,
+        0,  1,
+       -1,  1;
+}
+
+
+void Triangle::normal(Eigen::Ref<MatrixXd> n) const
+{
+   // 3 edges, 2D
+   n << 1,  1,  // vertex 0 → normal of edge (1,2)
+        1,  0,  // vertex 1 → normal of edge (0,2)
+        0, -1;  // vertex 2 → normal of edge (0,1)
+}

@@ -45,8 +45,11 @@ public:
     void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const override;
     void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const override;
     
-    void edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const override;
-    void face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& e_coord) const override;
+    void edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_coord) const override;
+    void face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> e_coord) const override;
+
+    void tangent(Eigen::Ref<MatrixXd> t) const override;
+    void normal(Eigen::Ref<MatrixXd> n) const override;
 };
 
 

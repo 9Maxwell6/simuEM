@@ -73,13 +73,26 @@ void Edge::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape)
 }
 
 
-void Edge::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const
+void Edge::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_coord) const
 {
    e_coord << edge_coord.x;
 }
 
-void Edge::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& f_coord) const
+void Edge::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> f_coord) const
 {
    Logger::error("Edge::edge_map - edge element does not have face_map.");
+}
+
+
+void Edge::tangent(Eigen::Ref<MatrixXd> t) const
+{
+   // 1 edges, 1D
+   t << 1;
+}
+
+
+void Edge::normal(Eigen::Ref<MatrixXd> n) const
+{
+   Logger::error("Edge::normal - 1D element cannot have normal.");
 }
 

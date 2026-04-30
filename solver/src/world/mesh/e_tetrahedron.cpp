@@ -131,7 +131,7 @@ void Tetrahedron::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d
 
 
 
-void Tetrahedron::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const
+void Tetrahedron::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_coord) const
 {
    double x = edge_coord.x;
    // mapping: (1-x)*pi + pj
@@ -151,7 +151,7 @@ void Tetrahedron::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_
 
 
 
-void Tetrahedron::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& e_coord) const
+void Tetrahedron::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> e_coord) const
 {
    // reference coordinate on reference triangle.
    double x = face_coord.x;
@@ -167,3 +167,27 @@ void Tetrahedron::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& e_
               y    , x, 0;
 }
 
+
+
+void Tetrahedron::tangent(Eigen::Ref<MatrixXd> t) const
+{
+    // 6 edges, 3D
+    t << 1,  0,  0,
+         0,  1,  0,
+         0,  0,  1,
+        -1,  1,  0,
+        -1,  0,  1,
+         0, -1,  1;
+}
+
+
+void Tetrahedron::normal(Eigen::Ref<MatrixXd> n) const
+{
+    // 4 faces, 3D
+    n.resize(4, 3);
+
+    n << 1,  1,  1,  // vertex 0 → normal of face (1,2,3)
+        -1,  0,  0,  // vertex 1 → normal of face (0,3,2)
+         0, -1,  0,  // vertex 2 → normal of face (0,1,3)
+         0,  0, -1;  // vertex 3 → normal of face (0,2,1)
+}
