@@ -110,7 +110,7 @@ void Hcurl_triangle::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> ba
             throw std::invalid_argument("Edge element not available for order:  "+std::to_string(p_));
     }
 
-};
+}
 
 void Hcurl_triangle::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
     double x = coord.x;
@@ -134,7 +134,38 @@ void Hcurl_triangle::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd>
             throw std::invalid_argument("Edge element not available for order:  "+std::to_string(p_));
     }
     
-};
+}
+
+
+void Hcurl_triangle::dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const
+{
+    switch (p_)
+    {
+    case 1:
+    {
+        // P is 3x3 diagonal matrix of +1/-1
+        // Edge 0: 0 -> 1
+        // Edge 1: 0 -> 2
+        // Edge 2: 1 -> 2
+        size_t idx_0 = node_idx[0];
+        size_t idx_1 = node_idx[1];
+        size_t idx_2 = node_idx[2];
+
+        double s0 = (idx_0 < idx_1) ? 1. : -1.;
+        double s1 = (idx_0 < idx_2) ? 1. : -1.;
+        double s2 = (idx_1 < idx_2) ? 1. : -1.;
+
+        P << s0,  0,  0,
+              0, s1,  0,
+              0,  0, s2;
+                
+        break;
+    }
+    default:
+        Logger::warning("Triangle::compute_dof_transformation_H_curl: higher order case not available.");
+        break;
+    }
+}
 
 
 /**
@@ -191,7 +222,7 @@ void Hcurl_tetrahedron::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd>
             throw std::invalid_argument("Edge element not available for order:  "+std::to_string(p_));
     }
 
-};
+}
 
 void Hcurl_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
     double x = coord.x;
@@ -221,27 +252,66 @@ void Hcurl_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<Matrix
             throw std::invalid_argument("Edge element not available for order:  "+std::to_string(p_));
     }
     
-};
+}
 
+
+void Hcurl_tetrahedron::dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const
+{
+    switch (p_)
+    {
+    case 1:
+    {
+        // P is 6x6 diagonal matrix of +1/-1
+        // Edge 0: 0 -> 1
+        // Edge 1: 0 -> 2
+        // Edge 2: 0 -> 3
+        // Edge 3: 1 -> 2
+        // Edge 4: 1 -> 3
+        // Edge 5: 2 -> 3
+        size_t idx_0 = node_idx[0];
+        size_t idx_1 = node_idx[1];
+        size_t idx_2 = node_idx[2];
+        size_t idx_3 = node_idx[3];
+
+        double s0 = (idx_0 < idx_1) ? 1. : -1.;
+        double s1 = (idx_0 < idx_2) ? 1. : -1.;
+        double s2 = (idx_0 < idx_3) ? 1. : -1.;
+        double s3 = (idx_1 < idx_2) ? 1. : -1.;
+        double s4 = (idx_1 < idx_3) ? 1. : -1.;
+        double s5 = (idx_2 < idx_3) ? 1. : -1.;
+
+        P << s0,  0,  0,  0,  0,  0,
+              0, s1,  0,  0,  0,  0,
+              0,  0, s2,  0,  0,  0,
+              0,  0,  0, s3,  0,  0,
+              0,  0,  0,  0, s4,  0,
+              0,  0,  0,  0,  0, s5;
+        break;
+    }
+    default:
+        Logger::warning("Tetrahedron::compute_dof_transformation_H_curl: higher order case not available.");
+        break;
+    }
+}
 
 
 
 void Hcurl_triangle::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_triangle::get_basis_s - Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
     throw std::logic_error("Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
-};
+}
 
 void Hcurl_triangle::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_triangle::get_ED_basis_s - Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
     throw std::logic_error("Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
-};
+}
 
 void Hcurl_tetrahedron::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_tetrahedron::get_basis_s - Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
     throw std::logic_error("Basis functions in H(curl) are vector-valued, call get_basis_v instead.");
-};
+}
 
 void Hcurl_tetrahedron::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("Hcurl_tetrahedron::get_ED_basis_s - Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
     throw std::logic_error("Exterior derivative of basis functions in H(curl) corresponds to the vector-valued curl, call get_ED_basis_v instead.");
-};
+}

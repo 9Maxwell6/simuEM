@@ -54,6 +54,16 @@ public:
     inline int    get_geometry_order() const {return o_;}
     inline size_t get_property_id() const {return property_id_;}
     inline void   set_property_id(size_t property_id) {property_id_ = property_id;}
+
+
+    /**
+     * @brief compute the physical coordinate of the reference coordinate of the element. 
+     * 
+     * @param mesh mesh that contains the element.
+     * @param ref_coord reference coordinate in the element.
+     * @param phy_coord physical coordinate in mesh to be computed.
+     */
+    void physical_point(const Mesh& mesh, const Ref_Coord& ref_coord, Eigen::Ref<VectorXd> phy_coord) const;
     
 
     /**
@@ -70,20 +80,24 @@ public:
     virtual void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const = 0;
 
     /**
-     * @brief compute transformation matrix to correct dof direction on reference element to actual element in H_curl space.
+     * @brief convert reference coordinate defined on edge to the coordinate of each edge of the reference element.
      * 
-     * @param mesh mesh that contains the element.
-     * @param P transformation matrix to be filled.
+     * @param edge_coord reference coordinate on edge.
+     * @param e_coord_mat output matrix, with each column represnets one edge of the reference element, 
+     *                                   with each row being the reference coordinate on that edge.
      */
-    virtual void compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const = 0;
+    virtual void edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const = 0;
 
     /**
-     * @brief compute transformation matrix to correct dof direction on reference element to actual element in H_div space.
+     * @brief convert reference coordinate defined on face to the coordinate of each face of the reference element.
      * 
-     * @param mesh mesh that contains the element.
-     * @param P transformation matrix to be filled.
+     * @param face_coord reference coordinate on edge.
+     * @param e_coord_mat output matrix, with each column represnets one face of the reference element, 
+     *                                   with each row being the reference coordinate on that face.
      */
-    virtual void compute_dof_transformation_H_div(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const = 0;
+    virtual void face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& e_coord_mat) const = 0;
+    
+    
 
 };
 

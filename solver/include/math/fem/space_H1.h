@@ -35,13 +35,17 @@ public:
     Space get_function_space() const override {return Space::H_1;};
 
 protected:
+    // these function should not be called at this abstraction level!
+
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const { Logger::error("H1_Space::get_basis_s should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
+    virtual void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const { Logger::error("H1_Space::get_basis_v should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
 
     // Return vector proxy of Exterior Derivative of basis of the corresponding form.
-    virtual void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {};
+    virtual void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const { Logger::error("H1_Space::get_ED_basis_s should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
+    virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const { Logger::error("H1_Space::get_ED_basis_v should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
+
+    virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const { Logger::error("H1_Space::dof_transformation should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
 
 };
 
@@ -68,6 +72,8 @@ public:
 
     void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
     void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
+
+    void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
 
     
 };
@@ -100,7 +106,7 @@ public:
     void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const override;
     void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
 
-    
+    void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
 };
 
 

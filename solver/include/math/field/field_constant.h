@@ -10,7 +10,11 @@ class Field_constant : public Field
 private:
 
 
-    Field_constant();
+    Field_constant(const Mesh& mesh);
+
+public:
+
+    Field_Type get_field_type() const override { return Field_Type::CONSTANT; }
 
 
 };

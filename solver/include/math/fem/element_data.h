@@ -47,7 +47,6 @@ struct Element_Data
     const FEM_Space* shape_space_1;  // trial space of specific geometry shape
     const FEM_Space* shape_space_2;  // test  space of specific geometry shape
 
-    // flag for transformation from conventional dof direction on reference element to dof direction on actual element.
     const FEM_Space* space_1;
     const FEM_Space* space_2;
 

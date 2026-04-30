@@ -100,7 +100,7 @@ void H1_triangle::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis
         default:
             throw std::invalid_argument("Nodal element not available for order:  "+std::to_string(p_));
     }
-};
+}
 
 void H1_triangle::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
     double x = coord.x;
@@ -123,7 +123,25 @@ void H1_triangle::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> ba
         default:
             throw std::invalid_argument("Nodal element not available for order:  "+std::to_string(p_));
     }
-};
+}
+
+
+void H1_triangle::dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const
+{
+    switch (p_)
+    {
+    case 1:
+    case 2:
+    {
+        // no transformation needed
+        P.setIdentity();
+        break;
+    }
+    default:
+        Logger::warning("H1_triangle::dof_transformation: higher order case not available.");
+        break;
+    }
+}
 
 
 /**
@@ -173,7 +191,7 @@ void H1_tetrahedron::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> ba
         default:
             throw std::invalid_argument("Nodal element not available for order:  "+std::to_string(p_));
     }
-};
+}
 
 
 void H1_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
@@ -200,7 +218,24 @@ void H1_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd>
         default:
             throw std::invalid_argument("Nodal element not available for order:  "+std::to_string(p_));
     }
-};
+}
+
+void H1_tetrahedron::dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const
+{
+    switch (p_)
+    {
+    case 1:
+    case 2:
+    {
+        // no transformation needed
+        P.setIdentity();
+        break;
+    }
+    default:
+        Logger::warning("H1_triangle::dof_transformation: higher order case not available.");
+        break;
+    }
+}
 
 
 
@@ -208,7 +243,7 @@ void H1_tetrahedron::get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd>
 void H1_triangle::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
     Logger::error("H1_triangle::get_basis_v - Basis functions in H(grad) are scalar-valued, call get_basis_s instead.");
     throw std::logic_error("Basis functions in H(grad) are scalar-valued, call get_basis_s instead.");
-};
+}
 
 void H1_triangle::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("H1_triangle::get_ED_basis_s - Exterior derivative of basis functions in H(grad) corresponds to the vector-valued grad, call get_ED_basis_v instead.");
@@ -218,9 +253,9 @@ void H1_triangle::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> ba
 void H1_tetrahedron::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {
     Logger::error("H1_tetrahedron::get_basis_v - Basis functions in H(grad) are scalar-valued, call get_basis_s instead.");
     throw std::logic_error("Basis functions in H(grad) are scalar-valued, call get_basis_s instead.");
-};
+}
 
 void H1_tetrahedron::get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
     Logger::error("H1_tetrahedron::get_ED_basis_s - Exterior derivative of basis functions in H(grad) corresponds to the vector-valued grad, call get_ED_basis_v instead.");
     throw std::logic_error("Exterior derivative of basis functions in H(grad) corresponds to the vector-valued grad, call get_ED_basis_v instead.");
-};
+}

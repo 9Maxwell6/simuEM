@@ -52,8 +52,8 @@ public:
     void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const override;
     void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const override;
 
-    void compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const override;
-    void compute_dof_transformation_H_div (const Mesh& mesh, Eigen::Ref<MatrixXd> P) const override;
+    void edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const override;
+    void face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& e_coord) const override;
 };
 
 

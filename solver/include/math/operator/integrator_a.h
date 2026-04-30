@@ -40,7 +40,7 @@ struct Element_Data;
 class Integrator__s_S__S : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
@@ -74,7 +74,7 @@ public:
 class Integrator__s_grad_S__grad_S : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
@@ -105,7 +105,7 @@ public:
 class Integrator_H1__s_V__grad_S : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
@@ -136,7 +136,7 @@ public:
 class Integrator__s_curl_V__curl_V : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
@@ -166,7 +166,7 @@ public:
 class Integrator__s_V__V : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
@@ -198,7 +198,7 @@ public:
 class Integrator__s_V__grad_S : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
@@ -228,7 +228,7 @@ public:
 class Integrator__s_grad_S__V : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();

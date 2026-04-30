@@ -2,9 +2,6 @@
 
 #include "math/field/field.h"
 
-#include "math/fem/element_data.h"
-
-#include <variant>
 
 namespace simu {
 
@@ -15,10 +12,11 @@ class S_Field_function : public Field
 public:
 
     template<typename Func>
-    S_Field_function(Func&& f) : func_(std::forward<Func>(f)) {}
+    S_Field_function(const Mesh& mesh, Func&& f) : Field(mesh), func_(std::forward<Func>(f)) {f_data.f_type=Field_Type::FUNCTION;}
 
-    template<int phy_dim, int ref_dim>
-    double eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const;
+    double eval(const Ref_Coord& ref_coord, const Element& e) const;
+
+    Field_Type get_field_type() const override { return Field_Type::FUNCTION; }
 };
 
 
@@ -28,10 +26,11 @@ class V_Field_function : public Field
     std::function<void(const Eigen::Ref<VectorXd>, const Field_Data&, Eigen::Ref<VectorXd>)> func_;
 public:
     template<typename Func>
-    V_Field_function(Func&& f) : func_(std::forward<Func>(f)) {}
+    V_Field_function(const Mesh& mesh, Func&& f) : Field(mesh), func_(std::forward<Func>(f)) {f_data.f_type=Field_Type::FUNCTION;}
 
-    template<int phy_dim, int ref_dim>
-    void eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data, Eigen::Ref<VectorXd> value) const;
+    void eval(const Ref_Coord& ref_coord, const Element& e, Eigen::Ref<VectorXd> value) const;
+
+    Field_Type get_field_type() const override { return Field_Type::FUNCTION; }
 };
 
 

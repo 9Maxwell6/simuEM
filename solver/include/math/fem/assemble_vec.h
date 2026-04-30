@@ -73,7 +73,7 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
             else if (row_size == 6 ) { Vector<6> vec;                     assemble_local(e_data, vec, user_operation); }
             else                     { VectorXd  vec(row_size);           assemble_local(e_data, vec, user_operation); }
 
-            data.row_dof_offset += row_size;            
+            data.row_dof_offset += row_size;
         }
     };
 

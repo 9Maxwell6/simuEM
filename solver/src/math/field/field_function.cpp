@@ -2,21 +2,19 @@
 
 using namespace simu;
 
-template<int phy_dim, int ref_dim>
-double S_Field_function::eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const
+double S_Field_function::eval(const Ref_Coord& ref_coord, const Element& e) const
 {
-    Vector<phy_dim> phy_point = e_data.physical_point(ref_coord);
+    VectorXd phy_point(f_data.mesh->get_mesh_dimension());
+    e.physical_point(*(f_data.mesh), ref_coord, phy_point);
     return func_(phy_point, f_data);
 }
-INSTANTIATE_FIELD_EVAL(S_Field_function, eval)
 
 
-template<int phy_dim, int ref_dim>
-void V_Field_function::eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data, Eigen::Ref<VectorXd> value) const
+void V_Field_function::eval(const Ref_Coord& ref_coord, const Element& e, Eigen::Ref<VectorXd> value) const
 {
-    Vector<phy_dim> phy_point = e_data.physical_point(ref_coord);
+    VectorXd phy_point(f_data.mesh->get_mesh_dimension());
+    e.physical_point(*(f_data.mesh), ref_coord, phy_point);
     func_(phy_point, f_data, value);
 }
-INSTANTIATE_FIELD_EVAL_VEC(V_Field_function, eval)
 
 

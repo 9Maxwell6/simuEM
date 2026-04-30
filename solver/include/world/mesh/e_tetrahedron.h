@@ -22,6 +22,12 @@ class Mesh;
  *                1 -> [0,      3,      2     ]
  *                2 -> [0,      1,      3     ]
  *                3 -> [0,      2,      1     ]
+ * 
+ * 
+ * Reference tetrahedron:
+ *      [x,y,z]
+ *   a0=[0,0,0]  a1=[1,0,0]  a2=[0,1,0]  a3=[0,0,1]    
+ *
  */
 
 class Tetrahedron : public Element
@@ -56,8 +62,8 @@ public:
     void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const override;
     void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const override;
 
-    void compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const override;
-    void compute_dof_transformation_H_div (const Mesh& mesh, Eigen::Ref<MatrixXd> P) const override;
+    void edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const override;
+    void face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& e_coord) const override;
 
 };
 

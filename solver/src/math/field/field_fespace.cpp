@@ -3,18 +3,30 @@
 
 using namespace simu;
 
-template<int phy_dim, int ref_dim>
-double S_Field_fespace::eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data) const
+S_Field_fespace::S_Field_fespace(const Mesh& mesh, 
+                                 const FEM_Space& fe_space, 
+                                 const std::vector<dof_idx>& dof, 
+                                 const std::vector<scalar_t>& value) : Field(mesh), fe_space_(fe_space), dof_(dof), value_(value)
+{
+    //TODO
+}
+
+V_Field_fespace::V_Field_fespace(const Mesh& mesh, 
+                                 const FEM_Space& fe_space, 
+                                 const std::vector<dof_idx>& dof, 
+                                 const std::vector<scalar_t>& value) : Field(mesh), fe_space_(fe_space), dof_(dof), value_(value)
+{
+    //TODO
+}
+
+double S_Field_fespace::eval(const Ref_Coord& ref_coord, const Element& e) const
 {
     Logger::error("S_Field_fespace::eval - not implemented.");
     return 0;
 }
-INSTANTIATE_FIELD_EVAL(S_Field_fespace, eval)
 
 
-template<int phy_dim, int ref_dim>
-void V_Field_fespace::eval(const Ref_Coord& ref_coord, const Element_Data<phy_dim, ref_dim>& e_data, Eigen::Ref<VectorXd> value) const
+void V_Field_fespace::eval(const Ref_Coord& ref_coord, const Element& e, Eigen::Ref<VectorXd> value) const
 {
     Logger::error("S_Field_fespace::eval - not implemented.");
 }
-INSTANTIATE_FIELD_EVAL_VEC(V_Field_fespace, eval)

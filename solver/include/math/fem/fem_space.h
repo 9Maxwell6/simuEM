@@ -100,6 +100,16 @@ public:
     virtual void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
     virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {};
 
+    /**
+     * @brief compute transformation matrix to correct dof direction on reference element to actual element.
+     * 
+     * @param node_idx list of global node index in mesh.
+     * @param P transformation matrix to be filled.
+     */
+    virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const = 0;
+
+    
+
 
     
 };

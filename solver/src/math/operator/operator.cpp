@@ -25,28 +25,13 @@ void Operator::dof_transformation_mat(Element_Data<phy_dim, ref_dim>& e_data, Ma
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
 
-    Space s_1 = e_data.space_1->get_function_space();
-    Space s_2 = e_data.space_2->get_function_space();
+    Matrix<R, R> P_1(e_data.rows, e_data.rows);
+    Matrix<C, C> P_2(e_data.cols, e_data.cols);
 
-    if (s_1 == Space::H_curl || s_1 == Space::H_div) {
-        Matrix<R, R> P_1(e_data.rows, e_data.rows);
-        if (s_1 == Space::H_curl) 
-            e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_1);
-        else 
-            e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_1);
-        
-        element_matrix = P_1 * element_matrix;
-    }
+    e_data.shape_space_1->dof_transformation(e_data.e->get_node_idx(), P_1);
+    e_data.shape_space_2->dof_transformation(e_data.e->get_node_idx(), P_2);
 
-    if (s_2 == Space::H_curl || s_2 == Space::H_div) {
-        Matrix<C, C> P_2(e_data.cols, e_data.cols);
-        if (s_2 == Space::H_curl) 
-            e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_2);
-        else 
-            e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_2);
-        
-        element_matrix = element_matrix * P_2.transpose();
-    }
+    element_matrix = P_1 * element_matrix * P_2;
 }
 INSTANTIATE_ELEMENT_MAT_TEMPLATE(Operator, dof_transformation_mat)
 
@@ -73,15 +58,11 @@ void Operator::dof_transformation_vec(Element_Data<phy_dim, ref_dim>& e_data, Ve
 
     Space s_1 = e_data.space_1->get_function_space();
     
-    if (s_1 == Space::H_curl || s_1 == Space::H_div) {
-        Matrix<R, R> P_1(e_data.rows, e_data.rows);
-        if (s_1 == Space::H_curl) 
-            e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, P_1);
-        else 
-            e_data.e->compute_dof_transformation_H_div(*e_data.mesh, P_1);
-        
-        element_vector = P_1 * element_vector;
-    }
+    Matrix<R, R> P_1(e_data.rows, e_data.rows);
+
+    e_data.shape_space_1->dof_transformation(e_data.e->get_node_idx(), P_1);
+
+    element_vector = P_1 * element_vector;
 }
 INSTANTIATE_ELEMENT_VEC_TEMPLATE(Operator, dof_transformation_vec)
 

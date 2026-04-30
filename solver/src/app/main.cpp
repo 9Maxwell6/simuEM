@@ -6,6 +6,7 @@
 #include "math/fem/fem_space.h"
 #include "math/fem/space_H1.h"
 #include "math/fem/space_Hcurl.h"
+#include "math/data_format.h"
 
 #include "utils/logger.h"
 #include "utils/util_la.h"
@@ -31,7 +32,7 @@ struct Option
 using namespace simu;
 
 int main(int argc, char** argv) 
-{    
+{
     std::string mesh_file    = "test_cc.msh";
     bool l2_test_flag = false;
 
@@ -106,17 +107,17 @@ int main(int argc, char** argv)
                 Mesh mesh = mp.load_mesh(SCRIPT_PATH + mesh_file);
                 Logger::stop_timer("Loading mesh");
 
-                Logger::start_timer("Initialize CurlCurl solver");
+                Logger::start_timer("Initialize T-Omega solver");
                 T_Omega T_O(mesh);
-                Logger::stop_timer("Initialize CurlCurl solver");
+                Logger::stop_timer("Initialize T-Omega solver");
 
-                Logger::start_timer("Assemble CurlCurl matrix system");
+                Logger::start_timer("Assemble T-Omega matrix system");
                 T_O.assemble_system();
-                Logger::stop_timer("Assemble CurlCurl matrix system");
+                Logger::stop_timer("Assemble T-Omega matrix system");
 
-                Logger::start_timer("Solve CurlCurl matrix system");
+                Logger::start_timer("Solve T-Omega matrix system");
                 T_O.solve_system();
-                Logger::stop_timer("Solve CurlCurl matrix system");
+                Logger::stop_timer("Solve T-Omega matrix system");
 
                 Logger::start_timer("Compute L2 error.");
                 l2_error = T_O.compute_L2_error();
@@ -125,7 +126,7 @@ int main(int argc, char** argv)
 
             std::ostringstream ss;
             ss << std::scientific << std::setprecision(15) << l2_error;
-            Logger::info("[CurlCurl] h = " + std::to_string(h) + "  L2 error: " + ss.str());
+            Logger::info("[T-Omega] h = " + std::to_string(h) + "  L2 error: " + ss.str());
 
             l2_convergence << h << "  " << l2_error << "\n";
             l2_convergence.flush();   // persist after every run — a crash on the

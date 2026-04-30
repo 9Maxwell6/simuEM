@@ -1,5 +1,8 @@
 #pragma once
 
+/*
+DEPRECATED MACRO
+
 // For scalar eval: double Class::Method(const Ref_Coord&, const Element_Data<P,R>&) const
 #define INSTANTIATE_FIELD_EVAL(Class, Method)                                                               \
     template double Class::Method(const Ref_Coord&, const Element_Data<3,3>&) const;                        \
@@ -18,5 +21,6 @@
     template void Class::Method(const Ref_Coord&, const Element_Data<2,2>&, Eigen::Ref<VectorXd>) const;              \
     template void Class::Method(const Ref_Coord&, const Element_Data<2,1>&, Eigen::Ref<VectorXd>) const;              \
     template void Class::Method(const Ref_Coord&, const Element_Data<1,1>&, Eigen::Ref<VectorXd>) const;
+*/
 
 

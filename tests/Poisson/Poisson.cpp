@@ -111,7 +111,7 @@ bool Poisson::assemble_system()
     const double pi = CONST::PI;
 
     
-    S_Field_function source_field([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd) {
+    S_Field_function source_field(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd) {
         return (pi*pi/3)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
     });
 
@@ -212,7 +212,7 @@ scalar_t Poisson::compute_L2_error()
     const double pi = CONST::PI;
 
     // manufactured solution
-    S_Field_function u_exact([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd) {
+    S_Field_function u_exact(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd) {
         return std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
 
     });
@@ -268,7 +268,7 @@ scalar_t Poisson::compute_L2_error()
                 last_solve_f = solved_field;  // for test
             }
             
-            solution_field = u_exact.eval(i_p.coord, e_data);
+            solution_field = u_exact.eval(i_p.coord, *e_data.e);
 
             last_solve_f = solved_field;
             last_exact_f = solution_field;

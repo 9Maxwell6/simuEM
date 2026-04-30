@@ -111,7 +111,7 @@ bool CurlCurl::assemble_system()
 
     const double pi = CONST::PI;
 
-    V_Field_function source_field([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function source_field(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         v(0) = (2*pi*pi/9+1)*std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
         v(1) = (2*pi*pi/9+1)*std::cos(pi*x(0)/3)*std::cos(pi*x(2)/3);
         v(2) = (2*pi*pi/9+1)*std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3);
@@ -214,7 +214,7 @@ scalar_t CurlCurl::compute_L2_error()
     double pi = CONST::PI;
 
     // manufactured solution
-    V_Field_function u_exact([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function u_exact(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         v(0) = std::cos(pi*x(1)/3)*std::cos(pi*x(2)/3);
         v(1) = std::cos(pi*x(0)/3)*std::cos(pi*x(2)/3);
         v(2) = std::cos(pi*x(0)/3)*std::cos(pi*x(1)/3);
@@ -242,8 +242,6 @@ scalar_t CurlCurl::compute_L2_error()
         Vector<3> solution_field;
 
         Matrix<6, 6> dof_transform;
-        e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, dof_transform);
-
         
         Vector<3> last_solve_f; // for test
         Vector<3> last_exact_f; // for test
@@ -264,7 +262,7 @@ scalar_t CurlCurl::compute_L2_error()
                 const FEM_Space* space = space_list[i];
                 const std::vector<scalar_t>& dof_value = dof_value_list[i];
                 if(space->get_function_space()==Space::H_curl){
-
+                    space->dof_transformation(e_data.e->get_node_idx(), dof_transform);
                     space->get_basis_v(i_p.coord, Hcurl_basis);
                     Hcurl_phy_basis = dof_transform*Hcurl_basis * J_inv;
                     
@@ -281,7 +279,7 @@ scalar_t CurlCurl::compute_L2_error()
                 }
             }
 
-            u_exact.eval(i_p.coord, e_data, solution_field);
+            u_exact.eval(i_p.coord, *e_data.e, solution_field);
 
             last_solve_f = solved_field;
             last_exact_f = solution_field;

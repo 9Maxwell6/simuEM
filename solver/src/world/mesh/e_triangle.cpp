@@ -125,40 +125,26 @@ void Triangle::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_sh
    }
 }
 
-void Triangle::compute_dof_transformation_H_curl(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const
+
+
+void Triangle::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd>& e_coord) const
 {
-   switch (o_)
-   {
-   case 1:
-   {
-      // P is 3x3 diagonal matrix of +1/-1
-      // Edge 0: 0 -> 1
-      // Edge 1: 0 -> 2
-      // Edge 2: 1 -> 2
-      size_t idx_0 = node_idx_[0];
-      size_t idx_1 = node_idx_[1];
-      size_t idx_2 = node_idx_[2];
-
-      double s0 = (idx_0 < idx_1) ? 1. : -1.;
-      double s1 = (idx_0 < idx_2) ? 1. : -1.;
-      double s2 = (idx_1 < idx_2) ? 1. : -1.;
-
-      P << s0,  0,  0,
-            0, s1,  0,
-            0,  0, s2;
-              
-      break;
-   }
-   default:
-      Logger::warning("Triangle::compute_dof_transformation_H_curl: higher order case not available.");
-      break;
-   }
+   double x = edge_coord.x;
+   // mapping: (1-x)*pi + x*pj
+   // Edge 0: 0 -> 1
+   // Edge 1: 0 -> 2
+   // Edge 2: 1 -> 2
+   e_coord << x  , 0,
+              0  , x,
+              1-x, x;
 }
 
-
-void Triangle::compute_dof_transformation_H_div(const Mesh& mesh, Eigen::Ref<MatrixXd> P) const
+void Triangle::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd>& f_coord) const
 {
-   // TODO...
-   Logger::warning("Triangle::compute_dof_transformation_H_div: not implemented.");
+   double x = face_coord.x;
+   double y = face_coord.y;
+   // For a triangle element, the face is the element itself
+   // so the mapping is the identity.
+   f_coord << x, y;
 }
 

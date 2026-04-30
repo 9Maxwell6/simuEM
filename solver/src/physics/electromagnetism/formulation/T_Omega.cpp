@@ -245,7 +245,7 @@ bool T_Omega::assemble_system()
     double sigma = 1.;
     double mu = 1.;
     // 3D vector field.  Hs = ∇×∇×T - T
-    V_Field_function f_T_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function f_T_conductor(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         auto sx = std::sin(2*pi*x(0));
         auto sy = std::sin(2*pi*x(1));
         auto sz = std::sin(2*pi*x(2));
@@ -270,7 +270,7 @@ bool T_Omega::assemble_system()
     });
 
     // 3D vector field.  Hs = ∇×∇×T - T + ∇Ω
-    V_Field_function f_T_conductor_outer_layer([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function f_T_conductor_outer_layer(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         auto sx = std::sin(2*pi*x(0));
         auto sy = std::sin(2*pi*x(1));
         auto sz = std::sin(2*pi*x(2));
@@ -303,7 +303,7 @@ bool T_Omega::assemble_system()
     });
 
     // 3D vector field.  -Hs = T - ∇Ω
-    V_Field_function f_Omega_conductor_outer_layer([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function f_Omega_conductor_outer_layer(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         auto sx = std::sin(2*pi*x(0));
         auto sy = std::sin(2*pi*x(1));
         auto sz = std::sin(2*pi*x(2));
@@ -336,7 +336,7 @@ bool T_Omega::assemble_system()
     });
 
     // 3D vector field.  -Hs = -∇Ω
-    V_Field_function f_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function f_empty(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         v(0) = pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
         v(1) = pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
         v(2) = pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
@@ -347,10 +347,10 @@ bool T_Omega::assemble_system()
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
             Integrator__v__grad_S::assemble_element_vector(f_Omega_conductor_outer_layer, e_data, vec);
-            
+
         }else if(property_id == Domain::EMPTY){
             Integrator__v__grad_S::assemble_element_vector(f_empty, e_data, vec);
-        }        
+        }       
     });
 
 
@@ -463,7 +463,7 @@ scalar_t T_Omega::compute_L2_error()
 
     // manufactured solution
     // 3D vector field.  u = T
-    V_Field_function x_conductor([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function x_conductor(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         v(0) = std::exp(x(0))*std::sin(2*pi*x(1))*std::sin(2*pi*x(2));
         v(1) = std::sin(2*pi*x(0))*std::exp(x(1))*std::sin(2*pi*x(2));
         v(2) = std::sin(2*pi*x(0))*std::sin(2*pi*x(1))*std::exp(x(2));
@@ -471,7 +471,7 @@ scalar_t T_Omega::compute_L2_error()
     });
 
     // 3D vector field.  u = T - ∇Ω
-    V_Field_function x_conductor_outer_layer([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function x_conductor_outer_layer(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         v(0) = std::exp(x(0))*std::sin(2*pi*x(1))*std::sin(2*pi*x(2)) + pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
         v(1) = std::sin(2*pi*x(0))*std::exp(x(1))*std::sin(2*pi*x(2)) + pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
         v(2) = std::sin(2*pi*x(0))*std::sin(2*pi*x(1))*std::exp(x(2)) + pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
@@ -479,7 +479,7 @@ scalar_t T_Omega::compute_L2_error()
     });
 
     // 3D vector field.  u = -∇Ω
-    V_Field_function x_empty([&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
+    V_Field_function x_empty(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         v(0) = pi*std::sin(pi*x(0))*std::cos(pi*x(1))*std::cos(pi*x(2));
         v(1) = pi*std::cos(pi*x(0))*std::sin(pi*x(1))*std::cos(pi*x(2));
         v(2) = pi*std::cos(pi*x(0))*std::cos(pi*x(1))*std::sin(pi*x(2));
@@ -515,8 +515,6 @@ scalar_t T_Omega::compute_L2_error()
 
         Vector<3> temp;
 
-        e_data.e->compute_dof_transformation_H_curl(*e_data.mesh, dof_transform);
-
         for(const Integration_Point& i_p : i_p_list)
         {
             solved_field.setZero();
@@ -538,7 +536,7 @@ scalar_t T_Omega::compute_L2_error()
 
 
                 }else if(space->get_function_space()==Space::H_curl){
-
+                    space->dof_transformation(e_data.e->get_node_idx(), dof_transform);
                     space->get_basis_v(i_p.coord, Hcurl_basis);
                     Hcurl_phy_basis = dof_transform*Hcurl_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
@@ -549,13 +547,13 @@ scalar_t T_Omega::compute_L2_error()
 
             size_t property_id = e_data.e->get_property_id();
             if(property_id == Domain::CONDUCTOR){
-                x_conductor.eval(i_p.coord, e_data, temp);
+                x_conductor.eval(i_p.coord, *e_data.e, temp);
                 solution_field += temp;
             }else if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
-                x_conductor_outer_layer.eval(i_p.coord, e_data, temp);
+                x_conductor_outer_layer.eval(i_p.coord, *e_data.e, temp);
                 solution_field += temp;
             }else if(property_id == Domain::EMPTY){
-                x_empty.eval(i_p.coord, e_data, temp);
+                x_empty.eval(i_p.coord, *e_data.e, temp);
                 solution_field += temp;
             }   
 

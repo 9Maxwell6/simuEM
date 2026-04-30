@@ -41,7 +41,7 @@ struct Element_Data;
 class Integrator__s__S : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         if(space_1 != nullptr && space_2 == nullptr)
         {
@@ -77,7 +77,7 @@ public:
 class Integrator__v__grad_S : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         if(space_1 != nullptr && space_2 == nullptr)
         {
@@ -115,7 +115,7 @@ public:
 class Integrator__v__V : public Integrator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
     {
         if(space_1 != nullptr && space_2 == nullptr)
         {

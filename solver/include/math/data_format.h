@@ -24,7 +24,14 @@ using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 #ifdef LOAD_PETSC
     // local element matrix: row major 
     template<int R, int C>
-    using Matrix = Eigen::Matrix<double, R, C, (C==1) ? Eigen::ColMajor : Eigen::RowMajor>;
+
+    // caution: 
+    // for Matrix with 1 column, we use ColMajor, this is forced by Eigen3 library.
+    // but MatrixXd use RowMajor.
+    // throughout the code we often use Eigen::Ref<MatrixXd>& to accept reference to both Matrix and MatrixXd 
+    // it is forbiden to pass fixed size Matrix with one column as parameter to Eigen::Ref<MatrixXd>&,
+    // this case won't happen in this solver so no coner case handleling is implemented!
+    using Matrix = Eigen::Matrix<double, R, C, (C==1 && R!=1) ? Eigen::ColMajor : Eigen::RowMajor>;
     using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
     // global matrix

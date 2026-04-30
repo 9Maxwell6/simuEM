@@ -14,7 +14,7 @@ void Integrator__s__S::assemble_element_vector(Field& F, Element_Data<phy_dim, r
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ do_once(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -28,7 +28,7 @@ void Integrator__s__S::assemble_element_vector(Field& F, Element_Data<phy_dim, r
         {
             test__space->get_basis_s(i_p.coord, basis);
 
-            double coeff = F.eval(i_p.coord, e_data);
+            double coeff = F.eval(i_p.coord, *e);
             double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
 
             element_vector += coeff * i_p.weight * abs_det_J * basis;
@@ -49,8 +49,7 @@ void Integrator__v__grad_S::assemble_element_vector(Field& F, Element_Data<phy_d
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
-        
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ do_once(e_data.space_1, e_data.space_2); }); 
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
         int order = e->get_geometry_order() + 2*test__space->get_basis_order();
@@ -66,7 +65,7 @@ void Integrator__v__grad_S::assemble_element_vector(Field& F, Element_Data<phy_d
         {            
             test__space->get_ED_basis_v(i_p.coord, grad_basis);
 
-            F.eval(i_p.coord, e_data, coeff);
+            F.eval(i_p.coord, *e, coeff);
 
             double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
             const Matrix<ref_dim, phy_dim>& inv_J = e_data.get_inv_J(i_p.coord);
@@ -91,7 +90,7 @@ void Integrator__v__V::assemble_element_vector(Field& F, Element_Data<phy_dim, r
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ do_once(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
@@ -106,7 +105,7 @@ void Integrator__v__V::assemble_element_vector(Field& F, Element_Data<phy_dim, r
         {
             test__space->get_basis_v(i_p.coord, basis);
             
-            F.eval(i_p.coord, e_data, coeff);
+            F.eval(i_p.coord, *e, coeff);
 
             double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
             const Matrix<ref_dim, phy_dim>& J_inv = e_data.get_inv_J(i_p.coord);   
