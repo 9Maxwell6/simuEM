@@ -96,14 +96,17 @@ static void legendre_compute_glr(int n, double x[], double w[])
     legendre_compute_glr1(n, x, w);
 
     /* Convert derivatives stored in w[] into actual quadrature weights. */
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++)
+    {
         w[i] = 2.0 / (1.0 - x[i]) / (1.0 + x[i]) / w[i] / w[i];
     }
     w_sum = 0.0;
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++)
+    {
         w_sum += w[i];
     }
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++)
+    {
         w[i] = 2.0 * w[i] / w_sum;
     }
 }
@@ -129,7 +132,8 @@ static void legendre_compute_glr0(int n, double *p, double *pp)
     ppm2 = 0.0;
     ppm1 = 0.0;
 
-    for (k = 0; k < n; k++) {
+    for (k = 0; k < n; k++)
+    {
         dk = (double) k;
         *p  = -dk * pm2 / (dk + 1.0);
         *pp = ((2.0 * dk + 1.0) * pm1 - dk * ppm2) / (dk + 1.0);
@@ -179,7 +183,8 @@ static void legendre_compute_glr1(int n, double *x, double *ders)
 
     dn = (double) n;
 
-    for (j = n2; j < n - 1; j++) {
+    for (j = n2; j < n - 1; j++)
+    {
         xp = x[j];
 
         h = rk2_leg(pi / 2.0, -pi / 2.0, xp, n) - xp;
@@ -192,7 +197,8 @@ static void legendre_compute_glr1(int n, double *x, double *ders)
         up[1] = u[2];
 
         /* Build the Taylor coefficients of P_n around xp. */
-        for (k = 0; k <= m - 2; k++) {
+        for (k = 0; k <= m - 2; k++)
+        {
             dk = (double) k;
             u[k + 3] = (
                 2.0 * xp * (dk + 1.0) * u[k + 2]
@@ -203,7 +209,8 @@ static void legendre_compute_glr1(int n, double *x, double *ders)
         }
 
         /* Newton iteration on the Taylor series to refine the next root. */
-        for (l = 0; l < 5; l++) {
+        for (l = 0; l < 5; l++)
+        {
             h = h - ts_mult(u, h, m) / ts_mult(up, h, m - 1);
         }
 
@@ -215,7 +222,8 @@ static void legendre_compute_glr1(int n, double *x, double *ders)
     free(up);
 
     /* Mirror the upper-half roots to the lower half. */
-    for (k = 0; k < n2 + s; k++) {
+    for (k = 0; k < n2 + s; k++)
+    {
         x[k]    = -x[n - k - 1];
         ders[k] =  ders[n - k - 1];
     }
@@ -256,7 +264,8 @@ static void legendre_compute_glr2(double pn0, int n, double *x1, double *d1)
     u[1] = pn0;
     up[0] = 0.0;
 
-    for (k = 0; k <= m - 2; k += 2) {
+    for (k = 0; k <= m - 2; k += 2)
+    {
         dk = (double) k;
 
         u[k + 2] = 0.0;
@@ -268,7 +277,8 @@ static void legendre_compute_glr2(double pn0, int n, double *x1, double *d1)
     }
 
     /* Newton refinement of the root estimate. */
-    for (l = 0; l < 5; l++) {
+    for (l = 0; l < 5; l++)
+    {
         *x1 = *x1 - ts_mult(u, *x1, m) / ts_mult(up, *x1, m - 1);
     }
     *d1 = ts_mult(up, *x1, m - 1);
@@ -293,10 +303,12 @@ static void rescale(double a, double b, int n, double x[], double w[])
 {
     int i;
 
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) 
+    {
         x[i] = ((a + b) + (b - a) * x[i]) / 2.0;
     }
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) 
+    {
         w[i] = (b - a) * w[i] / 2.0;
     }
 }
@@ -325,7 +337,8 @@ static double rk2_leg(double t1, double t2, double x, int n)
 
     t = t1;
 
-    for (j = 0; j < m; j++) {
+    for (j = 0; j < m; j++)
+    {
         f = (1.0 - x) * (1.0 + x);
         k1 = -h * f / (snn1 * sqrt(f) - 0.5 * x * sin(2.0 * t));
         x = x + k1;
@@ -359,7 +372,8 @@ static double ts_mult(double *u, double h, int n)
 
     ts = 0.0;
     hk = 1.0;
-    for (k = 1; k <= n; k++) {
+    for (k = 1; k <= n; k++)
+    {
         ts += u[k] * hk;
         hk *= h;
     }
