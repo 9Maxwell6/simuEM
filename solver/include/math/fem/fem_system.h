@@ -8,7 +8,7 @@
 #include "world/mesh/mesh.h"
 #include "math/data_format.h"
 #include "math/fem/assemble_data.h"
-#include "math/fem/fem_util.h"
+#include "math/fem/shape.h"
 
 #include "math/fem/bc_dirichlet.h"
 
@@ -104,10 +104,6 @@ private:
     std::unordered_map<Block, std::array<std::vector<dof_idx>, 2>,   Block::Hash> coupled_block_dof_data_;
 
     
-    // usage: integration_rule_[Shape][order]    (make sure the length of outer vector >= required order)
-    mutable std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash> integration_rule_;
-
-
 
     // coupling between space need two block:   and dof list from each block
 
@@ -179,9 +175,6 @@ public:
     const FEM_Space* get_block_col_space(const Block& block) const;
     const std::vector<dof_idx>* get_block_row_dof(const Block& block) const;
     const std::vector<dof_idx>* get_block_col_dof(const Block& block) const;
-
-    
-    std::vector<const std::vector<Integration_Point>*>* get_integration_rule(Basis_Shape b_shape) const { return &integration_rule_[b_shape]; }
 
     // use only after every dof table of blocks are initialized
     void delete_block_hash() { fe_block_hash_.clear(); }

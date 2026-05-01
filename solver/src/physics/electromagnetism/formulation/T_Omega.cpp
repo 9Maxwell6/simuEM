@@ -183,7 +183,6 @@ bool T_Omega::assemble_system()
     //   b_shape       - Basis_Shape, element geometry
     //   shape_space_1 - const FEM_Space*, trial function space
     //   shape_space_2 - const FEM_Space*, test function space
-    //   i_r_list      - integration rules per order
     //
     //
     // Template parameters:
@@ -497,7 +496,7 @@ scalar_t T_Omega::compute_L2_error()
         const std::vector<std::vector<scalar_t>>& dof_value_list = *e_data.dof_value_list; 
 
         // compute T - grad Omega
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, 3);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, 3);
 
         Matrix<4, 3> H1_grad_basis;
         Matrix<4, 3> H1_phy_grad_basis;

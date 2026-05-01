@@ -1008,8 +1008,7 @@ Assemble_Data FEM_System::assemble_mat_data(Block& block)
         .elements = elements,
         .row_dof = block_row_dof,
         .col_dof = block_col_dof,
-        .block_matrix = block.mat,
-        .integration_rule = integration_rule_
+        .block_matrix = block.mat
     };
 
 }
@@ -1025,7 +1024,7 @@ Assemble_Data FEM_System::assemble_vec_data(Block& block)
 {
     if(!block.is_base_block){
         Logger::error("FEM_System::assemble_vec_data - block must be base block (diagonal block).");
-        return Assemble_Data{.integration_rule = integration_rule_};
+        return Assemble_Data{};
     }
     const FEM_Space* space_1;
 
@@ -1057,8 +1056,7 @@ Assemble_Data FEM_System::assemble_vec_data(Block& block)
         .space_1 = space_1,
         .elements = elements,
         .row_dof = block_row_dof,
-        .block_vector = block.vec,
-        .integration_rule = integration_rule_
+        .block_vector = block.vec
     };
 
 }

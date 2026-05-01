@@ -4,6 +4,8 @@
 
 #include "math/ref_coord.h"
 #include "math/data_format.h"
+#include "math/fem/shape.h"
+
 
 #include <vector>
 #include <Eigen/Dense>
@@ -17,17 +19,6 @@ enum class Space {
     H_div 
 };
 
-enum class Basis_Shape {
-    TRIANGLE,
-    TETRAHEDRON, 
-    // currently not support other element geometry
-};
-
-struct Shape_Hash {
-    size_t operator()(Basis_Shape s) const {
-        return std::hash<int>{}(static_cast<int>(s));
-    }
-};
 
 
 class FEM_Space
@@ -108,7 +99,7 @@ public:
      */
     virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const = 0;
 
-    
+
 
 
     

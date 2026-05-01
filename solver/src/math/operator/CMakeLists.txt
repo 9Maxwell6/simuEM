@@ -1,3 +1,5 @@
+add_subdirectory(quadrature)
+
 target_sources(simu_core PRIVATE
     integration.cpp
     operator.cpp

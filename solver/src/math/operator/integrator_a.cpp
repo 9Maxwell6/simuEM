@@ -21,7 +21,7 @@ void Integrator__s_S__S::assemble_element_matrix(double coeff, Element_Data<phy_
         const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order();
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
         Vector<R> basis(e_data.rows);
 
@@ -55,7 +55,7 @@ void Integrator__s_grad_S__grad_S::assemble_element_matrix(double coeff, Element
         const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order()-1;
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
     
         Matrix<R,ref_dim> grad_basis(e_data.rows, ref_dim);
         Matrix<R, phy_dim> phy_grad_basis(e_data.rows, phy_dim);
@@ -93,7 +93,7 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
         const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order()-1;
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
 
         if constexpr ((R == Eigen::Dynamic && C == Eigen::Dynamic) || (phy_dim*R == C)) {
             
@@ -163,7 +163,7 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
         const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order()-1;
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
         Matrix<R, ref_dim> curl_basis(e_data.rows, ref_dim);
         Matrix<R, phy_dim> phy_curl_basis(e_data.rows, phy_dim);
@@ -206,7 +206,7 @@ void Integrator__s_V__V::assemble_element_matrix(double coeff, Element_Data<phy_
         const FEM_Space* test__space = e_data.shape_space_1;
         const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order();
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
         Matrix<R, ref_dim> basis(e_data.rows, ref_dim);
         Matrix<R, phy_dim> phy_basis(e_data.rows, phy_dim);
@@ -245,7 +245,7 @@ void Integrator__s_V__grad_S::assemble_element_matrix(double coeff, Element_Data
         const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order()-1 + test__space->get_basis_order();
         
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
         Matrix<R, ref_dim> domain_grad_basis(e_data.rows, ref_dim);
         Matrix<R, phy_dim> phy_domain_grad_basis(e_data.rows, phy_dim);
@@ -289,7 +289,7 @@ void Integrator__s_grad_S__V::assemble_element_matrix(double coeff, Element_Data
         const FEM_Space* trial_space = e_data.shape_space_2;
         int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order()-1;
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
 
         Matrix<R, ref_dim> domain_basis(e_data.rows, ref_dim);
         Matrix<R, phy_dim> phy_domain_basis(e_data.rows, phy_dim);

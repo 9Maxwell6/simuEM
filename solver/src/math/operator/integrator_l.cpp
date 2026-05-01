@@ -20,7 +20,7 @@ void Integrator__s__S::assemble_element_vector(Field& F, Element_Data<phy_dim, r
         const FEM_Space* test__space = e_data.shape_space_1;
         int order = e->get_geometry_order() + 2*test__space->get_basis_order();
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
         Vector<R> basis(e_data.rows);
         
@@ -54,7 +54,7 @@ void Integrator__v__grad_S::assemble_element_vector(Field& F, Element_Data<phy_d
         const FEM_Space* test__space = e_data.shape_space_1;
         int order = e->get_geometry_order() + 2*test__space->get_basis_order();
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
 
         Vector<phy_dim> coeff(phy_dim);
@@ -96,7 +96,7 @@ void Integrator__v__V::assemble_element_vector(Field& F, Element_Data<phy_dim, r
         const FEM_Space* test__space = e_data.shape_space_1;
         int order = e->get_geometry_order() + 2*test__space->get_basis_order();
 
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, order);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
 
         Vector<phy_dim> coeff(phy_dim);
         Matrix<R, ref_dim> basis(e_data.rows, ref_dim);

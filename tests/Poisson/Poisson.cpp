@@ -88,7 +88,6 @@ bool Poisson::assemble_system()
     //   b_shape       - Basis_Shape, element geometry
     //   shape_space_1 - const FEM_Space*, trial function space
     //   shape_space_2 - const FEM_Space*, test function space
-    //   i_r_list      - integration rules per order
     //
     //
     // Template parameters:
@@ -230,7 +229,7 @@ scalar_t Poisson::compute_L2_error()
         const std::vector<std::vector<scalar_t>>& dof_value_list = *e_data.dof_value_list; 
 
         // compute T - grad Omega
-        const std::vector<Integration_Point>& i_p_list = Integration::integration_rule_update(*e_data.i_r_list, e_data.b_shape, 5);
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, 5);
 
         Matrix<4, 1> H1_basis;
 

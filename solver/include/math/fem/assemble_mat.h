@@ -3,7 +3,7 @@
 #include "math/fem/assemble_data.h"
 #include "math/fem/element_data.h"
 #include "math/operator/operator_collection.h"
-#include "math/fem/fem_util.h"
+#include "math/fem/shape.h"
 
 
 
@@ -53,7 +53,6 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
 
             e_data.e = e;
             e_data.b_shape = b_shape;
-            e_data.i_r_list = &data.integration_rule[b_shape];
 
             e_data.shape_space_1 = data.space_1->get_basis_space(b_shape);
             e_data.shape_space_2 = data.space_2->get_basis_space(b_shape);

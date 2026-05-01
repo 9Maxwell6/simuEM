@@ -22,7 +22,6 @@ namespace simu {
  *   b_shape       - Basis_Shape, element geometry
  *   shape_space_1 - const FEM_Space*, trial function space
  *   shape_space_2 - const FEM_Space*, test function space
- *   i_r_list      - integration rules per order
  *
  *
  * Template parameters:
@@ -37,8 +36,6 @@ struct Element_Data
     const Mesh* mesh;
 
     const Element* e;
-
-    std::vector<const std::vector<Integration_Point>*>* i_r_list;
 
     // to check if the constraints of each operator applied is satisfied.
     // e.g. FEM_Space space_1 must be Hcurl space.

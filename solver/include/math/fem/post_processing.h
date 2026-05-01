@@ -2,7 +2,7 @@
 
 #include "math/fem/fem_system.h"
 #include "math/fem/block_rack.h"
-#include "math/fem/fem_util.h"
+#include "math/fem/shape.h"
 #include "math/data_format.h"
 
 #include "utils/util_hash.h"
@@ -98,8 +98,6 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                 e_data.e = e;
 
                 e_data.b_shape = to_basis_shape(e->get_geometry());
-
-                e_data.i_r_list = fe_system.get_integration_rule(e_data.b_shape);
 
                 e_data.reset_flag();
 

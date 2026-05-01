@@ -2,9 +2,26 @@
 
     
 #include "world/mesh/e_collection.h"
-#include "math/fem/space_collection.h"
 
 namespace simu {
+
+enum class Basis_Shape {
+    EDGE,
+    TRIANGLE,
+    TETRAHEDRON, 
+    // currently not support other element geometry
+};
+
+constexpr size_t N_SHAPE = 3;
+static_assert(static_cast<size_t>(Basis_Shape::TETRAHEDRON) + 1 == N_SHAPE, "N_SHAPES is out of sync with Basis_Shape enum");
+
+
+struct Shape_Hash {
+    size_t operator()(Basis_Shape s) const {
+        return std::hash<int>{}(static_cast<int>(s));
+    }
+};
+
 
 inline Basis_Shape to_basis_shape(Geometry t)
 {

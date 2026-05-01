@@ -2,7 +2,7 @@
 
 #include "math/fem/assemble_data.h"
 #include "math/fem/element_data.h"
-#include "math/fem/fem_util.h"
+#include "math/fem/shape.h"
 #include "math/operator/operator_collection.h"
 
 
@@ -55,7 +55,6 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
 
             e_data.e = e;
             e_data.b_shape = b_shape;
-            e_data.i_r_list = &data.integration_rule[b_shape];
 
             e_data.shape_space_1 = data.space_1->get_basis_space(b_shape);
 

@@ -36,8 +36,6 @@ struct Assemble_Data
     mutable G_Matrix block_matrix;   // shared pointer to global block matrix
     mutable G_Vector block_vector;   // shared pointer to global block vector
 
-    std::unordered_map<Basis_Shape , std::vector<const std::vector<Integration_Point>*>, Shape_Hash>& integration_rule;
-
     // to check if the constraints of each operator applied is satisfied.
     // e.g. FEM_Space space_1 must be Hcurl space.
     mutable Check_Flag check;
