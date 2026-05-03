@@ -131,7 +131,7 @@ void Tetrahedron::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d
 
 
 
-void Tetrahedron::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_coord) const
+std::vector<Ref_Coord> Tetrahedron::edge_map(const Ref_Coord& edge_coord) const
 {
    double x = edge_coord.x;
    // mapping: (1-x)*pi + pj
@@ -141,17 +141,17 @@ void Tetrahedron::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_c
    // Edge 3: 1 -> 2
    // Edge 4: 1 -> 3
    // Edge 5: 2 -> 3
-   e_coord << x  , 0  , 0,
-              0  , x  , 0,
-              0  , 0  , x,
-              1-x, x  , 0,
-              1-x, 0  , x,
-              0  , 1-x, x;
+   return {{x  , 0  , 0},
+           {0  , x  , 0},
+           {0  , 0  , x},
+           {1-x, x  , 0},
+           {1-x, 0  , x},
+           {0  , 1-x, x},};
 }
 
 
 
-void Tetrahedron::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> e_coord) const
+std::vector<Ref_Coord> Tetrahedron::face_map(const Ref_Coord& face_coord) const
 {
    // reference coordinate on reference triangle.
    double x = face_coord.x;
@@ -161,10 +161,10 @@ void Tetrahedron::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> e_c
    // Face 1: 0, 3, 2
    // Face 2: 0, 1, 3
    // Face 3: 0, 2, 1
-   e_coord << 1-x-y, x, y,
-              0    , y, x,
-              x    , 0, y,
-              y    , x, 0;
+   return {{1-x-y, x, y},
+           {0    , y, x},
+           {x    , 0, y},
+           {y    , x, 0},};
 }
 
 

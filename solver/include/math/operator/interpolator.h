@@ -1,6 +1,8 @@
 #pragma once
 
 #include "math/operator/operator.h"
+#include "math/fem/shape.h"
+
 #include "math/data_format.h"
 
 
@@ -34,7 +36,7 @@ private:
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
-        if(s_1 != Space::H_1 || s_2 != Space::H_curl)
+        if(s_1 != Space::H_1 && s_2 != Space::H_curl)
         {
             Logger::error("Interpolator_H1_to_Hcurl: require H_1 -> H_curl.");
             throw std::invalid_argument("Interpolator_H1_to_Hcurl: require H_1 -> H_curl.");

@@ -127,25 +127,25 @@ void Triangle::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_sh
 
 
 
-void Triangle::edge_map(const Ref_Coord& edge_coord, Eigen::Ref<MatrixXd> e_coord) const
+std::vector<Ref_Coord> Triangle::edge_map(const Ref_Coord& edge_coord) const
 {
    double x = edge_coord.x;
    // mapping: (1-x)*pi + x*pj
    // Edge 0: 0 -> 1
    // Edge 1: 0 -> 2
    // Edge 2: 1 -> 2
-   e_coord << x  , 0,
-              0  , x,
-              1-x, x;
+   return {{x  , 0, 0},
+           {0  , x, 0},
+           {1-x, x, 0},};
 }
 
-void Triangle::face_map(const Ref_Coord& face_coord, Eigen::Ref<MatrixXd> f_coord) const
+std::vector<Ref_Coord> Triangle::face_map(const Ref_Coord& face_coord) const
 {
    double x = face_coord.x;
    double y = face_coord.y;
    // For a triangle element, the face is the element itself
    // so the mapping is the identity.
-   f_coord << x, y;
+   return {{x, y, 0}};
 }
 
 

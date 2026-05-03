@@ -26,6 +26,7 @@ struct Shape_Hash {
 inline Basis_Shape to_basis_shape(Geometry t)
 {
     switch (t) {
+        case Geometry::EDGE: return Basis_Shape::EDGE;
         case Geometry::TRIANGLE: return Basis_Shape::TRIANGLE;
         case Geometry::TETRAHEDRON: return Basis_Shape::TETRAHEDRON;
         default:
@@ -39,6 +40,7 @@ inline Basis_Shape to_basis_shape(Geometry t)
 inline Geometry to_element_geometry(Basis_Shape g)
 {
     switch (g) {
+        case Basis_Shape::EDGE: return Geometry::EDGE;
         case Basis_Shape::TRIANGLE: return Geometry::TRIANGLE;
         case Basis_Shape::TETRAHEDRON: return Geometry::TETRAHEDRON;
         default:
@@ -48,5 +50,33 @@ inline Geometry to_element_geometry(Basis_Shape g)
         }
     }
 }
+
+/**
+ * @brief return the face shape of the given shape, shape must be 3D elements.
+ * 
+ * @return face shape, if element has no face, return the given shape.
+ */
+inline Basis_Shape get_face(Basis_Shape g)
+{
+    switch (g) {
+        case Basis_Shape::TETRAHEDRON: return Basis_Shape::TRIANGLE;
+    }
+    return g;
+} 
+
+
+/**
+ * @brief return the face shape of the given shape, shape must be 3D elements.
+ * 
+ * @return face shape, if element has no face, return the given shape.
+ */
+inline Basis_Shape get_edge(Basis_Shape g)
+{
+    switch (g) {
+        case Basis_Shape::TRIANGLE: return Basis_Shape::EDGE;
+        case Basis_Shape::TETRAHEDRON: return Basis_Shape::EDGE;
+    }
+    return g;
+} 
 
 }
