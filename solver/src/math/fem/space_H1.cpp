@@ -144,6 +144,11 @@ void H1_triangle::dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd
 }
 
 
+void H1_triangle::get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const
+{
+    //TODO:
+}
+
 /**
  * =============================== Tetrahedron ===============================
  * 
@@ -237,7 +242,10 @@ void H1_tetrahedron::dof_transformation(const size_t* node_idx, Eigen::Ref<Matri
     }
 }
 
-
+void H1_tetrahedron::get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const
+{
+    //TODO:
+}
 
 
 void H1_triangle::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {

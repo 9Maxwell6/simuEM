@@ -38,14 +38,16 @@ protected:
     // these function should not be called at this abstraction level!
     // following function cannot be called from Hcurl_space instance, it must be called from Hcurl_Tetrahedron for example.
     // For H1: Scalars. For HCurl: Vectors.
-    virtual void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const { Logger::error("Hcurl_Space::get_basis_s should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); };
-    virtual void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const { Logger::error("Hcurl_Space::get_basis_v should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); };
+    virtual void get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const { Logger::error("Hcurl_Space::get_basis_s should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); }
+    virtual void get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const { Logger::error("Hcurl_Space::get_basis_v should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); }
 
     // Return vector proxy of Exterior Derivative of basis of the corresponding form.
-    virtual void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const { Logger::error("Hcurl_Space::get_ED_basis_s should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); };
-    virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const { Logger::error("Hcurl_Space::get_ED_basis_v should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); };
+    virtual void get_ED_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const { Logger::error("Hcurl_Space::get_ED_basis_s should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); }
+    virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const { Logger::error("Hcurl_Space::get_ED_basis_v should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); }
 
-    virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const { Logger::error("Hcurl_Space::dof_transformation should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); };
+    virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const { Logger::error("Hcurl_Space::dof_transformation should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); }
+
+    virtual void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const { Logger::error("Hcurl_Space::get_dof_signature should not be called at this abstraction level (please call from, e.g., Hcurl_triangle)."); }
 };
 
 
@@ -74,6 +76,7 @@ public:
 
     void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
 
+    void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const override;
 };
 
 
@@ -106,6 +109,8 @@ public:
     void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
 
     void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
+
+    void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const override;
 
 };
 

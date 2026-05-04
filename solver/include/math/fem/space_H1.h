@@ -46,6 +46,8 @@ protected:
     virtual void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const { Logger::error("H1_Space::get_ED_basis_v should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
 
     virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const { Logger::error("H1_Space::dof_transformation should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
+    
+    virtual void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const { Logger::error("H1_Space::get_dof_signature should not be called at this abstraction level (please call from, e.g., H1_triangle)."); }
 
 };
 
@@ -75,7 +77,7 @@ public:
 
     void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
 
-    
+    void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const override;
 };
 
 
@@ -107,6 +109,8 @@ public:
     void get_ED_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const override;
 
     void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
+
+    void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const override;
 };
 
 

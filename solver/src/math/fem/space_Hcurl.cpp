@@ -168,6 +168,12 @@ void Hcurl_triangle::dof_transformation(const size_t* node_idx, Eigen::Ref<Matri
 }
 
 
+void Hcurl_triangle::get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const
+{
+    //TODO:
+}
+
+
 /**
  * =============================== Tetrahedron ===============================
  * 
@@ -292,6 +298,12 @@ void Hcurl_tetrahedron::dof_transformation(const size_t* node_idx, Eigen::Ref<Ma
         Logger::warning("Tetrahedron::compute_dof_transformation_H_curl: higher order case not available.");
         break;
     }
+}
+
+
+void Hcurl_tetrahedron::get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const
+{
+    //TODO:
 }
 
 

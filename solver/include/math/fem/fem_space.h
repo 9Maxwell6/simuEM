@@ -100,10 +100,37 @@ public:
     virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const = 0;
 
     
+    virtual void get_edge_dual_basis(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_face_dual_basis(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
+    virtual void get_volume_dual_basis(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
+
+    virtual void get_dof_signatures(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {}
+    
 
 
 
-
+    /**
+     * @brief Evaluates the dual basis "signatures" (kernels) for all DOFs on a specific topological entity.
+     * 
+     * This function provides the mathematical weights (scalars or vectors) used to define 
+     * a Degree of Freedom (DOF) via an integral moment or point evaluation. For H1 spaces, 
+     * this typically returns a scalar 1.0; for H(curl) or H(div), it returns the 
+     * constant reference tangent or normal vector scaled by the appropriate polynomial.
+     * 
+     * @param[in] entity_dim dimension of the entity (0: Node, 1: Edge, 2: Face, 3: Cell).
+     * @param[in] entity_idx local index of the entity within the element (e.g., edge index 0-5 for a Tet).
+     * @param[in] coord The local coordinate relative to the entity's own reference space.
+     *                  - Dim 1 (Edge): 1D coordinate s in [0, 1].
+     *                  - Dim 2 (Face): 2D coordinates (s0, s1) on the reference triangle/square.
+     *                  - Dim 3 (Cell): 3D coordinates (s0, s1, s2) on the reference tetrahedron/hexahedron.
+     * @param[out] kernels A matrix where each column corresponds to a single DOF on the entity.
+     *                     - Rows: Match the geometric dimension (1 for scalar H1, 2/3 for vector Hcurl/Hdiv).
+     *                     - Cols: Number of DOFs associated with this specific entity.
+     * 
+     * @note For curved elements, these signatures represent the reference space directions; 
+     *       the physical transformation (Jacobian) should be applied during integration.
+     */
+    virtual void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const = 0;
     
 };
 
