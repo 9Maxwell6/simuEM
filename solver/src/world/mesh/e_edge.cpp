@@ -73,14 +73,26 @@ void Edge::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape)
 }
 
 
-std::vector<Ref_Coord> Edge::edge_map(const Ref_Coord& edge_coord) const
+std::vector<Ref_Coord> Edge::edge_map(const std::vector<Integration_Point>& edge_coord, size_t edge_idx) const
 {
-   return {{edge_coord.x, 0, 0}};
+   std::vector<Ref_Coord> coord(edge_coord.size());
+   switch (edge_idx)
+   {
+   case 0:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({i_p.coord.x, 0, 0});
+      break;
+   
+   default:
+      Logger::error("Edge::edge_map - edge_idx exceed limit: {0}.");
+      return {};
+   }
+   return coord;
+   
 }
 
-std::vector<Ref_Coord> Edge::face_map(const Ref_Coord& face_coord) const
+std::vector<Ref_Coord> Edge::face_map(const std::vector<Integration_Point>& face_coord, size_t face_idx) const
 {
-   Logger::error("Edge::edge_map - edge element does not have face_map.");
+   Logger::error("Edge::face_map - edge element does not have face_map.");
    return {};
 }
 

@@ -144,9 +144,44 @@ void H1_triangle::dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd
 }
 
 
-void H1_triangle::get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const
+void H1_triangle::dof_signature(
+    int /*entity_dim*/, 
+    int /*entity_idx*/, 
+    const std::vector<Ref_Coord>& /*coord_list*/, 
+    Eigen::Ref<MatrixXd> kernel
+) const
 {
-    //TODO:
+    // in H1 space, coord_list is not needed because the DOF defines its own location, no integration point needed.
+    switch (p_)
+    {
+    case 1:
+        kernel << 0., 0.,       // node 0 dof 0
+                  1., 0.,       // node 1 dof 1
+                  0., 1.;       // node 2 dof 2
+        break;
+    case 2:
+        kernel << 0. , 0. ,     // node 0 dof 0
+                  1. , 0. ,     // node 1 dof 1
+                  0. , 1. ,     // node 2 dof 2
+                  0.5, 0. ,     // edge 0 dof 3
+                  0. , 0.5,     // edge 1 dof 4
+                  0.5, 0.5;     // edge 2 dof 5
+        break;
+    case 3:
+        kernel << 0.   , 0.   ,  // node 0 dof 0
+                  1.   , 0.   ,  // node 1 dof 1
+                  0.   , 1.   ,  // node 2 dof 2
+                  1./3., 0.   ,  // edge 0 dof 3
+                  2./3., 0.   ,  // edge 0 dof 4
+                  0.   , 1./3.,  // edge 1 dof 5
+                  0.   , 2./3.,  // edge 1 dof 6
+                  2./3., 1./3.,  // edge 2 dof 7
+                  1./3., 2./3.,  // edge 2 dof 8
+                  1./3., 1./3.;  // face 0 dof 9
+        break;
+    default:
+        Logger::warning("H1_triangle::get_dof_signature: higher order case not available.");
+    }
 }
 
 /**
@@ -242,9 +277,39 @@ void H1_tetrahedron::dof_transformation(const size_t* node_idx, Eigen::Ref<Matri
     }
 }
 
-void H1_tetrahedron::get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const
+void H1_tetrahedron::dof_signature(
+    int /*entity_dim*/, 
+    int /*entity_idx*/, 
+    const std::vector<Ref_Coord>& /*coord_list*/, 
+    Eigen::Ref<MatrixXd> kernel
+) const
 {
-    //TODO:
+    // in H1 space, coord_list is not needed because the DOF defines its own location, no integration point needed.
+    switch (p_)
+    {
+    case 1:
+        kernel << 0., 0., 0.,       // node 0 dof 0
+                  1., 0., 0.,       // node 1 dof 1
+                  0., 1., 0.,       // node 2 dof 2
+                  0., 0., 1.;       // node 3 dof 3
+
+        break;
+    case 2:
+        kernel << 0. , 0. , 0. ,    // node 0 dof 0
+                  1. , 0. , 0. ,    // node 1 dof 1
+                  0. , 1. , 0. ,    // node 2 dof 2
+                  0. , 0. , 1. ,    // node 3 dof 3
+                  0.5, 0. , 0. ,    // edge 0 dof 4
+                  0. , 0.5, 0. ,    // edge 1 dof 5
+                  0. , 0. , 0.5,    // edge 2 dof 6
+                  0.5, 0.5, 0. ,    // edge 3 dof 7
+                  0.5, 0. , 0.5,    // edge 4 dof 8
+                  0. , 0.5, 0.5;    // edge 5 dof 9
+
+        break;
+    default:
+        Logger::warning("H1_tetrahedron::get_dof_signature: higher order case not available.");
+    }
 }
 
 

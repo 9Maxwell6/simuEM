@@ -45,7 +45,7 @@ public:
     int get_dim() const override { return 2; }
     int get_n_node() const override { return 3; }
     int get_n_edge() const override { return 3; }
-    int get_n_face() const override { return 3; }   // also edge
+    int get_n_face() const override { return 1; }
     int get_n_volume() const override { return 0; }
 
     void set_node_idx(const size_t *idx);
@@ -56,8 +56,8 @@ public:
     void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const override;
     void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const override;
 
-    std::vector<Ref_Coord> edge_map(const Ref_Coord& edge_coord) const override;
-    std::vector<Ref_Coord> face_map(const Ref_Coord& face_coord) const override;
+    std::vector<Ref_Coord> edge_map(const std::vector<Integration_Point>& edge_coord, size_t edge_idx) const override;
+    std::vector<Ref_Coord> face_map(const std::vector<Integration_Point>& face_coord, size_t face_idx) const override;
 
     void tangent(Eigen::Ref<MatrixXd> t) const override;
     void normal(Eigen::Ref<MatrixXd> n) const override;

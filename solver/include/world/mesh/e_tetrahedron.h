@@ -18,10 +18,10 @@ class Mesh;
  *                5 -> [2,      3     ]
  * 
  *                      node_1, node_2, node_3
- * local face id: 0 -> [1,      2,      3     ]
- *                1 -> [0,      3,      2     ]
- *                2 -> [0,      1,      3     ]
- *                3 -> [0,      2,      1     ]
+ * local face id: 0 -> [0,      1,      2     ]
+ *                1 -> [0,      1,      3     ]
+ *                2 -> [0,      2,      3     ]
+ *                3 -> [1,      2,      3     ]
  * 
  * 
  * Reference tetrahedron:
@@ -66,8 +66,8 @@ public:
     void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const override;
     void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const override;
 
-    std::vector<Ref_Coord> edge_map(const Ref_Coord& edge_coord) const override;
-    std::vector<Ref_Coord> face_map(const Ref_Coord& face_coord) const override;
+    std::vector<Ref_Coord> edge_map(const std::vector<Integration_Point>& edge_coord, size_t edge_idx) const override;
+    std::vector<Ref_Coord> face_map(const std::vector<Integration_Point>& face_coord, size_t face_idx) const override;
 
     void tangent(Eigen::Ref<MatrixXd> t) const override;
     void normal(Eigen::Ref<MatrixXd> n) const override;

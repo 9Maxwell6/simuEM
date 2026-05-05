@@ -35,40 +35,44 @@ void Interpolator_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, ref_dim
         e->tangent(all_edge_tangent); // get tangent vector for all edge of reference element. the magnitude is length of edge.
 
 
-        for(const Integration_Point& i_p : i_r)
+        
+
+        for (int i=0; i<e->get_n_edge(); ++i) 
         {
-            std::vector<Ref_Coord> all_edge_coord =  e->edge_map(i_p.coord);
+            
+            std::vector<Ref_Coord> edge_coord=  e->edge_map(i_r, i);
 
-            for (int i=0; i<all_edge_coord.size(); ++i) 
+            for(int j=0; j<n_dof_per_edge; ++j)
             {
-                for(int j=0; j<n_dof_per_edge; ++j)
+                //TODO: implement edge_poly per FEM_space
+                //double edge_poly = target_space->edge_poly(i_p.coord, j);
+                int row_idx = i*n_dof_per_edge +j;
+                auto edge_tangent = all_edge_tangent.row(i).transpose();
+ 
+                for(int k=0; k<edge_coord.size(); ++k)
                 {
-                    //TODO: implement edge_poly per FEM_space
-                    //double edge_poly = target_space->edge_poly(i_p.coord, j);
-                    int row_idx = i*n_dof_per_edge +j;
-                    Ref_Coord& edge_coord = all_edge_coord[i];
-                    auto edge_tangent = all_edge_tangent.row(i).transpose();
+                    source_space->get_basis_s(edge_coord[k], H1_basis);
+                    const Matrix<phy_dim, ref_dim>& J = e_data.get_J(edge_coord[k]);   
+                    Vector<phy_dim> t_phys = J*edge_tangent;
 
-                    source_space->get_basis_s(edge_coord, H1_basis);
-                    const Matrix<phy_dim, ref_dim>& J = e_data.get_J(edge_coord);   
-                    Vector<phy_dim> t_phys = J*edge_tangent; 
-
-                    for (Eigen::Index k = 0; k < H1_basis.size(); ++k)
+                    for (Eigen::Index m = 0; m < H1_basis.size(); ++m)
                     {
                         for(int d=0; d<phy_dim; ++d)
                         {
-                            double tangential = H1_basis[k] * t_phys[d];
+                            double tangential = H1_basis[m] * t_phys[d];
 
-                            int col_idx = k*phy_dim + d;
+                            int col_idx = m*phy_dim + d;
 
-                            element_matrix(row_idx, col_idx) += i_p.weight * tangential;
+                            element_matrix(row_idx, col_idx) += i_r[k].weight * tangential;
                             //element_matrix(row_idx, col_idx) += i_p.weight * tangential * edge_poly;
 
                         }
                     }
                 }
             }
+            
         }
+        
 
 
 

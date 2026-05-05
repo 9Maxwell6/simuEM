@@ -47,7 +47,12 @@ protected:
 
     virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const { Logger::error("H1_Space::dof_transformation should not be called at this abstraction level (please call from, e.g., H1_triangle)."); };
     
-    virtual void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const { Logger::error("H1_Space::get_dof_signature should not be called at this abstraction level (please call from, e.g., H1_triangle)."); }
+    virtual void dof_signature(
+        int entity_dim, 
+        int entity_idx, 
+        const std::vector<Ref_Coord>& coord_list, 
+        Eigen::Ref<MatrixXd> kernel
+    ) const { Logger::error("H1_Space::get_dof_signature should not be called at this abstraction level (please call from, e.g., H1_triangle)."); }
 
 };
 
@@ -77,7 +82,12 @@ public:
 
     void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
 
-    void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const override;
+    void dof_signature(
+        int /*entity_dim*/, 
+        int /*entity_idx*/, 
+        const std::vector<Ref_Coord>& /*coord_list*/, 
+        Eigen::Ref<MatrixXd> kernel
+    ) const override;
 };
 
 
@@ -110,7 +120,12 @@ public:
 
     void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const override;
 
-    void get_dof_signature(int entity_dim, int entity_idx, const Ref_Coord& coord, Eigen::Ref<MatrixXd> kernels) const override;
+    void dof_signature(
+        int /*entity_dim*/, 
+        int /*entity_idx*/, 
+        const std::vector<Ref_Coord>& /*coord_list*/, 
+        Eigen::Ref<MatrixXd> kernel
+    ) const override;
 };
 
 

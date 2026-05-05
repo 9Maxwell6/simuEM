@@ -86,18 +86,18 @@ public:
     /**
      * @brief convert reference coordinate defined on edge to the coordinate of each edge of the reference element.
      * 
-     * @param edge_coord reference coordinate on edge.
+     * @param edge_coord list of reference coordinate on edge.
      * @return vector of reference coordinate on one edge of the reference element.
      */
-    virtual std::vector<Ref_Coord> edge_map(const Ref_Coord& edge_coord) const = 0;
+    virtual std::vector<Ref_Coord> edge_map(const std::vector<Integration_Point>& edge_coord, size_t edge_idx) const = 0;
 
     /**
      * @brief convert reference coordinate defined on face to the coordinate of each face of the reference element.
      * 
-     * @param face_coord reference coordinate on edge.
+     * @param face_coord list of reference coordinate on edge.
      * @return vector of reference coordinate on one face of the reference element, 
      */
-    virtual std::vector<Ref_Coord> face_map(const Ref_Coord& face_coord) const = 0;
+    virtual std::vector<Ref_Coord> face_map(const std::vector<Integration_Point>& face_coord, size_t face_idx) const = 0;
 
     /**
      * @brief compute the tangent vector along each edge, with magnitude equal to the length of the reference edge,

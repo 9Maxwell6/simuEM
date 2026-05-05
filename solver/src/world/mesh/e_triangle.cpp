@@ -127,25 +127,46 @@ void Triangle::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_sh
 
 
 
-std::vector<Ref_Coord> Triangle::edge_map(const Ref_Coord& edge_coord) const
+std::vector<Ref_Coord> Triangle::edge_map(const std::vector<Integration_Point>& edge_coord, size_t edge_idx) const
 {
-   double x = edge_coord.x;
    // mapping: (1-x)*pi + x*pj
    // Edge 0: 0 -> 1
    // Edge 1: 0 -> 2
    // Edge 2: 1 -> 2
-   return {{x  , 0, 0},
-           {0  , x, 0},
-           {1-x, x, 0},};
+   std::vector<Ref_Coord> coord(edge_coord.size());
+   switch (edge_idx)
+   {
+   case 0:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({i_p.coord.x, 0, 0});
+      break;
+   case 1:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({0, i_p.coord.x, 0});
+      break;
+   case 2:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({1-i_p.coord.x, i_p.coord.x, 0});
+      break;
+   default:
+      Logger::error("Triangle::edge_map - edge_idx exceed limit: {0,1,2}.");
+      return {};
+   }
+   return coord;
 }
 
-std::vector<Ref_Coord> Triangle::face_map(const Ref_Coord& face_coord) const
+std::vector<Ref_Coord> Triangle::face_map(const std::vector<Integration_Point>& face_coord, size_t face_idx) const
 {
-   double x = face_coord.x;
-   double y = face_coord.y;
    // For a triangle element, the face is the element itself
    // so the mapping is the identity.
-   return {{x, y, 0}};
+   std::vector<Ref_Coord> coord(face_coord.size());
+   switch (face_idx)
+   {
+   case 0:
+      for(const Integration_Point& i_p : face_coord) coord.push_back({i_p.coord.x, i_p.coord.y, 0});
+      break;
+   default:
+      Logger::error("Triangle::face_map - edge_idx exceed limit: {0}.");
+      return {};
+   }
+   return coord;
 }
 
 
@@ -154,6 +175,7 @@ std::vector<Ref_Coord> Triangle::face_map(const Ref_Coord& face_coord) const
 void Triangle::tangent(Eigen::Ref<MatrixXd> t) const
 {
    // 3 edges, 2D
+   // TODO: convention TBD (normalization?)
    t << 1,  0,
         0,  1,
        -1,  1;
@@ -163,7 +185,8 @@ void Triangle::tangent(Eigen::Ref<MatrixXd> t) const
 void Triangle::normal(Eigen::Ref<MatrixXd> n) const
 {
    // 3 edges, 2D
-   n << 1,  1,  // vertex 0 → normal of edge (1,2)
-        1,  0,  // vertex 1 → normal of edge (0,2)
-        0, -1;  // vertex 2 → normal of edge (0,1)
+   // TODO: convention TBD (normalization?)
+   n << 0, -1;  // normal of edge (0,1)
+        1,  0,  // normal of edge (0,2)
+        1,  1;  // normal of edge (1,2)
 }

@@ -131,9 +131,8 @@ void Tetrahedron::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d
 
 
 
-std::vector<Ref_Coord> Tetrahedron::edge_map(const Ref_Coord& edge_coord) const
+std::vector<Ref_Coord> Tetrahedron::edge_map(const std::vector<Integration_Point>& edge_coord, size_t edge_idx) const
 {
-   double x = edge_coord.x;
    // mapping: (1-x)*pi + pj
    // Edge 0: 0 -> 1
    // Edge 1: 0 -> 2
@@ -141,53 +140,83 @@ std::vector<Ref_Coord> Tetrahedron::edge_map(const Ref_Coord& edge_coord) const
    // Edge 3: 1 -> 2
    // Edge 4: 1 -> 3
    // Edge 5: 2 -> 3
-   return {{x  , 0  , 0},
-           {0  , x  , 0},
-           {0  , 0  , x},
-           {1-x, x  , 0},
-           {1-x, 0  , x},
-           {0  , 1-x, x},};
+   std::vector<Ref_Coord> coord(edge_coord.size());
+   switch (edge_idx)
+   {
+   case 0:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({i_p.coord.x, 0, 0});
+      break;
+   case 1:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({0, i_p.coord.x, 0});
+      break;
+   case 2:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({0, 0, i_p.coord.x});
+      break;
+   case 3:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({1-i_p.coord.x, i_p.coord.x, 0});
+      break;
+   case 4:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({1-i_p.coord.x, 0, i_p.coord.x});
+      break;
+   case 5:
+      for(const Integration_Point& i_p : edge_coord) coord.push_back({0, 1-i_p.coord.x, i_p.coord.x});
+      break;
+   default:
+      Logger::error("Tetrahedron::edge_map - edge_idx exceed limit: {0,1,2,3,4,5}.");
+      return {};
+   }
+   return coord;
 }
 
 
 
-std::vector<Ref_Coord> Tetrahedron::face_map(const Ref_Coord& face_coord) const
+std::vector<Ref_Coord> Tetrahedron::face_map(const std::vector<Integration_Point>& face_coord, size_t face_idx) const
 {
-   // reference coordinate on reference triangle.
-   double x = face_coord.x;
-   double y = face_coord.y;
+   // reference coordinate [x,y] on reference triangle.
    // mapping: (1-x-y)*pi + x*pj + y*pk
-   // Face 0: 1, 2, 3
-   // Face 1: 0, 3, 2
-   // Face 2: 0, 1, 3
-   // Face 3: 0, 2, 1
-   return {{1-x-y, x, y},
-           {0    , y, x},
-           {x    , 0, y},
-           {y    , x, 0},};
+   std::vector<Ref_Coord> coord(face_coord.size());
+   switch (face_idx)
+   {
+   case 0: // face (0,1,2)
+      for(const auto& i_p : face_coord) coord.push_back({i_p.coord.x, i_p.coord.y, 0.0});
+      break;
+   case 1: // face (0,1,3)
+      for(const auto& i_p : face_coord) coord.push_back({i_p.coord.x, 0.0, i_p.coord.y});
+      break;
+   case 2: // face (0,2,3)
+      for(const auto& i_p : face_coord) coord.push_back({0.0, i_p.coord.x, i_p.coord.y});
+      break;
+   case 3: // face (1,2,3)
+      for(const auto& i_p : face_coord) coord.push_back({1.0 - i_p.coord.x - i_p.coord.y, i_p.coord.x, i_p.coord.y});
+      break;
+   default:
+      Logger::error("Tetrahedron::face_map - face_idx exceed limit: {0,1,2,3}.");
+      return {};
+   }
+   return coord;
 }
 
 
 
 void Tetrahedron::tangent(Eigen::Ref<MatrixXd> t) const
 {
-    // 6 edges, 3D
-    t << 1,  0,  0,
-         0,  1,  0,
-         0,  0,  1,
-        -1,  1,  0,
-        -1,  0,  1,
-         0, -1,  1;
+   // 6 edges, 3D
+   // TODO: convention TBD (normalization?)
+   t << 1,  0,  0,
+        0,  1,  0,
+        0,  0,  1,
+       -1,  1,  0,
+       -1,  0,  1,
+        0, -1,  1;
 }
 
 
 void Tetrahedron::normal(Eigen::Ref<MatrixXd> n) const
 {
-    // 4 faces, 3D
-    n.resize(4, 3);
-
-    n << 1,  1,  1,  // vertex 0 → normal of face (1,2,3)
-        -1,  0,  0,  // vertex 1 → normal of face (0,3,2)
-         0, -1,  0,  // vertex 2 → normal of face (0,1,3)
-         0,  0, -1;  // vertex 3 → normal of face (0,2,1)
+   // 4 faces, 3D
+   // TODO: convention TBD (normalization?)
+   n <<  0,  0, -1,  // face 0: (0,1,2)
+         0, -1,  0,  // face 1: (0,1,3)
+        -1,  0,  0,  // face 2: (0,2,3)
+         1,  1,  1;  // face 3: (1,2,3)
 }
