@@ -39,7 +39,7 @@ public:
     int get_n_node() const override { return 2; }
     int get_n_edge() const override { return 1; }
     int get_n_face() const override { return 0; }
-    int get_n_volume() const override { return 0; }
+    int get_n_cell() const override { return 0; }
 
     void set_node_idx(const size_t *idx);
     void set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3);

@@ -30,13 +30,13 @@ protected:
     size_t n_node_;
     size_t n_edge_;
     size_t n_face_;
-    size_t n_volume_;
+    size_t n_cell_;
 
     int n_dof_;
     int n_dof_per_node_;
     int n_dof_per_edge_;
     int n_dof_per_face_;
-    int n_dof_per_volume_;
+    int n_dof_per_cell_;
 
     FEM_Space() = default;
     FEM_Space(int dim, int p);
@@ -45,8 +45,8 @@ protected:
 public:
     
     //FEM_Space(int dim, int p, 
-    //            int n_node, int n_edge, int n_face, int n_volume, 
-    //            int n_dof, int n_dof_per_node, int n_dof_per_edge, int n_dof_per_face, int n_dof_per_volume);
+    //            int n_node, int n_edge, int n_face, int n_cell, 
+    //            int n_dof, int n_dof_per_node, int n_dof_per_edge, int n_dof_per_face, int n_dof_per_cell);
     
 
 
@@ -75,12 +75,12 @@ public:
     int get_n_node() const { return n_node_;}
     int get_n_edge() const { return n_edge_;}
     int get_n_face() const { return n_face_;}
-    int get_n_volume() const { return n_volume_;}
+    int get_n_cell() const { return n_cell_;}
     int get_n_dof() const { return n_dof_;}
     int get_n_dof_per_node() const { return n_dof_per_node_;}
     int get_n_dof_per_edge() const { return n_dof_per_edge_;}
     int get_n_dof_per_face() const { return n_dof_per_face_;}
-    int get_n_dof_per_volume() const { return n_dof_per_volume_;}
+    int get_n_dof_per_cell() const { return n_dof_per_cell_;}
 
 
 
@@ -98,14 +98,6 @@ public:
      * @param P transformation matrix to be filled.
      */
     virtual void dof_transformation(const size_t* node_idx, Eigen::Ref<MatrixXd> P) const = 0;
-
-    
-    virtual void get_edge_dual_basis(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_face_dual_basis(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
-    virtual void get_volume_dual_basis(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {};
-
-    virtual void dof_signatures(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const {}
-    
 
 
 

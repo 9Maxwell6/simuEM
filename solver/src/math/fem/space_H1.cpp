@@ -67,15 +67,15 @@ H1_triangle::H1_triangle(int p) : H1_Space(2, p)
 {
     n_node_   = 3;
     n_edge_   = 3;
-    n_face_   = 1;
-    n_volume_ = 0;
+    n_face_   = 0;
+    n_cell_ = 1;
 
 
     n_dof_            = (p+1)*(p+2)/2;
     n_dof_per_node_   = 1;
     n_dof_per_edge_   = (p-1);
-    n_dof_per_face_   = (p-1)*(p-2)/2;
-    n_dof_per_volume_ = 0;
+    n_dof_per_face_   = 0;
+    n_dof_per_cell_ = (p-1)*(p-2)/2;
 }
 
 void H1_triangle::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
@@ -194,14 +194,14 @@ H1_tetrahedron::H1_tetrahedron(int p) : H1_Space(3, p)
     n_node_   = 4;
     n_edge_   = 6;
     n_face_   = 4;
-    n_volume_ = 1;
+    n_cell_ = 1;
 
 
     n_dof_            = (p+1)*(p+2)*(p+3)/6;
     n_dof_per_node_   = 1;
     n_dof_per_edge_   = (p-1);
     n_dof_per_face_   = (p-1)*(p-2)/2;
-    n_dof_per_volume_ = (p-1)*(p-2)*(p-3)/6;
+    n_dof_per_cell_ = (p-1)*(p-2)*(p-3)/6;
 }
 
 

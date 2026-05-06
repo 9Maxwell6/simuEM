@@ -32,7 +32,7 @@ protected:
     size_t n_node_;
     size_t n_edge_;
     size_t n_face_; 
-    size_t n_volume_;
+    size_t n_cell_;
 
     size_t n_exterior_boundary_node; // true boundary of simulation domain.
     size_t n_interior_boundary_node;
@@ -98,7 +98,7 @@ protected:
     std::unordered_map<Key, std::set<size_t>,            Key::Hash> node_group;                   // all nodes from the group
     std::unordered_map<Key, std::string,                 Key::Hash> element_group_description;    // description of the group
 
-    std::unordered_map<Key, std::array<size_t, 4>,       Key::Hash> element_size_group;           // total number of node/edge/face/volume of the group
+    std::unordered_map<Key, std::array<size_t, 4>,       Key::Hash> element_size_group;           // total number of node/edge/face/cell of the group
     std::unordered_map<Key, std::map<size_t, size_t>,    Key::Hash> element_face_size_group;      // total number of of faces for each different number of vertices of the group
 
     std::vector<Key> key_true_boundary;
@@ -107,7 +107,7 @@ protected:
     std::vector<Key> key_others;
 
 
-    std::array<size_t, 4> count_node_edge_face_volume(const std::vector<Element*>& elements);
+    std::array<size_t, 4> count_node_edge_face_cell(const std::vector<Element*>& elements);
     
 
 
@@ -213,7 +213,7 @@ public:
 
             element_geometry_size_group[new_key] = std::move(g_group);
 
-            element_size_group[new_key] = count_node_edge_face_volume(element_group[new_key]);
+            element_size_group[new_key] = count_node_edge_face_cell(element_group[new_key]);
 
             element_group_description[new_key] = description;
 
@@ -305,7 +305,7 @@ public:
 
             element_geometry_size_group[new_key] = std::move(g_group);
 
-            element_size_group[new_key] = count_node_edge_face_volume(element_group[new_key]);
+            element_size_group[new_key] = count_node_edge_face_cell(element_group[new_key]);
 
             element_group_description[new_key] = description;
 

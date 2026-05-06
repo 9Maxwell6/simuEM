@@ -176,7 +176,7 @@ Key Mesh::group_union(const Key& group_1_key, const Key& group_2_key, const std:
 
     }
 
-    element_size_group[new_key] = count_node_edge_face_volume(element_group[new_key]);
+    element_size_group[new_key] = count_node_edge_face_cell(element_group[new_key]);
     
 
     return new_key;
@@ -185,7 +185,7 @@ Key Mesh::group_union(const Key& group_1_key, const Key& group_2_key, const std:
 /**
  * @brief Count unique topological entities in a mesh.
  *
- * Traverses all elements and counts unique nodes, edges, faces, and volumes
+ * Traverses all elements and counts unique nodes, edges, faces, and cells
  * without double-counting shared entities between adjacent elements.
  * Deduplication is based on sorted corner node indices, so curved/high-order
  * elements are handled correctly (mid-edge nodes are ignored).
@@ -195,20 +195,20 @@ Key Mesh::group_union(const Key& group_1_key, const Key& group_2_key, const std:
  *         [0] = number of unique nodes
  *         [1] = number of unique edges
  *         [2] = number of unique faces
- *         [3] = number of volumes
+ *         [3] = number of cells
  */
-std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Element*>& elements) {
+std::array<size_t, 4> Mesh::count_node_edge_face_cell(const std::vector<Element*>& elements) {
 
     util::Block_Hash bh(1024, 1024, 1024, 1024);
     size_t unique_node_count = 0;
     size_t unique_edge_count = 0;
     size_t unique_face_count = 0;
-    size_t unique_volume_count = 0;
+    size_t unique_cell_count = 0;
 
     //std::set<size_t>              unique_nodes;
     //std::set<std::vector<size_t>> unique_edges;
     //std::set<std::vector<size_t>> unique_faces;
-    //size_t                     num_volumes = 0;
+    //size_t                     num_cells = 0;
 
     //auto makeKey = [](std::initializer_list<size_t> list) {
     //    std::vector<size_t> v(list);
@@ -238,7 +238,7 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
                 if(!bh.if_exist(idx[0], idx[1], 0)) { unique_edge_count++; bh.get_id(idx[0], idx[1], 0); }
                 if(!bh.if_exist(idx[1], idx[2], 0)) { unique_edge_count++; bh.get_id(idx[1], idx[2], 0); }
                 if(!bh.if_exist(idx[0], idx[2], 0)) { unique_edge_count++; bh.get_id(idx[0], idx[2], 0); }
-                if(!bh.if_exist(idx[0], idx[1], idx[2], 0)) { unique_face_count++; bh.get_id(idx[0], idx[1], idx[2], 0); }
+                if(!bh.if_exist(idx[0], idx[1], idx[2], 0)) { unique_cell_count++; bh.get_id(idx[0], idx[1], idx[2], 0); }
                 //unique_edges.insert(makeKey({idx[0], idx[1]}));
                 //unique_edges.insert(makeKey({idx[1], idx[2]}));
                 //unique_edges.insert(makeKey({idx[0], idx[2]}));
@@ -256,7 +256,7 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
                 if(!bh.if_exist(idx[0], idx[1], idx[3], 0)) { unique_face_count++; bh.get_id(idx[0], idx[1], idx[3], 0); }
                 if(!bh.if_exist(idx[0], idx[2], idx[3], 0)) { unique_face_count++; bh.get_id(idx[0], idx[2], idx[3], 0); }
                 if(!bh.if_exist(idx[1], idx[2], idx[3], 0)) { unique_face_count++; bh.get_id(idx[1], idx[2], idx[3], 0); }
-                unique_volume_count++;
+                unique_cell_count++;
 
                 //unique_edges.insert(makeKey({idx[0], idx[1]}));
                 //unique_edges.insert(makeKey({idx[0], idx[2]}));
@@ -268,7 +268,7 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
                 //unique_faces.insert(makeKey({idx[0], idx[1], idx[3]}));
                 //unique_faces.insert(makeKey({idx[0], idx[2], idx[3]}));
                 //unique_faces.insert(makeKey({idx[1], idx[2], idx[3]}));
-                //num_volumes++;
+                //num_cells++;
                 break;
 
 
@@ -276,7 +276,7 @@ std::array<size_t, 4> Mesh::count_node_edge_face_volume(const std::vector<Elemen
         }
     }
 
-    return {unique_node_count, unique_edge_count, unique_face_count, unique_volume_count};
+    return {unique_node_count, unique_edge_count, unique_face_count, unique_cell_count};
 }
 
 

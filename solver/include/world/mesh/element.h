@@ -52,7 +52,7 @@ public:
     virtual int get_n_node() const = 0;
     virtual int get_n_edge() const = 0;
     virtual int get_n_face() const = 0;
-    virtual int get_n_volume() const = 0;
+    virtual int get_n_cell() const = 0;
 
     inline size_t get_id() const {return id_;}
     inline int    get_geometry_order() const {return o_;}

@@ -161,8 +161,8 @@ public:
  *      5. if no match, assign new id for this set of vertices and dof index, insert to block.
  *      6. if the total size of the entry > 4 * size of block, increase table size by 2.
  * 
- * hash table is not needed for volume dof, since each volume is only belong to one element,
- * but it is recommand to store the total number of volume dof by using Block_Hash::set_volume_count().
+ * hash table is not needed for cell dof, since each cell is only belong to one element,
+ * but it is recommand to store the total number of cell dof by using Block_Hash::set_cell_count().
  * 
  */
 struct Block_Hash 
@@ -192,7 +192,7 @@ struct Block_Hash
     size_t count_face = 0;    // face dof counter
 
     //
-    size_t count_volume = 0;  // volume dof counter
+    size_t count_cell = 0;  // cell dof counter
 
     Block_Hash(size_t initial_size_1 = 32*1024, 
                size_t initial_size_2 = 32*1024, 
@@ -214,8 +214,8 @@ struct Block_Hash
     const size_t get_edge_count() const { return count_edge; }
     const size_t get_face_count() const { return count_face; }
 
-    void set_volume_count(size_t volume_dof_size) { count_volume = volume_dof_size; }
-    const size_t get_volume_count() const { return count_volume; }
+    void set_cell_count(size_t cell_dof_size) { count_cell = cell_dof_size; }
+    const size_t get_cell_count() const { return count_cell; }
 
     // 1 vertex
     size_t get_id(size_t p0, size_t p_dof)

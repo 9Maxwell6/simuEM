@@ -48,13 +48,13 @@ namespace simu {
  *
  *
  * for each block space, dof is ordered from:
- *     node -> edge -> face -> volume
+ *     node -> edge -> face -> cell
  * i.e.:
  *
  *      [ [nodes]    .       .        .     ]
  *      [    .    [edges]    .        .     ]
  *      [    .       .    [faces]     .     ]
- *      [    .       .       .    [volumes] ]
+ *      [    .       .       .    [cells] ]
  *
  * the mapping between 
  * 
@@ -113,7 +113,7 @@ private:
 
     //void assign_dof(Element * e);
 
-    const util::Block_Hash_D create_volume_dof_hash(const Block& block) const;
+    const util::Block_Hash_D create_cell_dof_hash(const Block& block) const;
 
     bool generate_block_dof(Block& block);
 

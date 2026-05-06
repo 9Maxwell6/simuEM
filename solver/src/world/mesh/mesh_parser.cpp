@@ -253,7 +253,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
     // Store surface elements into mesh.surface  (only if mesh is 2D!)
 
 
-    // Store volume elements into mesh.volume   (only if mesh is 3D!)
+    // Store cell elements into mesh.cell   (only if mesh is 3D!)
 
 
     // Store all elements with the same dimension of mesh (_md)
@@ -292,20 +292,20 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
         element_map_md[el->get_id()] = el; 
     }
 
-    std::array<size_t, 4> count = mesh.count_node_edge_face_volume(mesh.elements_);
+    std::array<size_t, 4> count = mesh.count_node_edge_face_cell(mesh.elements_);
     mesh.n_node_   = count[0];
     mesh.n_edge_   = count[1];
     mesh.n_face_   = count[2];
-    mesh.n_volume_ = count[3];
+    mesh.n_cell_ = count[3];
 
     //Logger::info("Node number: " + std::to_string(mesh.n_node_));
     Logger::info("Edge number: " + std::to_string(mesh.n_edge_));
     Logger::info("Face number: " + std::to_string(mesh.n_face_));
-    Logger::info("Volume number: " + std::to_string(mesh.n_volume_));
+    Logger::info("cell number: " + std::to_string(mesh.n_cell_));
     
 
 
-    // Store volume elements into mesh.volume   (only if mesh is 3D!)
+    // Store cell elements into mesh.cell   (only if mesh is 3D!)
  
     
 
@@ -397,7 +397,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
             }
         }
 
-        mesh.element_size_group[gmsh_key] = mesh.count_node_edge_face_volume(e_group);
+        mesh.element_size_group[gmsh_key] = mesh.count_node_edge_face_cell(e_group);
 
 
         Logger::mesh_entity(dim, tag, mesh.dim_keys[dim].id, 

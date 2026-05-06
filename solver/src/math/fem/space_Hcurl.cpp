@@ -71,15 +71,15 @@ Hcurl_triangle::Hcurl_triangle(int p) : Hcurl_Space(2, p)
 {
     n_node_   = 3;
     n_edge_   = 3;
-    n_face_   = 1;
-    n_volume_ = 0;
+    n_face_   = 0;
+    n_cell_ = 1;
 
 
     n_dof_            = p*(p+2);
     n_dof_per_node_   = 0;
     n_dof_per_edge_   = p;
-    n_dof_per_face_   = p*(p-1);
-    n_dof_per_volume_ = 0;
+    n_dof_per_face_   = 0;
+    n_dof_per_cell_ = p*(p-1);
 }
 
 void Hcurl_triangle::get_basis_v(const Ref_Coord& coord, Eigen::Ref<MatrixXd> basis) const 
@@ -230,13 +230,13 @@ Hcurl_tetrahedron::Hcurl_tetrahedron(int p) : Hcurl_Space(3, p)
     n_node_   = 4;
     n_edge_   = 6;
     n_face_   = 4;
-    n_volume_ = 1;
+    n_cell_ = 1;
 
     n_dof_            = p*(p+2)*(p+3)/2;
     n_dof_per_node_   = 0;
     n_dof_per_edge_   = p;
     n_dof_per_face_   = p*(p-1);
-    n_dof_per_volume_ = p*(p-1)*(p-2)/2;
+    n_dof_per_cell_ = p*(p-1)*(p-2)/2;
 
 }
 
