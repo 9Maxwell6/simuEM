@@ -6,7 +6,11 @@
 using namespace simu;
 
 
-H1_Space::H1_Space(int dim, int p) : FEM_Space(dim, p){}
+H1_Space::H1_Space(int dim, int p, bool is_vec_field, bool layout) : FEM_Space(dim, p)
+{
+    f_dim_ = is_vec_field ? dim : 1;
+    layout_ = layout;
+}
 
 
 bool H1_Space::add_basis_shape(Basis_Shape g)

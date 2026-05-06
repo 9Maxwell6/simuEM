@@ -16,7 +16,7 @@ private:
 
 public:
     Hcurl_Space() = default;
-    Hcurl_Space(int dim, int p = 1);
+    Hcurl_Space(int dim, int p);
 
     bool add_basis_shape(Basis_Shape g) override;
     FEM_Space * get_basis_space(Basis_Shape s) const override;

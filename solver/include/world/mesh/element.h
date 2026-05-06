@@ -80,6 +80,23 @@ public:
      */
     virtual bool compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> J) const = 0;
 
+
+    /**
+     * @brief Reference-space tangent vectors of a face.
+     *
+     * usually combined with the volume Jacobian J at a face quadrature point, 
+     * they give the face Jacobian columns J*e1, J*e2 and hence
+     * the oriented area vector
+     *
+     *     a_f = (J e1) x (J e2).
+     *
+     *
+     * @param[in]  face_idx local face index, in `[0, num_faces())`.
+     * @param[out] e1, e2   refeference tangent vectors; caller must pre-size to the
+     *                      element's reference dimension.
+     */
+    virtual void face_ref_edge(int face_idx, Eigen::Ref<VectorXd> e1, Eigen::Ref<VectorXd> e2) const = 0;
+
     virtual void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const = 0;
     virtual void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const = 0;
 

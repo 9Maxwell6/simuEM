@@ -6,7 +6,10 @@
 using namespace simu;
 
 
-Hcurl_Space::Hcurl_Space(int dim, int p) : FEM_Space(dim, p){}
+Hcurl_Space::Hcurl_Space(int dim, int p) : FEM_Space(dim, p)
+{
+    f_dim_ = dim;
+}
 
 
 bool Hcurl_Space::add_basis_shape(Basis_Shape g)

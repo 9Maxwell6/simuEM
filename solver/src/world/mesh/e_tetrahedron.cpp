@@ -79,6 +79,31 @@ bool Tetrahedron::compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eig
 }
 
 
+void Tetrahedron::face_ref_edge(int face_idx, Eigen::Ref<VectorXd> e1, Eigen::Ref<VectorXd> e2) const
+{
+   switch (face_idx) {
+   case 0:  // face (0,1,2)
+      e1 << 1, 0, 0;
+      e2 << 0, 1, 0;
+      break;
+   case 1:  // face (0,1,3)
+      e1 << 1, 0, 0;
+      e2 << 0, 0, 1;
+      break;
+   case 2:  // face (0,2,3)
+      e1 << 0, 1, 0;
+      e2 << 0, 0, 1;
+      break;
+   case 3:  // face (1,2,3)
+      e1 << -1, 1, 0;
+      e2 << -1, 0, 1;
+      break;
+   default:
+      Logger::error("Tetrahedron::face_ref_edge: invalid face_id.");
+      break;
+   }
+}
+
 
 void Tetrahedron::compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const
 {

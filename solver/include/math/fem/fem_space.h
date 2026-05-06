@@ -27,6 +27,12 @@ protected:
     int dim_; // space dimension
     int p_;   // polynomial order
 
+    // field dimension:
+    //      for H(curl) and H(div): f_dim_ == dim_
+    //      for H1, default to be scalar field         f_dim_ = 1, 
+    //              if vector field option is enabled, f_dim_ == dim_
+    bool f_dim_;  
+
     size_t n_node_;
     size_t n_edge_;
     size_t n_face_;
@@ -72,6 +78,7 @@ public:
 
     int get_basis_order() const { return p_;}
     int get_dim() const { return dim_;}
+    int get_field_dim() const { return f_dim_;}
     int get_n_node() const { return n_node_;}
     int get_n_edge() const { return n_edge_;}
     int get_n_face() const { return n_face_;}

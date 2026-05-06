@@ -44,7 +44,7 @@ private:
     }
 
 public:
-    static constexpr int INTEGRATOR_ID = 0;
+    static constexpr int INTERPOLATOR_ID = 0;
 
     template<int phy_dim, int ref_dim, typename Mat_Type>
     void static interpolate_element(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);

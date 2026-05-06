@@ -45,6 +45,9 @@ public:
     void set_node_idx(size_t idx_1, size_t idx_2, size_t idx_3);
     
     bool compute_Jacobian(const Mesh& mesh, const Ref_Coord& coord, Eigen::Ref<MatrixXd> J) const override;
+    
+    void face_ref_edge(int face_idx, Eigen::Ref<VectorXd> e1, Eigen::Ref<VectorXd> e2) const override { Logger::error("Triangle::compute_face_jacobian - no face."); }
+
 
     void compute_shape(const Ref_Coord& coord, Eigen::Ref<VectorXd> shape) const override;
     void compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape) const override;
