@@ -78,26 +78,25 @@ private:
     std::vector<size_t> elements_dof_lookup_list;  // [dofs of element 1, dofs of element 2, ...]
 
 
-    std::vector<FEM_Space * > global_space_;
+    //std::vector<FEM_Space * > global_space_;
 
 
-    std::unordered_map<Key, std::vector<FEM_Space * >, Key::Hash> group_space_;
+    //std::unordered_map<Key, std::vector<FEM_Space * >, Key::Hash> group_space_;
 
     
     size_t block_id_;
-    std::unordered_map<Block, Key,                 Block::Hash> fe_block_key_;
+    std::unordered_map<Block, Key,                          Block::Hash> fe_block_key_;
 
     // for basic block
-    std::unordered_map<Block, FEM_Space *,         Block::Hash> fe_block_space_;
+    std::unordered_map<Block, FEM_Space *,                  Block::Hash> fe_block_space_;
     std::unordered_map<Block, const std::vector<dof_idx> *, Block::Hash> fe_block_dof_;
-    //temporary, for constructing dof, should be cleared after dof table is constructed.
-    std::unordered_map<Block, util::Block_Hash,    Block::Hash> fe_block_hash_;
+    std::unordered_map<Block, util::Block_Hash,             Block::Hash> fe_block_hash_;
 
     // for coupling block
     std::unordered_map<Block, std::array<const Block*, 2>,                  Block::Hash> coupled_block_;
     std::unordered_map<Block, std::array<const FEM_Space*, 2>,              Block::Hash> coupled_block_space_;
     std::unordered_map<Block, std::array<const std::vector<dof_idx>*, 2>,   Block::Hash> coupled_block_dof_;
-    
+    std::unordered_map<Block, std::array<util::Block_Hash, 2>,              Block::Hash> coupled_block_hash_;
 
     // store actual coupling block dof data, this is to avoid copy when transpose of block is applied.
     std::unordered_map<Block, std::vector<dof_idx>,   Block::Hash> fe_block_dof_data_;
@@ -115,7 +114,7 @@ private:
 
     const util::Block_Hash_D create_cell_dof_hash(const Block& block) const;
 
-    bool generate_block_dof(Block& block);
+    bool generate_block_dof(Block& block, FEM_Space& fe_space, int idx);
 
     bool generate_coupling_block_dof(Block& block);
 
@@ -152,7 +151,9 @@ public:
 
     // assign functional space to specific group of elements, 
     // if using default key, assign space to global domain.
-    Block register_FE_space(FEM_Space& fe_space, const Key group_key={0,0});
+    Block register_FE_space(FEM_Space& fe_space, const Key group_key={0,0}, const Block* block=nullptr);
+
+    Block register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_space_2, const Key group_key={0,0}, const Block* block_1=nullptr, const Block* block_2=nullptr);
 
     Block register_FE_space_coupling(const Block& block_1, const Block& block_2, const Key group_key={0,0});
 
@@ -170,6 +171,9 @@ public:
     const std::array<const Block*,                 2>& get_coupled_block(const Block& block) const;
     const std::array<const FEM_Space *,            2>& get_coupled_block_space(const Block& block) const;
     const std::array<const std::vector<dof_idx> * ,2>& get_coupled_block_dof(const Block& block) const; 
+
+    const FEM_Space*            get_block_space(const Block& block, int idx) const;
+    const std::vector<dof_idx>* get_block_dof(const Block& block, int idx) const; 
 
     const FEM_Space* get_block_row_space(const Block& block) const;
     const FEM_Space* get_block_col_space(const Block& block) const;

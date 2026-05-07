@@ -6,9 +6,19 @@
 using namespace simu;
 
 
+/**
+ * @note Declare H1 space.
+ * 
+ * @param dim          dimension of the space
+ * @param p            polynomial order of the basis function.
+ * @param is_vec_field flag to tell if this is H1 scalar or vector field.
+ * @param layout       for vector H1 field, the dof layout is depend on layout_:
+ *                          layout_ = 0:   [x1,x2,...,xn,y1,y2,...,yn,z1,z2,...,zn]
+ *                          layout_ = 1:   [x1,y1,z1,x2,y2,z2,    ...    ,xn,yn,zn]
+ */
 H1_Space::H1_Space(int dim, int p, bool is_vec_field, bool layout) : FEM_Space(dim, p)
 {
-    f_dim_ = is_vec_field ? dim : 1;
+    vdim_   = is_vec_field ? dim : 1;
     layout_ = layout;
 }
 
@@ -72,14 +82,14 @@ H1_triangle::H1_triangle(int p) : H1_Space(2, p)
     n_node_   = 3;
     n_edge_   = 3;
     n_face_   = 0;
-    n_cell_ = 1;
+    n_cell_   = 1;
 
 
     n_dof_            = (p+1)*(p+2)/2;
     n_dof_per_node_   = 1;
     n_dof_per_edge_   = (p-1);
     n_dof_per_face_   = 0;
-    n_dof_per_cell_ = (p-1)*(p-2)/2;
+    n_dof_per_cell_   = (p-1)*(p-2)/2;
 }
 
 void H1_triangle::get_basis_s(const Ref_Coord& coord, Eigen::Ref<VectorXd> basis) const {
@@ -198,14 +208,14 @@ H1_tetrahedron::H1_tetrahedron(int p) : H1_Space(3, p)
     n_node_   = 4;
     n_edge_   = 6;
     n_face_   = 4;
-    n_cell_ = 1;
+    n_cell_   = 1;
 
 
     n_dof_            = (p+1)*(p+2)*(p+3)/6;
     n_dof_per_node_   = 1;
     n_dof_per_edge_   = (p-1);
     n_dof_per_face_   = (p-1)*(p-2)/2;
-    n_dof_per_cell_ = (p-1)*(p-2)*(p-3)/6;
+    n_dof_per_cell_   = (p-1)*(p-2)*(p-3)/6;
 }
 
 

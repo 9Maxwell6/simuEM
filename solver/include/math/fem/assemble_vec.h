@@ -40,7 +40,7 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
 
         e_data.space_1 =  data.space_1;
 
-        //space_1->get_function_space();
+        int vdim_1 = data.space_1->get_vdim();
 
         e_data.check = &data.check;
 
@@ -60,17 +60,19 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
 
             size_t row_size = e_data.shape_space_1->get_n_dof();
 
-            e_data.rows = row_size;
+            size_t e_row = row_size * vdim_1;
+
+            e_data.rows = e_row;
 
             e_data.reset_flag();
 
 
             // optimized with fixed size matrix for certain cases.
-            if      (row_size == 2 ) { Vector<2> vec;                     assemble_local(e_data, vec, user_operation); }
-            else if (row_size == 3 ) { Vector<3> vec;                     assemble_local(e_data, vec, user_operation); }
-            else if (row_size == 4 ) { Vector<4> vec;                     assemble_local(e_data, vec, user_operation); }
-            else if (row_size == 6 ) { Vector<6> vec;                     assemble_local(e_data, vec, user_operation); }
-            else                     { VectorXd  vec(row_size);           assemble_local(e_data, vec, user_operation); }
+            if      (e_row == 2 ) { Vector<2> vec;                     assemble_local(e_data, vec, user_operation); }
+            else if (e_row == 3 ) { Vector<3> vec;                     assemble_local(e_data, vec, user_operation); }
+            else if (e_row == 4 ) { Vector<4> vec;                     assemble_local(e_data, vec, user_operation); }
+            else if (e_row == 6 ) { Vector<6> vec;                     assemble_local(e_data, vec, user_operation); }
+            else                  { VectorXd  vec(e_row);              assemble_local(e_data, vec, user_operation); }
 
             data.row_dof_offset += row_size;
         }

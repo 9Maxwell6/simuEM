@@ -155,14 +155,16 @@ void Interpolator_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, ref_dim
 {
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
+    constexpr int S = (C == Eigen::Dynamic) ? Eigen::Dynamic : C / phy_dim;
+
 
     if constexpr  (phy_dim == ref_dim) 
     {
         std::call_once(e_data.check->interpolator_check[INTERPOLATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
         
         const Element* e = e_data.e;
-        const FEM_Space* source_space = e_data.shape_space_1;  // H1 space      N dof
-        const FEM_Space* target_space = e_data.shape_space_2;  // Hcurl space   M dof
+        const FEM_Space* target_space = e_data.shape_space_1;  // H1 space      N dof
+        const FEM_Space* source_space = e_data.shape_space_2;  // Hcurl space   M dof
 
         int n_dof_per_edge = target_space->get_n_dof_per_edge();
         int n_dof_per_face = target_space->get_n_dof_per_face();
@@ -179,7 +181,7 @@ void Interpolator_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, ref_dim
         {
             Matrix<Eigen::Dynamic, ref_dim> dof_info(coords.size(), ref_dim);
 
-            std::vector<Vector<R>>                H1_k(coords.size(), Vector<R>(e_data.rows));
+            std::vector<Vector<S>>                H1_k(coords.size(), Vector<S>(e_data.cols/phy_dim));
             std::vector<Matrix<phy_dim, ref_dim>>  J_k(coords.size());
             for (int k = 0; k < coords.size(); ++k)
             {

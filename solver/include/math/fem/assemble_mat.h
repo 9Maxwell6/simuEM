@@ -40,6 +40,9 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
         e_data.space_1 =  data.space_1;
         e_data.space_2 =  data.space_2;
 
+        int vdim_1 = data.space_1->get_vdim();
+        int vdim_2 = data.space_2->get_vdim();
+
         e_data.check = &data.check;
 
         data.row_dof_offset = 0;
@@ -60,19 +63,22 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
             size_t row_size = e_data.shape_space_1->get_n_dof();
             size_t col_size = e_data.shape_space_2->get_n_dof();
 
-            e_data.rows = row_size;
-            e_data.cols = col_size;
+            size_t e_row = row_size * vdim_1;
+            size_t e_col = col_size * vdim_2;
+
+            e_data.rows = e_row;
+            e_data.cols = e_col;
 
             e_data.reset_flag();
 
 
             // optimized with fixed size matrix for certain cases.
-            if      (row_size == 3 && col_size == 3) { Matrix<3,3> mat;                     assemble_local(e_data, mat, user_operation); }
-            else if (row_size == 4 && col_size == 4) { Matrix<4,4> mat;                     assemble_local(e_data, mat, user_operation); }
-            else if (row_size == 4 && col_size == 6) { Matrix<4,6> mat;                     assemble_local(e_data, mat, user_operation); }
-            else if (row_size == 6 && col_size == 4) { Matrix<6,4> mat;                     assemble_local(e_data, mat, user_operation); }
-            else if (row_size == 6 && col_size == 6) { Matrix<6,6> mat;                     assemble_local(e_data, mat, user_operation); }
-            else                                     { MatrixXd    mat(row_size, col_size); assemble_local(e_data, mat, user_operation); }
+            if      (e_row == 3 && e_col == 3) { Matrix<3,3> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (e_row == 4 && e_col == 4) { Matrix<4,4> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (e_row == 4 && e_col == 6) { Matrix<4,6> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (e_row == 6 && e_col == 4) { Matrix<6,4> mat;                     assemble_local(e_data, mat, user_operation); }
+            else if (e_row == 6 && e_col == 6) { Matrix<6,6> mat;                     assemble_local(e_data, mat, user_operation); }
+            else                               { MatrixXd    mat(e_row, e_col);       assemble_local(e_data, mat, user_operation); }
 
             data.row_dof_offset += row_size;
             data.col_dof_offset += col_size;

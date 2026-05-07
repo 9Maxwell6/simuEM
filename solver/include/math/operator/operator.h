@@ -40,6 +40,9 @@ public:
 
     template<typename Vec_Type>
     void static add_to_global_vec(const Assemble_Data& data, Vec_Type& element_vector);
+
+    const static size_d* adjust_dof(int vdim, bool layout, size_d n_dof, size_d total_n_dof, const size_d dof_list[], size_d output[]);
+
 };
 
 

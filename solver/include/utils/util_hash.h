@@ -194,10 +194,10 @@ struct Block_Hash
     //
     size_t count_cell = 0;  // cell dof counter
 
-    Block_Hash(size_t initial_size_1 = 32*1024, 
-               size_t initial_size_2 = 32*1024, 
-               size_t initial_size_3 = 32*1024, 
-               size_t initial_size_4 = 32*1024) 
+    Block_Hash(size_t initial_size_1 = 2, 
+               size_t initial_size_2 = 2, 
+               size_t initial_size_3 = 2, 
+               size_t initial_size_4 = 2) 
               :table_1(initial_size_1), mask_1(initial_size_1 - 1),
                table_2(initial_size_2), mask_2(initial_size_2 - 1),
                table_3(initial_size_3), mask_3(initial_size_3 - 1),

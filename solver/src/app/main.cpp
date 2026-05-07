@@ -35,11 +35,13 @@ int main(int argc, char** argv)
 {
     std::string mesh_file    = "test_cc.msh";
     bool l2_test_flag = false;
+    bool enable_preconditioner = false;
 
 
     const std::vector<Option> options = {
-        {"mesh",    'm',  true,  [&](std::string_view v) { mesh_file = std::string(v); }},
-        {"l2-test", '\0',  false, [&](std::string_view)   { l2_test_flag = true;       }},
+        {"mesh",    'm',   true,  [&](std::string_view v) { mesh_file = std::string(v);    }},
+        {"l2-test", '\0',  false, [&](std::string_view)   { l2_test_flag = true;           }},
+        {"pc",      '\0',  false, [&](std::string_view)   { enable_preconditioner = true;  }},
         // add more here — one line each
     };
 
@@ -115,6 +117,12 @@ int main(int argc, char** argv)
                 T_O.assemble_system();
                 Logger::stop_timer("Assemble T-Omega matrix system");
 
+                if(enable_preconditioner){
+                    Logger::start_timer("Assemble T-Omega preconditioner");
+                    T_O.assemble_preconditioner();
+                    Logger::stop_timer("Assemble T-Omega preconditioner");
+                }
+
                 Logger::start_timer("Solve T-Omega matrix system");
                 T_O.solve_system();
                 Logger::stop_timer("Solve T-Omega matrix system");
@@ -149,6 +157,12 @@ int main(int argc, char** argv)
         Logger::start_timer("Assemble T-Omega matrix system");
         T_O.assemble_system();
         Logger::stop_timer("Assemble T-Omega matrix system");
+
+        if(enable_preconditioner){
+            Logger::start_timer("Assemble T-Omega preconditioner");
+            T_O.assemble_preconditioner();
+            Logger::stop_timer("Assemble T-Omega preconditioner");
+        }
 
         Logger::start_timer("Solve T-Omega matrix system");
         T_O.solve_system();

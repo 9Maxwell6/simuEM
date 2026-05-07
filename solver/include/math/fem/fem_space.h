@@ -27,11 +27,16 @@ protected:
     int dim_; // space dimension
     int p_;   // polynomial order
 
-    // field dimension:
-    //      for H(curl) and H(div): f_dim_ == dim_
-    //      for H1, default to be scalar field         f_dim_ = 1, 
-    //              if vector field option is enabled, f_dim_ == dim_
-    bool f_dim_;  
+    // number of component per dof:
+    //      for H(curl) and H(div): vdim_ == 1
+    //      for H1, default to be scalar field         vdim_ = 1, 
+    //              if vector field option is enabled, vdim_ == dim_
+    int vdim_;  
+
+    // for vector H1 field, the dof layout is depend on layout_:
+    //      layout_ = 0:   [x1,x2,...,xn,y1,y2,...,yn,z1,z2,...,zn]
+    //      layout_ = 1:   [x1,y1,z1,x2,y2,z2,    ...    ,xn,yn,zn]
+    bool layout_ = 0;  
 
     size_t n_node_;
     size_t n_edge_;
@@ -78,7 +83,7 @@ public:
 
     int get_basis_order() const { return p_;}
     int get_dim() const { return dim_;}
-    int get_field_dim() const { return f_dim_;}
+    int get_vdim() const { return vdim_;}
     int get_n_node() const { return n_node_;}
     int get_n_edge() const { return n_edge_;}
     int get_n_face() const { return n_face_;}
@@ -88,6 +93,13 @@ public:
     int get_n_dof_per_edge() const { return n_dof_per_edge_;}
     int get_n_dof_per_face() const { return n_dof_per_face_;}
     int get_n_dof_per_cell() const { return n_dof_per_cell_;}
+
+    /**
+     * @brief for vector H1 field, the dof layout is depend on layout_:
+     *              layout_ = 0:   [x1,x2,...,xn,y1,y2,...,yn,z1,z2,...,zn]
+     *              layout_ = 1:   [x1,y1,z1,x2,y2,z2,    ...    ,xn,yn,zn]
+     */
+    bool get_layout() const { return layout_;}
 
 
 

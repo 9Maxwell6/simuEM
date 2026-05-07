@@ -11,7 +11,10 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
     dim_ = mesh.get_mesh_dimension();
 
     Omega_space_ = H1_Space(mesh.get_mesh_dimension(), 1);
-    T_space_1_ = Hcurl_Space(mesh.get_mesh_dimension(),1);
+    T_space_1_   = Hcurl_Space(mesh.get_mesh_dimension(),1);
+
+    T_H1_v_    = H1_Space(mesh.get_mesh_dimension(), 1, true, 0);
+    T_H1_s_    = H1_Space(mesh.get_mesh_dimension(), 1);
 
     key_true_boundary_ = mesh_.get_keys_true_boundary()[0];  // there must be only one true boundary.
     std::string true_boundary_description = mesh.get_group_description(key_true_boundary_);
@@ -134,8 +137,6 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
                        dof_coupling_1_.col_size);
     
     //Block dof_coupling = fe_system_.register_FE_space_coupling(dof_T_[i], dof_Omega, key_conductor_interface_layer[i]);
-    
-
 
 
 
@@ -147,6 +148,44 @@ T_Omega::T_Omega(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
                        dof_coupling_tp_1_.col_size);
     
     //Block dof_coupling_tp = fe_system_.transpose_block(dof_coupling);
+    
+    
+
+    Logger::info("[T_Omega preconditioner] - initialize edge interpolation matrix. ");
+    pc_P_ = fe_system_.register_dual_FE_space(T_space_1_, T_H1_v_, key_conductor_1_, &dof_T_1_, nullptr);
+    Logger::block_info(pc_P_.id, 
+                       pc_P_.row_offset, 
+                       pc_P_.col_offset, 
+                       pc_P_.row_size, 
+                       pc_P_.col_size);
+
+    
+
+    Logger::info("[T_Omega preconditioner] - initialize descrete gradient matrix. ");
+    pc_G_ = fe_system_.register_dual_FE_space(T_space_1_, T_H1_s_, key_conductor_1_, &dof_T_1_, nullptr);
+    Logger::block_info(pc_G_.id, 
+                       pc_G_.row_offset, 
+                       pc_G_.col_offset, 
+                       pc_G_.row_size, 
+                       pc_G_.col_size);
+
+    Logger::info("[T_Omega preconditioner] - initialize preconditioner in (H1)^3. ");
+    pc_L_ = fe_system_.register_dual_FE_space(T_H1_v_, T_H1_v_, key_conductor_1_, &pc_P_, &pc_P_);
+    Logger::block_info(pc_L_.id, 
+                       pc_L_.row_offset, 
+                       pc_L_.col_offset, 
+                       pc_L_.row_size, 
+                       pc_L_.col_size);
+
+    Logger::info("[T_Omega preconditioner] - initialize preconditioner in H1. ");
+    pc_Q_ = fe_system_.register_dual_FE_space(T_H1_s_, T_H1_s_, key_conductor_1_, &pc_G_, &pc_G_);
+    Logger::block_info(pc_Q_.id, 
+                       pc_Q_.row_offset, 
+                       pc_Q_.col_offset, 
+                       pc_Q_.row_size, 
+                       pc_Q_.col_size);
+    
+
 
 
     Logger::info("[T_Omega] - delete temporary block hash.");
@@ -385,6 +424,21 @@ bool T_Omega::assemble_system()
 
 
 
+bool T_Omega::assemble_preconditioner()
+{
+
+    Logger::info("[T_Omega - preconditioner] - assemble edge interpolation matrix.");
+    assemble_mat(fe_system_.assemble_mat_data(pc_P_), [&](auto& e_data, auto& mat) {
+        Interpolator_H1_to_Hcurl::interpolate_element(e_data, mat);
+    });
+
+    petsc_util::petsc_save_ascii_mat(pc_P_.mat, "P_mat.txt");
+
+
+    return true;
+}
+
+
 
 bool T_Omega::solve_system()
 {
@@ -407,13 +461,13 @@ bool T_Omega::solve_system()
 
     // Optionally configure the preconditioner (e.g., Jacobi)
     PC pc;
-    KSPGetPC(ksp, &pc);    // <-- add this line
+    KSPGetPC(ksp, &pc);   
     //PCSetType(pc, PCHYPRE);
     //PCHYPRESetType(pc, "boomeramg");
 
     //PCSetType(pc, PCNONE);
 
-    PCSetType(pc, PCSOR);           // SOR family (includes SGS)
+    PCSetType(pc, PCSOR);          
     PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP);
     PCSORSetOmega(pc, 1.0);
 
@@ -437,9 +491,12 @@ bool T_Omega::solve_system()
         PetscPrintf(PETSC_COMM_WORLD, "Converged in %d iterations\n", its);
         successful_flag = true;
     }
+
+    // for debug, load matrix to txt file.
     petsc_util::petsc_save_ascii_mat(lhs, "lhs_mat.txt");
     petsc_util::petsc_save_ascii_vec(x, "x_vec.txt");
     petsc_util::petsc_save_ascii_vec(rhs, "rhs_vec.txt");
+
     // Clean up
     KSPDestroy(&ksp);
 

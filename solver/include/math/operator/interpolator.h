@@ -36,10 +36,16 @@ private:
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
-        if(s_1 != Space::H_1 && s_2 != Space::H_curl)
+        if(s_1 != Space::H_curl && s_2 != Space::H_1)
         {
-            Logger::error("Interpolator_H1_to_Hcurl: require H_1 -> H_curl.");
-            throw std::invalid_argument("Interpolator_H1_to_Hcurl: require H_1 -> H_curl.");
+            Logger::error("Interpolator_H1_to_Hcurl: require H_1(column) -> H_curl(row).");
+            throw std::invalid_argument("Interpolator_H1_to_Hcurl: require H_1(column) -> H_curl(row).");
+        }
+
+        if(space_2->get_vdim() != space_2->get_dim())
+        {
+            Logger::error("Interpolator_H1_to_Hcurl: require vdim = dim in H1 space.");
+            throw std::invalid_argument("Interpolator_H1_to_Hcurl: require vdim = dim in H1 space.");
         }
     }
 

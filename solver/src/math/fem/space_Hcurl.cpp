@@ -8,7 +8,8 @@ using namespace simu;
 
 Hcurl_Space::Hcurl_Space(int dim, int p) : FEM_Space(dim, p)
 {
-    f_dim_ = dim;
+    vdim_   = 1;
+    layout_ = 0;
 }
 
 

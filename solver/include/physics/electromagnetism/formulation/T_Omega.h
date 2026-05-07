@@ -50,6 +50,13 @@ private:
     Block              dof_coupling_1_;
     Block              dof_coupling_tp_1_;
 
+    H1_Space           T_H1_v_; //  vector H1 field in T
+    H1_Space           T_H1_s_; //  scalar H1 field in T
+    Block              pc_P_;   //  edge interpolation matrix for preconditioner.
+    Block              pc_G_;   //  discrete gradient matrix  for preconditioner.
+    Block              pc_L_;   //  L = integral_{ σ^-1  ∇u : ∇v  + μ u.v  dx }    (H1)^3 x (H1)^3
+    Block              pc_Q_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1
+
 
     Dirichlet_BC bc_Omega_out_;
     Dirichlet_BC bc_Omega_in_;
@@ -149,6 +156,8 @@ public:
     T_Omega(Mesh& mesh);
 
     bool assemble_system();
+
+    bool assemble_preconditioner();
 
     bool solve_system();
 

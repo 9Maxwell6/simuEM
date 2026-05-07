@@ -11,12 +11,7 @@ class H1_Space : public FEM_Space
 private:
     //std::vector<std::unique_ptr<H1_Space>> shape_H1_;
     std::unordered_map<Basis_Shape, std::unique_ptr<H1_Space>,  Shape_Hash> shape_H1_;
-    std::vector<Basis_Shape> basis_shapes_;
-
-    // for vector H1 field, the dof layout is depend on layout_:
-    //      layout_ = 0:   [x1,x2,...,xn,y1,y2,...,yn,z1,z2,...,zn]
-    //      layout_ = 1:   [x1,y1,z1,x2,y2,z2,    ...    ,xn,yn,zn]
-    bool layout_ = 0;    
+    std::vector<Basis_Shape> basis_shapes_;  
 
 public:
     H1_Space() = default;

@@ -92,19 +92,10 @@ const util::Block_Hash_D FEM_System::create_cell_dof_hash(const Block& block) co
  * 
  * @return true if dof for this block is succeffully initialized.
  */
-bool FEM_System::generate_block_dof(Block& block)
+bool FEM_System::generate_block_dof(Block& block, FEM_Space& fe_space, int idx)
 {
-    FEM_Space * fe_space;
-    auto it = fe_block_space_.find(block);
-    if (it != fe_block_space_.end()){
-        fe_space = it->second;
-    }else{
-        Logger::error("FEM_System::generate_block_dof - block not found: return false");
-        return false;
-    }
-
     #ifdef LOAD_PETSC
-    Logger::warning("FEM_System::generate_block_dof - hash map use size_t index, while dof_idx use PetscInt.");
+    //Logger::warning("FEM_System::generate_block_dof - hash map use size_t index, while dof_idx use PetscInt.");
     #endif
      
     //FEM_Space * fe_space = fe_block_space_.at(block);
@@ -113,7 +104,7 @@ bool FEM_System::generate_block_dof(Block& block)
                                                 ? mesh_.get_element_group(fe_block_key_.at(block))
                                                 : mesh_.get_mesh_elements();
     
-    const std::vector<Basis_Shape>& basis_shapes = fe_space->get_basis_shapes();
+    const std::vector<Basis_Shape>& basis_shapes = fe_space.get_basis_shapes();
 
     bool is_node_dof   = false;
     bool is_edge_dof   = false;
@@ -129,7 +120,7 @@ bool FEM_System::generate_block_dof(Block& block)
 
     for(Basis_Shape s : basis_shapes)
     {
-        FEM_Space * fe_basis_space = fe_space->get_basis_space(s);
+        FEM_Space * fe_basis_space = fe_space.get_basis_space(s);
 
         int n_dof_per_node = fe_basis_space->get_n_dof_per_node();
         int n_dof_per_edge = fe_basis_space->get_n_dof_per_edge();
@@ -172,7 +163,7 @@ bool FEM_System::generate_block_dof(Block& block)
 
         Geometry g = e->get_geometry();
 
-        FEM_Space * fe_basis_space = fe_space->get_basis_space(to_basis_shape(g));
+        FEM_Space * fe_basis_space = fe_space.get_basis_space(to_basis_shape(g));
 
         int n_dof_per_node   = fe_basis_space->get_n_dof_per_node();
         int n_dof_per_edge   = fe_basis_space->get_n_dof_per_edge();
@@ -217,7 +208,7 @@ bool FEM_System::generate_block_dof(Block& block)
 
         Geometry g = e->get_geometry();
 
-        FEM_Space * fe_basis_space = fe_space->get_basis_space(to_basis_shape(g));
+        FEM_Space * fe_basis_space = fe_space.get_basis_space(to_basis_shape(g));
 
         int n_dof_per_node = fe_basis_space->get_n_dof_per_node();
         int n_dof_per_edge = fe_basis_space->get_n_dof_per_edge();
@@ -233,17 +224,6 @@ bool FEM_System::generate_block_dof(Block& block)
 
 
     }
-    bh.set_cell_count(cell_dof_counter);
-
-
-    size_t dof_size = bh.get_node_count() + bh.get_edge_count() + bh.get_face_count() + bh.get_cell_count();
-    block.row_size = dof_size;
-    block.col_size = dof_size;
-    fe_block_dof_data_[block] = std::move(fe_block_dof);
-    fe_block_hash_[block] = std::move(bh);
-
-    fe_block_dof_[block] = &fe_block_dof_data_[block];
-
 
     if(!shape_found_flag)
     {
@@ -251,6 +231,29 @@ bool FEM_System::generate_block_dof(Block& block)
         return false;
     }
 
+    bh.set_cell_count(cell_dof_counter);
+
+
+    size_t dof_size = bh.get_node_count() + bh.get_edge_count() + bh.get_face_count() + bh.get_cell_count();
+    
+
+    if(block.is_base_block){
+        fe_block_dof_data_[block] = std::move(fe_block_dof);
+        fe_block_hash_[block] = std::move(bh);
+        fe_block_dof_[block] = &fe_block_dof_data_[block];
+        block.row_size = dof_size * fe_space.get_vdim();
+        block.col_size = dof_size * fe_space.get_vdim();
+    }else if(idx==0 || idx==1){
+        coupled_block_dof_data_[block][idx] = std::move(fe_block_dof);
+        coupled_block_hash_[block][idx] = std::move(bh);
+        coupled_block_dof_[block][idx] = &coupled_block_dof_data_[block][idx];
+        if(idx==0) block.row_size = dof_size * fe_space.get_vdim();
+        if(idx==1) block.col_size = dof_size * fe_space.get_vdim();
+
+    }else{
+        Logger::error("FEM_System::get_block_space - invalid idx: " + std::to_string(idx) + ".");
+        return false;
+    }
 
     return true;    
 }
@@ -466,38 +469,127 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
  *
  * @param fe_space finite element space.
  * @param group_key group key.
+ * @param block optional parameter:
+ *          for registering block that share the dof list with this existing block.
+ *          if nullptr is provided, this function will compute the dof list from scratch.
  * 
  * @return partially initialized block (with unique id, row_size and col_size, 
  * but row_offset and col_offset set to zero).
+ * 
+ * @note if @p block is given, it is user's responsibility to make sure the 
+ *       dof list provided by this block is identical to the block currently registering.
  */
-Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key)
+Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key, const Block* block)
 {
-    for(const auto& [type, size] : mesh_.get_mesh_element_geometry_size())
-    {
+    for(const auto& [type, size] : mesh_.get_element_geometry_size_group(group_key))
         fe_space.add_basis_shape(to_basis_shape(type));
-    }
 
     // create uninitialized block
     block_id_++;
     Block new_block = {block_id_, 0, 0, 0, 0, true};
 
     fe_block_space_[new_block] = &fe_space;
-    
-    if(group_key.dim == 0 && group_key.id==0){
-        global_space_.push_back(&fe_space);
-    }else{
-        group_space_[group_key].push_back(&fe_space);
-        fe_block_key_[new_block] = group_key;
+    fe_block_key_[new_block] = group_key;
+
+    if(block != nullptr && block->is_base_block 
+                        && (fe_space.get_function_space() == get_block_space(*block)->get_function_space())
+                        && (get_block_group_key(*block)   == group_key)){
+        fe_block_dof_[new_block] = get_block_dof(*block);
+        return new_block;        fe_block_dof_[new_block] = get_block_dof(*block);
+
     }
 
-
-    if(generate_block_dof(new_block)){
+    if(generate_block_dof(new_block, fe_space, 0)){
         return new_block;
     }else{
         Logger::error("FEM_System::register_FE_space - block initialization failed, return bad block.");
         return {0,0,0,0,0,true};
     }
 }
+
+
+
+/**
+ * @brief assign functional space to specific group of elements, 
+ * if using default key {0, 0}, then assign space to global domain.
+ *
+ * @param fe_space finite element space.
+ * @param group_key group key.
+ * @param block optional parameter:
+ *          for registering block that share the dof list with this existing block.
+ *          if nullptr is provided, this function will compute the dof list from scratch.
+ * 
+ * @return partially initialized block (with unique id, row_size and col_size, 
+ * but row_offset and col_offset set to zero).
+ * 
+ * @note if @p block is given, it is user's responsibility to make sure the 
+ *       dof list provided by this block is identical to the block currently registering.
+ */
+Block FEM_System::register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_space_2, const Key group_key, const Block* block_1, const Block* block_2)
+{
+    for(const auto& [type, size] : mesh_.get_element_geometry_size_group(group_key))
+    {
+        fe_space_1.add_basis_shape(to_basis_shape(type));
+        fe_space_2.add_basis_shape(to_basis_shape(type));
+    }
+
+    // create uninitialized block
+    block_id_++;
+    Block new_block = {block_id_, 0, 0, 0, 0, false};
+
+    std::array<const FEM_Space *, 2>& block_space_pair = coupled_block_space_[new_block];
+    block_space_pair[0] = &fe_space_1;
+    block_space_pair[1] = &fe_space_2;
+    
+    fe_block_key_[new_block] = group_key;
+
+    std::array<const std::vector<dof_idx>*,2>& block_dof_pair = coupled_block_dof_[new_block];
+
+
+
+    if(block_1 != nullptr && (fe_space_1.get_function_space() == get_block_space(*block_1, 0)->get_function_space())
+                          && (fe_space_1.get_basis_order()    == get_block_space(*block_1, 0)->get_basis_order())
+                          && (get_block_group_key(*block_1)   == group_key)){
+        // block_1->row_size already scaled by its own vdim_, so we devide its vdim_ and multiply the new vdim_ of the target block
+        new_block.row_size = block_1->row_size / get_block_space(*block_1, 0)->get_vdim() * fe_space_1.get_vdim();
+        block_dof_pair[0] = get_block_dof(*block_1, 0);
+
+    }else if(block_1 != nullptr && (fe_space_1.get_function_space() == get_block_space(*block_1, 1)->get_function_space())
+                                && (fe_space_1.get_basis_order()    == get_block_space(*block_1, 1)->get_basis_order())
+                                && (get_block_group_key(*block_1)   == group_key)){
+        new_block.row_size = block_1->col_size / get_block_space(*block_1, 1)->get_vdim() * fe_space_1.get_vdim();
+        block_dof_pair[0] = get_block_dof(*block_1, 1);
+
+    }else if(
+        generate_block_dof(new_block, fe_space_1, 0)){;
+    }else{
+        Logger::error("FEM_System::register_dual_FE_space - block initialization failed for fe_space_1 dof generation, return bad block.");
+        return {0,0,0,0,0,true};
+    }
+
+    
+    if(block_2 != nullptr && (fe_space_2.get_function_space() == get_block_space(*block_2, 0)->get_function_space())
+                          && (fe_space_2.get_basis_order()    == get_block_space(*block_2, 0)->get_basis_order())
+                          && (get_block_group_key(*block_2)   == group_key)){
+        new_block.col_size = block_2->row_size / get_block_space(*block_2, 0)->get_vdim() * fe_space_2.get_vdim();
+        block_dof_pair[1] = get_block_dof(*block_2, 0);
+
+    }else if(block_2 != nullptr && (fe_space_2.get_function_space() == get_block_space(*block_2, 1)->get_function_space())
+                          && (fe_space_2.get_basis_order()    == get_block_space(*block_2, 1)->get_basis_order())
+                          && (get_block_group_key(*block_2)   == group_key)){
+        new_block.col_size = block_2->col_size / get_block_space(*block_2, 1)->get_vdim() * fe_space_2.get_vdim();
+        block_dof_pair[1] = get_block_dof(*block_2, 1);
+        
+    }else if(
+        generate_block_dof(new_block, fe_space_2, 1)){;
+    }else{
+        Logger::error("FEM_System::register_dual_FE_space - block initialization failed for fe_space_2 dof generation, return bad block.");
+        return {0,0,0,0,0,true};
+    }
+
+    return new_block;
+}
+
 
 /**
  * @brief given two group of elements under separate function space,
@@ -545,6 +637,7 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
         fe_block_key_[new_block] = shared_group_key;
     }
 
+    // TODO: generate_coupling_block_dof is not needed, just use existing dof list from block_1 and block_2.
     if(generate_coupling_block_dof(new_block)){
         return new_block;
     }else{
@@ -709,6 +802,31 @@ const std::array<const std::vector<dof_idx> * ,2>& FEM_System::get_coupled_block
     Logger::error("FEM_System::get_coupled_block_dof - failed: block not found, return empty list of dof.");
     static const std::array<const std::vector<dof_idx> * ,2> empty{};
     return empty;
+}
+
+
+const FEM_Space*            FEM_System::get_block_space(const Block& block, int idx) const
+{
+    if(block.is_base_block){
+        return get_block_space(block);
+    }else if(idx == 0 || idx == 1){
+        return get_coupled_block_space(block)[idx];
+    }else{
+        Logger::error("FEM_System::get_block_space - invalid idx: " + std::to_string(idx) + ".");
+        return nullptr;
+    }
+}
+
+const std::vector<dof_idx>* FEM_System::get_block_dof(const Block& block, int idx) const
+{
+    if(block.is_base_block){
+        return get_block_dof(block);
+    }else if(idx == 0 || idx == 1){
+        return get_coupled_block_dof(block)[idx];
+    }else{
+        Logger::error("FEM_System::get_block_space - invalid idx: " + std::to_string(idx) + ".");
+        return nullptr;
+    }
 }
 
 
@@ -919,9 +1037,13 @@ std::vector<size_d> FEM_System::compute_nnz_per_row(
         col_dof_offset += e_col_size;
     }
 
-    std::vector<dof_idx> marker(block_col_size, 0);
-    std::vector<size_d> nnz(block_row_size);
+    int vdim_1 = space_1->get_vdim();
+    int vdim_2 = space_2->get_vdim();
 
+    std::vector<dof_idx> marker(block_col_size, 0);
+    std::vector<size_d> nnz(block_row_size * vdim_1);
+
+    
     for(dof_idx i=1; i<=block_row_size; ++i)
     {
         size_d count = 0;
@@ -940,8 +1062,21 @@ std::vector<size_d> FEM_System::compute_nnz_per_row(
             }
         }
         // convert back to 0-based indexing
-        nnz[i-1] = count;
+        //nnz[i-1] = count * space_2->get_vdim();
+        const size_d row_nnz = count * vdim_2;
+        if(space_1->get_layout()){
+            //layout_ = 1:   [x1,y1,z1,x2,y2,z2,    ...    ,xn,yn,zn]
+            for(int v=0; v<vdim_1; ++v)
+                nnz[(i-1)*vdim_1 + v] = row_nnz;
+            
+        }else{
+            //layout_ = 0:   [x1,x2,...,xn,y1,y2,...,yn,z1,z2,...,zn]
+            for(int v=0; v<vdim_1; ++v)
+                nnz[i-1 + v*block_row_size] = row_nnz;
+        }
+        
     }
+
 
     return nnz;
 }
