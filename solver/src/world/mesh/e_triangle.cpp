@@ -133,7 +133,8 @@ std::vector<Ref_Coord> Triangle::edge_map(const std::vector<Integration_Point>& 
    // Edge 0: 0 -> 1
    // Edge 1: 0 -> 2
    // Edge 2: 1 -> 2
-   std::vector<Ref_Coord> coord(edge_coord.size());
+   std::vector<Ref_Coord> coord;
+   coord.reserve(edge_coord.size());
    switch (edge_idx)
    {
    case 0:
@@ -156,7 +157,8 @@ std::vector<Ref_Coord> Triangle::face_map(const std::vector<Integration_Point>& 
 {
    // For a triangle element, the face is the element itself
    // so the mapping is the identity.
-   std::vector<Ref_Coord> coord(face_coord.size());
+   std::vector<Ref_Coord> coord;
+   coord.reserve(face_coord.size());
    switch (face_idx)
    {
    case 0:

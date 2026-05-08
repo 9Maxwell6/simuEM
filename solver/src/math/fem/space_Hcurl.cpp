@@ -180,7 +180,8 @@ void Hcurl_triangle::dof_signature(
     Eigen::Ref<MatrixXd> kernel
 ) const
 {
-    const double inv_sqrt2 = 1. / std::sqrt(2.);
+    //TODO: normalization factor?
+    //const double inv_sqrt2 = 1. / std::sqrt(2.);
     size_t row_idx = 0;
     switch (p_)
     {
@@ -190,7 +191,7 @@ void Hcurl_triangle::dof_signature(
             {
             case 0: for(auto& s : coord_list) kernel.row(row_idx++) <<  1.       , 0.       ;  break;   // edge 0 dof 0
             case 1: for(auto& s : coord_list) kernel.row(row_idx++) <<  0.       , 1.       ;  break;   // edge 1 dof 1
-            case 2: for(auto& s : coord_list) kernel.row(row_idx++) << -inv_sqrt2, inv_sqrt2;  break;   // edge 2 dof 2
+            case 2: for(auto& s : coord_list) kernel.row(row_idx++) << -1, 1;  break;   // edge 2 dof 2
             }
         }
         break;
@@ -205,8 +206,8 @@ void Hcurl_triangle::dof_signature(
             case 1: for(auto& s : coord_list) kernel.row(row_idx++) <<   0.               , (1.-s.x)          ;   // edge 1 dof 2
                     for(auto& s : coord_list) kernel.row(row_idx++) <<   0.               , (   s.x)          ;   // edge 1 dof 3
                 break;
-            case 2: for(auto& s : coord_list) kernel.row(row_idx++) << -(1.-s.x)*inv_sqrt2, (1.-s.x)*inv_sqrt2;   // edge 2 dof 4
-                    for(auto& s : coord_list) kernel.row(row_idx++) << -(   s.x)*inv_sqrt2, (   s.x)*inv_sqrt2;   // edge 2 dof 5
+            case 2: for(auto& s : coord_list) kernel.row(row_idx++) << -(1.-s.x), (1.-s.x);   // edge 2 dof 4
+                    for(auto& s : coord_list) kernel.row(row_idx++) << -(   s.x), (   s.x);   // edge 2 dof 5
                 break;
             }
         }else if(entity_dim == 2){  // face
@@ -358,6 +359,7 @@ void Hcurl_tetrahedron::dof_signature(
     Eigen::Ref<MatrixXd> kernel
 ) const
 {
+    //TODO: normalization factor?
     const double inv_sqrt2 = 1. / std::sqrt(2.);
     const double inv_sqrt3 = 1. / std::sqrt(3.);
     size_t row_idx = 0;
@@ -370,9 +372,9 @@ void Hcurl_tetrahedron::dof_signature(
             case 0: for(auto& s : coord_list) kernel.row(row_idx++) <<  1.       , 0.       , 0.       ;  break;   // edge 0 dof 0
             case 1: for(auto& s : coord_list) kernel.row(row_idx++) <<  0.       , 1.       , 0.       ;  break;   // edge 1 dof 1
             case 2: for(auto& s : coord_list) kernel.row(row_idx++) <<  0.       , 0.       , 1.       ;  break;   // edge 2 dof 2
-            case 3: for(auto& s : coord_list) kernel.row(row_idx++) << -inv_sqrt2, inv_sqrt2, 0.       ;  break;   // edge 3 dof 3
-            case 4: for(auto& s : coord_list) kernel.row(row_idx++) << -inv_sqrt2, 0.       , inv_sqrt2;  break;   // edge 4 dof 4
-            case 5: for(auto& s : coord_list) kernel.row(row_idx++) <<  0.       ,-inv_sqrt2, inv_sqrt2;  break;   // edge 5 dof 5
+            case 3: for(auto& s : coord_list) kernel.row(row_idx++) << -1, 1, 0.       ;  break;   // edge 3 dof 3
+            case 4: for(auto& s : coord_list) kernel.row(row_idx++) << -1, 0.       , 1;  break;   // edge 4 dof 4
+            case 5: for(auto& s : coord_list) kernel.row(row_idx++) <<  0.       ,-1, 1;  break;   // edge 5 dof 5
             }
         }
         break;
@@ -390,14 +392,14 @@ void Hcurl_tetrahedron::dof_signature(
             case 2: for(auto& s : coord_list) kernel.row(row_idx++) <<   0.     ,  0.     , (1.-s.x);   // edge 2 dof 4
                     for(auto& s : coord_list) kernel.row(row_idx++) <<   0.     ,  0.     , (   s.x);   // edge 2 dof 5
                 break;
-            case 3: for(auto& s : coord_list) kernel.row(row_idx++) << -(1.-s.x)*inv_sqrt2, (1.-s.x)*inv_sqrt2,  0.;   // edge 3 dof 6
-                    for(auto& s : coord_list) kernel.row(row_idx++) << -(   s.x)*inv_sqrt2, (   s.x)*inv_sqrt2,  0.;   // edge 3 dof 7
+            case 3: for(auto& s : coord_list) kernel.row(row_idx++) << -(1.-s.x), (1.-s.x),  0.;   // edge 3 dof 6
+                    for(auto& s : coord_list) kernel.row(row_idx++) << -(   s.x), (   s.x),  0.;   // edge 3 dof 7
                 break;
-            case 4: for(auto& s : coord_list) kernel.row(row_idx++) << -(1.-s.x)*inv_sqrt2,  0., (1.-s.x)*inv_sqrt2;   // edge 4 dof 8
-                    for(auto& s : coord_list) kernel.row(row_idx++) << -(   s.x)*inv_sqrt2,  0., (   s.x)*inv_sqrt2;   // edge 4 dof 9
+            case 4: for(auto& s : coord_list) kernel.row(row_idx++) << -(1.-s.x),  0., (1.-s.x);   // edge 4 dof 8
+                    for(auto& s : coord_list) kernel.row(row_idx++) << -(   s.x),  0., (   s.x);   // edge 4 dof 9
                 break;   
-            case 5: for(auto& s : coord_list) kernel.row(row_idx++) <<   0.,-(1.-s.x)*inv_sqrt2, (1.-s.x)*inv_sqrt2;   // edge 5 dof 10
-                    for(auto& s : coord_list) kernel.row(row_idx++) <<   0.,-(   s.x)*inv_sqrt2, (   s.x)*inv_sqrt2;   // edge 5 dof 11
+            case 5: for(auto& s : coord_list) kernel.row(row_idx++) <<   0.,-(1.-s.x), (1.-s.x);   // edge 5 dof 10
+                    for(auto& s : coord_list) kernel.row(row_idx++) <<   0.,-(   s.x), (   s.x);   // edge 5 dof 11
                 break;  
             }
         }else if(entity_dim == 2){  // face

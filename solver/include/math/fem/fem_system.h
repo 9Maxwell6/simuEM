@@ -164,7 +164,7 @@ public:
     // [dof of element 1, dof of element 2]
 
     const FEM_Space* get_block_space(const Block& block) const;
-    const Key get_block_group_key(const Block& block) const;
+    const Key get_group_key(const Block& block) const;
     const std::vector<dof_idx> * get_block_dof(const Block& block) const;
     const util::Block_Hash& get_block_hash(const Block& block) const;
 

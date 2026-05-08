@@ -160,7 +160,7 @@ void Interpolator_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, ref_dim
 
     if constexpr  (phy_dim == ref_dim) 
     {
-        std::call_once(e_data.check->interpolator_check[INTERPOLATOR_ID], [&]{ check_precondition(e_data.space_1, e_data.space_2); }); 
+        std::call_once(e_data.check->interpolator_check[INTERPOLATOR_ID], [&]{ do_once(e_data.space_1, e_data.space_2, e_data.dof_manager, e_data.entity_size); }); 
         
         const Element* e = e_data.e;
         const FEM_Space* target_space = e_data.shape_space_1;  // H1 space      N dof
@@ -170,33 +170,54 @@ void Interpolator_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, ref_dim
         int n_dof_per_face = target_space->get_n_dof_per_face();
         int n_dof_per_cell = target_space->get_n_dof_per_cell();
 
+        const size_t * e_node = e->get_node_idx();
+        const Node& n0 = e_data.mesh->get_node(e_node[0]);
+        const Node& n1 = e_data.mesh->get_node(e_node[1]);
+        const Node& n2 = e_data.mesh->get_node(e_node[2]);
+        const Node& n3 = e_data.mesh->get_node(e_node[3]);
+        
+        std::cout<<"n0: x="<<n0.x<<", y="<<n0.y<<", z="<<n0.z<<std::endl;
+        std::cout<<"n1: x="<<n1.x<<", y="<<n1.y<<", z="<<n1.z<<std::endl;
+        std::cout<<"n2: x="<<n2.x<<", y="<<n2.y<<", z="<<n2.z<<std::endl;
+        std::cout<<"n3: x="<<n3.x<<", y="<<n3.y<<", z="<<n3.z<<std::endl;
+
+        std::cout<<"e0: x="<<n1.x-n0.x<<", y="<<n1.y-n0.y<<", z="<<n1.z-n0.z<<std::endl;
+        std::cout<<"e1: x="<<n2.x-n0.x<<", y="<<n2.y-n0.y<<", z="<<n2.z-n0.z<<std::endl;
+        std::cout<<"e2: x="<<n3.x-n0.x<<", y="<<n3.y-n0.y<<", z="<<n3.z-n0.z<<std::endl;
+        std::cout<<"e3: x="<<n2.x-n1.x<<", y="<<n2.y-n1.y<<", z="<<n2.z-n1.z<<std::endl;
+        std::cout<<"e4: x="<<n3.x-n1.x<<", y="<<n3.y-n1.y<<", z="<<n3.z-n1.z<<std::endl;
+        std::cout<<"e5: x="<<n3.x-n2.x<<", y="<<n3.y-n2.y<<", z="<<n3.z-n2.z<<std::endl;
+
         
         auto process_entity = [&](
             const std::vector<Ref_Coord>&            coords,
             const std::vector<Integration_Point>&    i_r_rule,
-            int                                      dim_arg,
+            int                                      entity_dim,
+            int                                      entity_idx, 
             int                                      n_dof, 
             size_t                                   row_offset, 
             auto&&                                   compute_t_phys)    // (J, dof_info_row, coord) -> Vector<phy_dim>
         {
-            Matrix<Eigen::Dynamic, ref_dim> dof_info(coords.size(), ref_dim);
+            Matrix<Eigen::Dynamic, ref_dim> dof_info(coords.size()*n_dof, ref_dim);
+            target_space->dof_signature(entity_dim, entity_idx, coords, dof_info);
 
             std::vector<Vector<S>>                H1_k(coords.size(), Vector<S>(e_data.cols/phy_dim));
             std::vector<Matrix<phy_dim, ref_dim>>  J_k(coords.size());
             for (int k = 0; k < coords.size(); ++k)
             {
+                //std::cout<<"ref_coord: x="<<coords[k].x<<", y="<<coords[k].y<<", z="<<coords[k].z<<std::endl;
                 source_space->get_basis_s(coords[k], H1_k[k]);
                 J_k[k] = e_data.get_J(coords[k]);
             }
+            //std::cout<<"coord size: "<<coords.size()<<std::endl;
 
             for (int j = 0; j < n_dof; ++j)
             {
-                target_space->dof_signature(dim_arg, j, coords, dof_info);
                 const size_t row = row_offset + j;
 
-                for (int k = 0; k < (int)coords.size(); ++k)
+                for (int k = 0; k < coords.size(); ++k)
                 {
-                    Vector<phy_dim> t_phys = compute_t_phys(J_k[k], dof_info.row(k), coords[k]);
+                    Vector<phy_dim> t_phys = compute_t_phys(J_k[k], dof_info.row(j*coords.size()+k), coords[k]);
                     double w = i_r_rule[k].weight;
 
                     for (Eigen::Index m = 0; m < H1_k[k].size(); ++m)
@@ -208,51 +229,59 @@ void Interpolator_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, ref_dim
 
 
         // ---- edges ----
-        const std::vector<Integration_Point>& i_r_edge = Integration::get_rule(get_edge(e_data.b_shape), target_space->get_basis_order()+e->get_geometry_order());
-        for (int i = 0; i < e->get_n_edge(); ++i) 
-        {
-            auto coords = e->edge_map(i_r_edge, i);
-            process_entity(coords, i_r_edge, 1, n_dof_per_edge, i*n_dof_per_edge,
-                [&](auto const& J, auto const& t, auto const&) -> Vector<phy_dim> {
-                    return J * t.transpose();
-                }
-            );
-        }
-
-        // ---- faces (for 3D elements only) ----
-        const size_t off_face = n_dof_per_edge * e->get_n_edge();
-        if constexpr (ref_dim == 3)
-        {
-            const std::vector<Integration_Point>& i_r_face = Integration::get_rule(get_face(e_data.b_shape), target_space->get_basis_order()+e->get_geometry_order());
-            for (int i = 0; i < e->get_n_face(); ++i)
+        if(n_dof_per_edge>0){
+            const std::vector<Integration_Point>& i_r_edge = Integration::get_rule(get_edge(e_data.b_shape), target_space->get_basis_order()+e->get_geometry_order());
+            
+            
+            for (int i = 0; i < e->get_n_edge(); ++i) 
             {
-                auto coords = e->face_map(i_r_face, i);
-                Vector<ref_dim> e1, e2;
-                e->face_ref_edge(i, e1, e2);
-                process_entity(coords, i_r_face, 2, n_dof_per_face, off_face+i*n_dof_per_face,
+                auto coords = e->edge_map(i_r_edge, i);
+                process_entity(coords, i_r_edge, 1, i, n_dof_per_edge, i*n_dof_per_edge,
                     [&](auto const& J, auto const& t, auto const&) -> Vector<phy_dim> {
-                        Vector<phy_dim> Jt    = J * t.transpose();
-                        const double    scale = ((J*e1).cross(J*e2)).norm();
-                        return Jt / Jt.norm() * scale;
+                        return J * t.transpose();
                     }
                 );
             }
         }
 
-        // ---- cell ----
-        const size_t off_cell = off_face + n_dof_per_face * e->get_n_face();
-        const std::vector<Integration_Point>& i_r_cell = Integration::get_rule(e_data.b_shape, target_space->get_basis_order()+e->get_geometry_order());
-        std::vector<Ref_Coord> coords;
-        coords.reserve(i_r_cell.size());
-        for (const auto& ip : i_r_cell) coords.push_back(ip.coord);
-
-        process_entity(coords, i_r_cell, ref_dim, n_dof_per_cell, off_cell,
-            [&](auto const& J, auto const& di, auto const& c) -> Vector<phy_dim> {
-                Vector<phy_dim> Jt        = J * di.transpose();
-                const double    abs_det_J = std::abs(e_data.get_det_J(c));
-                return Jt / Jt.norm() * abs_det_J;
+        // ---- faces (for 3D elements only) ----
+        if constexpr (ref_dim == 3)
+        {
+            if(n_dof_per_face>0){
+                const size_t offset_face = n_dof_per_edge * e->get_n_edge();
+                const std::vector<Integration_Point>& i_r_face = Integration::get_rule(get_face(e_data.b_shape), target_space->get_basis_order()+e->get_geometry_order());
+                for (int i = 0; i < e->get_n_face(); ++i)
+                {
+                    auto coords = e->face_map(i_r_face, i);
+                    Vector<ref_dim> e1, e2;
+                    e->face_ref_edge(i, e1, e2);
+                    process_entity(coords, i_r_face, 2, i, n_dof_per_face, offset_face+i*n_dof_per_face,
+                        [&](auto const& J, auto const& t, auto const&) -> Vector<phy_dim> {
+                            Vector<phy_dim> Jt    = J * t.transpose();
+                            const double    scale = ((J*e1).cross(J*e2)).norm();
+                            return Jt / Jt.norm() * scale;
+                        }
+                    );
+                }
             }
-        );
+        }
+
+        // ---- cell ----
+        if(n_dof_per_cell>0){
+            const size_t offset_cell = n_dof_per_edge * e->get_n_edge() + n_dof_per_face * e->get_n_face();
+            const std::vector<Integration_Point>& i_r_cell = Integration::get_rule(e_data.b_shape, target_space->get_basis_order()+e->get_geometry_order());
+            std::vector<Ref_Coord> coords;
+            coords.reserve(i_r_cell.size());
+            for (const auto& ip : i_r_cell) coords.push_back(ip.coord);
+
+            process_entity(coords, i_r_cell, ref_dim, 0, n_dof_per_cell, offset_cell,
+                [&](auto const& J, auto const& di, auto const& c) -> Vector<phy_dim> {
+                    Vector<phy_dim> Jt        = J * di.transpose();
+                    const double    abs_det_J = std::abs(e_data.get_det_J(c));
+                    return Jt / Jt.norm() * abs_det_J;
+                }
+            );
+        }
         
         
     }

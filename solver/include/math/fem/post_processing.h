@@ -60,7 +60,7 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
             {
                 const Block* block = rack[i*n_row+j];
 
-                const Key& group_key = fe_system.get_block_group_key(*block);
+                const Key& group_key = fe_system.get_group_key(*block);
                 const std::vector<Element*>& elements = mesh.get_element_group(group_key);
                 
                 size_t col_dof_offset = 0;
@@ -88,7 +88,7 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
             }
 
             for(size_t j=0; j<n_col; ++j)
-                for(Element* e : mesh.get_element_group(fe_system.get_block_group_key(*rack[i*n_row+j]))) e_record.insert(e);
+                for(Element* e : mesh.get_element_group(fe_system.get_group_key(*rack[i*n_row+j]))) e_record.insert(e);
             
 
             int ccc = 0;

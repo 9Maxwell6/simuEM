@@ -4,6 +4,7 @@
 #include "math/operator/operator_collection.h"
 #include "world/mesh/mesh.h"
 #include "math/fem/block.h"
+#include "math/dof/dof_manager.h"
 
 
 
@@ -35,6 +36,9 @@ struct Element_Data
 {
     const Mesh* mesh;
 
+    // [n_node, n_edge, n_face, n_cell]
+    const std::array<size_t,4>* entity_size;
+
     const Element* e;
 
     // to check if the constraints of each operator applied is satisfied.
@@ -46,6 +50,8 @@ struct Element_Data
 
     const FEM_Space* space_1;
     const FEM_Space* space_2;
+
+    mutable DoF_Manager* dof_manager;
 
     Basis_Shape b_shape;             // geometry shape
 

@@ -35,9 +35,9 @@ namespace {  // file-private
 
         for(int i=0; i<order; ++i)
         {
-            legendre.push_back({{x[i], 0., 0.}, w[i]});
+            legendre[i] = {{x[i], 0., 0.}, w[i]};
         }
-        return legendre;
+        return legendre;    
     }
 
 
@@ -219,7 +219,7 @@ const std::vector<Integration_Point>& get_rule(Basis_Shape b_shape, int order)
     std::vector<Integration_Point>& rule = per_shape[order];
     
     if (rule.empty()) rule = get_integration_points(b_shape, order);
-    
+
     return rule;
 }
 

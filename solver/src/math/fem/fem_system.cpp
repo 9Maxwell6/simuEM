@@ -189,7 +189,7 @@ bool FEM_System::generate_block_dof(Block& block, FEM_Space& fe_space, int idx)
     // get offset for edge/face/cell dof, node dof index start from 0 hence does not need offset.
     size_t offset_edge   = bh.get_node_count();
     size_t offset_face   = bh.get_node_count() + bh.get_edge_count();
-    size_t offset_cell = bh.get_node_count() + bh.get_edge_count() + bh.get_face_count();
+    size_t offset_cell   = bh.get_node_count() + bh.get_edge_count() + bh.get_face_count();
 
     std::vector<dof_idx> fe_block_dof;
     fe_block_dof.reserve(element_dof_list_counter);
@@ -493,7 +493,7 @@ Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key, co
 
     if(block != nullptr && block->is_base_block 
                         && (fe_space.get_function_space() == get_block_space(*block)->get_function_space())
-                        && (get_block_group_key(*block)   == group_key)){
+                        && (get_group_key(*block)   == group_key)){
         fe_block_dof_[new_block] = get_block_dof(*block);
         return new_block;        fe_block_dof_[new_block] = get_block_dof(*block);
 
@@ -549,14 +549,14 @@ Block FEM_System::register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_sp
 
     if(block_1 != nullptr && (fe_space_1.get_function_space() == get_block_space(*block_1, 0)->get_function_space())
                           && (fe_space_1.get_basis_order()    == get_block_space(*block_1, 0)->get_basis_order())
-                          && (get_block_group_key(*block_1)   == group_key)){
+                          && (get_group_key(*block_1)   == group_key)){
         // block_1->row_size already scaled by its own vdim_, so we devide its vdim_ and multiply the new vdim_ of the target block
         new_block.row_size = block_1->row_size / get_block_space(*block_1, 0)->get_vdim() * fe_space_1.get_vdim();
         block_dof_pair[0] = get_block_dof(*block_1, 0);
 
     }else if(block_1 != nullptr && (fe_space_1.get_function_space() == get_block_space(*block_1, 1)->get_function_space())
                                 && (fe_space_1.get_basis_order()    == get_block_space(*block_1, 1)->get_basis_order())
-                                && (get_block_group_key(*block_1)   == group_key)){
+                                && (get_group_key(*block_1)   == group_key)){
         new_block.row_size = block_1->col_size / get_block_space(*block_1, 1)->get_vdim() * fe_space_1.get_vdim();
         block_dof_pair[0] = get_block_dof(*block_1, 1);
 
@@ -570,13 +570,13 @@ Block FEM_System::register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_sp
     
     if(block_2 != nullptr && (fe_space_2.get_function_space() == get_block_space(*block_2, 0)->get_function_space())
                           && (fe_space_2.get_basis_order()    == get_block_space(*block_2, 0)->get_basis_order())
-                          && (get_block_group_key(*block_2)   == group_key)){
+                          && (get_group_key(*block_2)   == group_key)){
         new_block.col_size = block_2->row_size / get_block_space(*block_2, 0)->get_vdim() * fe_space_2.get_vdim();
         block_dof_pair[1] = get_block_dof(*block_2, 0);
 
     }else if(block_2 != nullptr && (fe_space_2.get_function_space() == get_block_space(*block_2, 1)->get_function_space())
                           && (fe_space_2.get_basis_order()    == get_block_space(*block_2, 1)->get_basis_order())
-                          && (get_block_group_key(*block_2)   == group_key)){
+                          && (get_group_key(*block_2)   == group_key)){
         new_block.col_size = block_2->col_size / get_block_space(*block_2, 1)->get_vdim() * fe_space_2.get_vdim();
         block_dof_pair[1] = get_block_dof(*block_2, 1);
         
@@ -744,12 +744,12 @@ const FEM_Space* FEM_System::get_block_space(const Block& block) const
     return nullptr;
 }
 
-const Key FEM_System::get_block_group_key(const Block& block) const
+const Key FEM_System::get_group_key(const Block& block) const
 {
     auto it = fe_block_key_.find(block);
     if (it != fe_block_key_.end()) return it->second;
 
-    Logger::error("FEM_System::get_block_group_key - failed: block not found, return bad key.");
+    Logger::error("FEM_System::get_group_key - failed: block not found, return bad key.");
     static const Key empty = {0,0};
     return empty;
 }
@@ -895,7 +895,7 @@ Block FEM_System::transpose_block(const Block& block)
         fe_block_dof_[new_block] = get_block_dof(block);
     }
 
-    fe_block_key_[new_block] = get_block_group_key(block);
+    fe_block_key_[new_block] = get_group_key(block);
 
     return new_block;
 }
@@ -1114,7 +1114,7 @@ Assemble_Data FEM_System::assemble_mat_data(Block& block)
         block_col_dof = block_dof_list[1];
     }
 
-    const Key& group_key = get_block_group_key(block);
+    const Key& group_key = get_group_key(block);
 
     const std::vector<Element*>* elements = &mesh_.get_element_group(group_key);
 
@@ -1138,6 +1138,7 @@ Assemble_Data FEM_System::assemble_mat_data(Block& block)
         .row_size = block.row_size,
         .col_size = block.col_size,
         .mesh = &mesh_,
+        .entity_size = &mesh_.get_element_size_group(get_group_key(block)),
         .space_1 = space_1,
         .space_2 = space_2,
         .elements = elements,
@@ -1171,7 +1172,7 @@ Assemble_Data FEM_System::assemble_vec_data(Block& block)
     const std::vector<dof_idx>* block_dof = get_block_dof(block);
     block_row_dof = block_dof;
 
-    const Key& group_key = get_block_group_key(block);
+    const Key& group_key = get_group_key(block);
 
     const std::vector<Element*>* elements = &mesh_.get_element_group(group_key);
 
@@ -1188,6 +1189,7 @@ Assemble_Data FEM_System::assemble_vec_data(Block& block)
         .element_dim = static_cast<int>(group_key.dim),
         .row_size = block.row_size,
         .mesh = &mesh_,
+        .entity_size = &mesh_.get_element_size_group(get_group_key(block)),
         .space_1 = space_1,
         .elements = elements,
         .row_dof = block_row_dof,

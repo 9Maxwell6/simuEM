@@ -37,6 +37,7 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
     auto assemble_global = [&](auto& e_data, const auto& user_operation) 
     {
         e_data.mesh = data.mesh;
+        e_data.entity_size = data.entity_size;
 
         e_data.space_1 =  data.space_1;
 
@@ -90,6 +91,8 @@ bool assemble_vec(const Assemble_Data& data, Op&& user_operation)
 
 
     la_kernel::finalize_vec(data.block_vector);
+
+    data.dof_manager.delete_all();
 
     return true;
 }

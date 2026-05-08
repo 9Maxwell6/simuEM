@@ -4,6 +4,7 @@
 #include "world/mesh/mesh.h"
 #include "math/operator/operator_collection.h"
 #include "math/fem/block.h"
+#include "math/dof/dof_manager.h"
 
 
 
@@ -25,6 +26,9 @@ struct Assemble_Data
 
     const Mesh* mesh;
 
+    // [n_node, n_edge, n_face, n_cell]
+    const std::array<size_t,4>* entity_size;
+
     const FEM_Space* space_1;  // test  space
     const FEM_Space* space_2;  // trial space
 
@@ -40,6 +44,8 @@ struct Assemble_Data
     // e.g. FEM_Space space_1 must be Hcurl space.
     mutable Check_Flag check;
 
+    // empty dof_manager, helper for some operators, data should be deleted after assemble
+    mutable DoF_Manager dof_manager;
 
     
 };

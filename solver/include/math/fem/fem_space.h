@@ -128,7 +128,7 @@ public:
      * @param[in] coord_list  local entity coordinates (e.g., s0 for edges, {s0, s1} for faces).
      * 
      * @param[out] kernel     matrix to be filled with signature data.
-     *                          Rows: num_points (coord_list.size()).
+     *                          Rows: coord_list.size() * number of dof on the entity.
      *                          Cols: Geometric dimension (x, y, [z]).
      * 
      * @note  H1 spaces ignore input arguments and return all nodal dof coordinates in 'kernel'.

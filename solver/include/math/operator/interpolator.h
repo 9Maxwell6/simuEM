@@ -5,6 +5,7 @@
 
 #include "math/data_format.h"
 
+#include "math/dof/dof_manager.h"
 
 
 
@@ -32,7 +33,7 @@ public:
 class Interpolator_H1_to_Hcurl : public Interpolator
 {
 private:
-    void static check_precondition(const FEM_Space* space_1, const FEM_Space* space_2)
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2, DoF_Manager* dm, const std::array<size_t,4>* e_size=nullptr)
     {
         Space s_1 = space_1->get_function_space();
         Space s_2 = space_2->get_function_space();
@@ -46,6 +47,19 @@ private:
         {
             Logger::error("Interpolator_H1_to_Hcurl: require vdim = dim in H1 space.");
             throw std::invalid_argument("Interpolator_H1_to_Hcurl: require vdim = dim in H1 space.");
+        }
+
+        if(dm){
+            if(!dm->is_ready())
+                if(e_size){
+                    dm->initialize((*e_size)[0], (*e_size)[1], (*e_size)[2], (*e_size)[3]);
+                }else{
+                    dm->initialize();
+                }
+            
+        }else{
+            Logger::error("Interpolator_H1_to_Hcurl: missing hash table.");
+            throw std::invalid_argument("Interpolator_H1_to_Hcurl: missing hash table.");
         }
     }
 

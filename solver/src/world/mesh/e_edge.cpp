@@ -75,7 +75,8 @@ void Edge::compute_D_shape(const Ref_Coord& coord, Eigen::Ref<MatrixXd> d_shape)
 
 std::vector<Ref_Coord> Edge::edge_map(const std::vector<Integration_Point>& edge_coord, size_t edge_idx) const
 {
-   std::vector<Ref_Coord> coord(edge_coord.size());
+   std::vector<Ref_Coord> coord;
+   coord.reserve(edge_coord.size());
    switch (edge_idx)
    {
    case 0:

@@ -165,7 +165,8 @@ std::vector<Ref_Coord> Tetrahedron::edge_map(const std::vector<Integration_Point
    // Edge 3: 1 -> 2
    // Edge 4: 1 -> 3
    // Edge 5: 2 -> 3
-   std::vector<Ref_Coord> coord(edge_coord.size());
+   std::vector<Ref_Coord> coord;
+   coord.reserve(edge_coord.size());
    switch (edge_idx)
    {
    case 0:
@@ -199,7 +200,8 @@ std::vector<Ref_Coord> Tetrahedron::face_map(const std::vector<Integration_Point
 {
    // reference coordinate [x,y] on reference triangle.
    // mapping: (1-x-y)*pi + x*pj + y*pk
-   std::vector<Ref_Coord> coord(face_coord.size());
+   std::vector<Ref_Coord> coord;
+   coord.reserve(face_coord.size());
    switch (face_idx)
    {
    case 0: // face (0,1,2)

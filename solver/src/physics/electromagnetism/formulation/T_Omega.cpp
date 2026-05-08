@@ -432,6 +432,11 @@ bool T_Omega::assemble_preconditioner()
         Interpolator_H1_to_Hcurl::interpolate_element(e_data, mat);
     });
 
+    //Logger::info("[T_Omega - preconditioner] - assemble discrete gradient matrix.");
+    //assemble_mat(fe_system_.assemble_mat_data(pc_G_), [&](auto& e_data, auto& mat) {
+        //Interpolator_H1_to_Hcurl::interpolate_element(e_data, mat);
+    //});
+
     petsc_util::petsc_save_ascii_mat(pc_P_.mat, "P_mat.txt");
 
 
