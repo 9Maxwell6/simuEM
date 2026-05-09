@@ -28,11 +28,9 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
 
         Operator::dof_transformation_mat(e_data, local_mat);
 
-        std::cout<<local_mat<<std::endl;
-        std::cout<<"========================"<<std::endl;
-
         Operator::add_to_global_mat(data, local_mat);
 
+        if(data.dof_manager.is_ready()) data.dof_manager.execute_pending_operations();
     };
 
 
@@ -40,6 +38,7 @@ bool assemble_mat(const Assemble_Data& data, Op&& user_operation)
     {   
         e_data.mesh = data.mesh;
         e_data.entity_size = data.entity_size;
+        e_data.dof_manager = &data.dof_manager;
 
         e_data.space_1 =  data.space_1;
         e_data.space_2 =  data.space_2;

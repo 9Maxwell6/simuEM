@@ -9,14 +9,15 @@ using namespace simu;
 
 const size_d* Operator::adjust_dof(int vdim, bool layout, size_d n_dof, size_d total_n_dof, const size_d dof_list[], size_d output[])
 {
-    if (vdim == 1) return dof_list;
+    if(vdim == 1) return dof_list;
 
-    if (layout == 0) {
+    // local matrix always use layout 1.
+    if(layout == 0){
         // [x1..xn, y1..yn, z1..zn]
         for (int c = 0; c < vdim; ++c)
             for (size_d i = 0; i < n_dof; ++i)
-                output[c * n_dof + i] = dof_list[i] + c * total_n_dof;
-    } else {
+                output[i * vdim + c] = dof_list[i] + c * total_n_dof;
+    }else if(layout == 1){
         // [x1,y1,z1, x2,y2,z2, ...]
         for (size_d i = 0; i < n_dof; ++i)
             for (int c = 0; c < vdim; ++c)
@@ -109,6 +110,7 @@ void Operator::add_to_global_mat(const Assemble_Data& data, Mat_Type& element_ma
     std::vector<dof_idx> col_buf(element_matrix.cols());
     
     // TODO: optimize this algorithm!
+    // local element matrix is always use layout 1 [x1,y1,z1, x2,y2,z2, ...]
     const size_d* row_ptr = adjust_dof(vdim_1, layout_1, element_matrix.rows()/vdim_1 , data.row_size/vdim_1, &(*data.row_dof)[data.row_dof_offset], row_buf.data());
     const size_d* col_ptr = adjust_dof(vdim_2, layout_2, element_matrix.cols()/vdim_2 , data.col_size/vdim_2, &(*data.col_dof)[data.col_dof_offset], col_buf.data());
 
