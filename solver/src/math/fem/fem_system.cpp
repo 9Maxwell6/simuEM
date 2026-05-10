@@ -1041,10 +1041,10 @@ std::vector<size_d> FEM_System::compute_nnz_per_row(
     int vdim_2 = space_2->get_vdim();
 
     std::vector<dof_idx> marker(block_col_size, 0);
-    std::vector<size_d> nnz(block_row_size * vdim_1);
+    std::vector<size_d> nnz(block_row_size);
 
-    
-    for(dof_idx i=1; i<=block_row_size; ++i)
+    // block_row_size is scaled by vdim_1 for vector H1 field, so here we scale back to compute nnz per component.
+    for(dof_idx i=1; i<=block_row_size/vdim_1; ++i)
     {
         size_d count = 0;
         for (auto&[e, col_start] : row_dof_to_elem[i])
@@ -1072,7 +1072,7 @@ std::vector<size_d> FEM_System::compute_nnz_per_row(
         }else{
             //layout_ = 0:   [x1,x2,...,xn,y1,y2,...,yn,z1,z2,...,zn]
             for(int v=0; v<vdim_1; ++v)
-                nnz[i-1 + v*block_row_size] = row_nnz;
+                nnz[i-1 + v*block_row_size/vdim_1] = row_nnz;
         }
         
     }

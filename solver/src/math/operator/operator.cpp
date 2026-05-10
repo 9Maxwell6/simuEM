@@ -11,17 +11,17 @@ const size_d* Operator::adjust_dof(int vdim, bool layout, size_d n_dof, size_d t
 {
     if(vdim == 1) return dof_list;
 
-    // local matrix always use layout 1.
+    // local matrix always use layout 0.
     if(layout == 0){
         // [x1..xn, y1..yn, z1..zn]
         for (int c = 0; c < vdim; ++c)
             for (size_d i = 0; i < n_dof; ++i)
-                output[i * vdim + c] = dof_list[i] + c * total_n_dof;
+                output[c * n_dof + i] = dof_list[i] + c * total_n_dof;
     }else if(layout == 1){
         // [x1,y1,z1, x2,y2,z2, ...]
         for (size_d i = 0; i < n_dof; ++i)
             for (int c = 0; c < vdim; ++c)
-                output[i * vdim + c] = vdim * dof_list[i] + c;
+                output[c * n_dof + i] = vdim * dof_list[i] + c;
     }
     return output;
 }

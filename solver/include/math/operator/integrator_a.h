@@ -62,6 +62,44 @@ public:
 
 
 
+
+/**
+ * domain: H_1
+ * range:  H_1 
+ * 
+ * @param coeff scalar coefficient value at each element.
+ * @param e_data element data struct contains all information needed to assemble element matrix.
+ * @param element_matrix computed local element matrix will be add to element_matrix.
+ * 
+ */
+class Integrator_H1__s_V__V : public Integrator
+{
+private:
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
+    {
+        Space s_1 = space_1->get_function_space();
+        Space s_2 = space_2->get_function_space();
+        if(s_1 != Space::H_1 || s_2 != Space::H_1)
+        {
+            Logger::error("Integrator_H1__s_V__V: require H_1 -> H_1.");
+            throw std::invalid_argument("Integrator_H1__s_V__V: require H_1 -> H_1.");
+        }
+        if(space_1->get_vdim() != space_1->get_dim() || space_2->get_vdim() != space_2->get_dim())
+            Logger::error("Integrator_H1__s_V__V: require vdim = dim in H1 space.");
+    }
+
+public:
+    static constexpr int INTEGRATOR_ID = 0;
+
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
+    
+};
+
+
+
+
+
 /**
  * domain: H_1
  * range:  H_1 
@@ -91,6 +129,46 @@ public:
     template<int phy_dim, int ref_dim, typename Mat_Type>
     void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
 };
+
+
+
+
+
+/**
+ * domain: H_1
+ * range:  H_1 
+ * 
+ * @param coeff scalar coefficient value at each element.
+ * @param e_data element data struct contains all information needed to assemble element matrix.
+ * @param element_matrix computed local element matrix will be add to element_matrix.
+ * 
+ * @note gradV[0] * gradV[0] + gradV[1] * gradV[1] + gradV[2] * gradV[2]
+ */
+class Integrator__s_grad_V__grad_V : public Integrator
+{
+private:
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2)
+    {
+        Space s_1 = space_1->get_function_space();
+        Space s_2 = space_2->get_function_space();
+        if(s_1 != Space::H_1 || s_2 != Space::H_1)
+        {
+            Logger::error("Integrator__s_grad_V__grad_V: require H1 -> H1.");
+            throw std::invalid_argument("Integrator__s_grad_S__grad_S: require H1 -> H1.");
+        }
+        if(space_1->get_vdim() != space_1->get_dim() || space_2->get_vdim() != space_2->get_dim())
+            Logger::error("Integrator__s_grad_V__grad_V: require vdim = dim in H1 space.");
+    }
+
+public:
+    static constexpr int INTEGRATOR_ID = 1;
+
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static assemble_element_matrix(double coeff, Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
+};
+
+
+
 
 
 /**

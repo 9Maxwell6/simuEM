@@ -207,7 +207,8 @@ void Interpolator__H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, ref_di
 
                     for (Eigen::Index m = 0; m < H1_k[k].size(); ++m)
                         for (int d = 0; d < phy_dim; ++d)
-                            element_matrix(row, m * phy_dim + d) += w * H1_k[k][m] * t_phys[d];
+                            //element_matrix(row, m * phy_dim + d) += w * H1_k[k][m] * t_phys[d];
+                            element_matrix(row, d*H1_k[k].size() + m) += w * H1_k[k][m] * t_phys[d];
                 }
             }
         };

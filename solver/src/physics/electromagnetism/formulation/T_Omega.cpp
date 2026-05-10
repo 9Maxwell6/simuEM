@@ -437,9 +437,25 @@ bool T_Omega::assemble_preconditioner()
         Interpolator__grad_H1_to_Hcurl::interpolate_element(e_data, mat);
     });
 
+    Logger::info("[T_Omega - preconditioner] - assemble preconditioner in (H1)^3.");
+    assemble_mat(fe_system_.assemble_mat_data(pc_L_), [&](auto& e_data, auto& mat) {
+        double mu = 1;
+        Integrator__s_grad_V__grad_V::assemble_element_matrix(mu, e_data, mat);
+        Integrator_H1__s_V__V::assemble_element_matrix(mu, e_data, mat);
+    });
+
+    Logger::info("[T_Omega - preconditioner] - assemble preconditioner in H1.");
+    assemble_mat(fe_system_.assemble_mat_data(pc_Q_), [&](auto& e_data, auto& mat) {
+        double mu = 1;
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
+    });
+
+
     // for debug
     petsc_util::petsc_save_ascii_mat(pc_P_.mat, "P_mat.txt");
     petsc_util::petsc_save_ascii_mat(pc_G_.mat, "G_mat.txt");
+    petsc_util::petsc_save_ascii_mat(pc_L_.mat, "L_mat.txt");
+    //petsc_util::petsc_save_ascii_mat(pc_Q_.mat, "Q_mat.txt");
 
 
     return true;
