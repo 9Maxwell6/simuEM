@@ -55,7 +55,7 @@ private:
     }
 
 public:
-    static constexpr int INTEGRATOR_ID = 7;
+    static constexpr int INTEGRATOR_ID = 9;
 
     template<typename Field, int phy_dim, int ref_dim, typename Vec_Type>
     void static assemble_element_vector(Field& F, Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_vector);
@@ -91,7 +91,7 @@ private:
     }
 
 public:
-    static constexpr int INTEGRATOR_ID = 8;
+    static constexpr int INTEGRATOR_ID = 10;
 
     template<typename Field, int phy_dim, int ref_dim, typename Vec_Type>
     void static assemble_element_vector(Field& F, Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_vector);
@@ -129,7 +129,7 @@ private:
     }
 
 public:
-    static constexpr int INTEGRATOR_ID = 9;
+    static constexpr int INTEGRATOR_ID = 11;
 
     template<typename Field, int phy_dim, int ref_dim, typename Vec_Type>
     void static assemble_element_vector(Field& F, Element_Data<phy_dim, ref_dim>& e_data, Vec_Type& element_vector);
