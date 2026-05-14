@@ -42,3 +42,9 @@ void Block::block_transpose(const Block& block)
     la_kernel::create_transpose(block.mat, mat);
 
 }
+
+Block::~Block()
+{
+    la_kernel::destroy_mat(mat);
+    la_kernel::destroy_vec(vec);
+}

@@ -84,6 +84,12 @@ protected:
                        {2,0},    // key to find surface group    (e.g., triangle).
                        {3,0}};   // key to find volume group     (e.g., tetrahedron).
 
+    Key generate_key(int dim)
+    { 
+        dim_keys[dim].id++;
+        return dim_keys[dim];
+    }
+
 
 
     // caution !!!

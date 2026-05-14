@@ -18,7 +18,7 @@ void Integrator__s__S::assemble_element_vector(Field& F, Element_Data<phy_dim, r
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
-        int order = e->get_geometry_order() + 2*test__space->get_basis_order();
+        int order = e->get_geometry_order() + 2*test__space->get_basis_order()+3;
 
         const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
@@ -52,7 +52,7 @@ void Integrator__v__grad_S::assemble_element_vector(Field& F, Element_Data<phy_d
         std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ do_once(e_data.space_1, e_data.space_2); }); 
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
-        int order = e->get_geometry_order() + 2*test__space->get_basis_order();
+        int order = e->get_geometry_order() + 2*test__space->get_basis_order()+3;
 
         const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
         
@@ -94,7 +94,7 @@ void Integrator__v__V::assemble_element_vector(Field& F, Element_Data<phy_dim, r
         
         const Element* e = e_data.e;
         const FEM_Space* test__space = e_data.shape_space_1;
-        int order = e->get_geometry_order() + 2*test__space->get_basis_order();
+        int order = e->get_geometry_order() + 2*test__space->get_basis_order()+3;
 
         const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
 

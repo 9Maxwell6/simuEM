@@ -47,7 +47,6 @@ struct Assemble_Data
     // empty dof_manager, helper for some operators, data should be deleted after assemble
     mutable DoF_Manager dof_manager;
 
-    
 };
 
 

@@ -17,6 +17,8 @@ def main():
     ap = argparse.ArgumentParser(description="Plot FEM convergence (h vs L2 error).")
     ap.add_argument("files", nargs="+", help="one or more .dat files with columns: h, L2_error")
     ap.add_argument("-o", "--output", help="save figure to this file instead of showing it")
+    ap.add_argument("-n", "--last-n", type=int, default=None, help="use only the last N refinements (smallest h) for the fit; "
+                                                                   "default: use all points")
     args = ap.parse_args()
  
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -25,9 +27,15 @@ def main():
         h, err = np.loadtxt(path, comments="#", unpack=True)
         order = np.argsort(h)
         h, err = h[order], err[order]
+
+        # subset used for the fit: the N smallest h values
+        if args.last_n is not None and args.last_n < len(h):
+            h_fit, err_fit = h[:args.last_n], err[:args.last_n]
+        else:
+            h_fit, err_fit = h, err
  
         # least-squares fit in log-log space
-        slope, intercept = np.polyfit(np.log(h), np.log(err), 1)
+        slope, intercept = np.polyfit(np.log(h_fit), np.log(err_fit), 1)
         fit = np.exp(intercept) * h ** slope
  
         label = os.path.basename(path).replace("_", r"\_")
@@ -43,6 +51,17 @@ def main():
     ax.grid(True, which="both", alpha=0.3)
     ax.legend()
     ax.invert_xaxis() 
+
+    def sci_label(v):
+        exp = int(np.floor(np.log10(v)))
+        mant = round(v / 10**exp, 10)          # avoid 4.999... artifacts
+        return rf"${mant:g} \times 10^{{{exp}}}$"
+
+    ticks  = [0.5, 0.2, 0.1, 0.05]
+    labels = [sci_label(t) for t in ticks]
+
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(labels)
     fig.tight_layout()
  
     if args.output:

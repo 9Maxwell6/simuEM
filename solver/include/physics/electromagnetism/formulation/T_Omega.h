@@ -38,6 +38,8 @@ class T_Omega
 {
 
 private:
+    bool enable_pc_ = false;  // preconditioner flag
+
     Mesh& mesh_;
     FEM_System fe_system_;
 
@@ -55,13 +57,29 @@ private:
     Block              pc_P_;   //  edge interpolation matrix for preconditioner.
     Block              pc_G_;   //  discrete gradient matrix  for preconditioner.
     Block              pc_L_;   //  L = integral_{ σ^-1  ∇u : ∇v  + μ u.v  dx }    (H1)^3 x (H1)^3
-    Block              pc_Q_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1
+    Block              pc_Q_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1   inside T
 
+    //Block              pc_I_Omega_;   //  discrete gradient matrix  for preconditioner.
+    Block              pc_Q_Omega_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1   inside Omega
+
+    Block              pc_G_T_;
+    Block              pc_I_;
+    H1_Space           global_H1;
+    Block              pc_global_Q_;
+    Dirichlet_BC       pc_bc_global_;
 
     Dirichlet_BC bc_Omega_out_;
     Dirichlet_BC bc_Omega_in_;
 
     Dirichlet_BC bc_T_1_;
+
+
+    Dirichlet_BC pc_bc_Omega_out_;
+    Dirichlet_BC pc_bc_Omega_in_;
+
+    Dirichlet_BC pc_bc_T_1_v_;
+    Dirichlet_BC pc_bc_T_1_s_;
+    
 
 
     Block_Rack br_system_;
@@ -77,12 +95,15 @@ private:
     Key key_conductor_interface_1_;        // key to 1D/2D conductor boundary element groups
     Key key_conductor_interface_layer_1_;  // key to 2D/3D conducting region element groups in contact with conductor boundarys.
 
+    Key key_global_;
     Key key_source_;                       // key to 2D/3D source element groups
     Key key_insulator_;                    // key to 2D/3D insulating region element groups
     Key key_conductor_1_;                  // key to 2D/3D conducting region element groups
     
 
     Key key_Omega_;
+
+    
 
     /**
      * @brief Wapper of lambda filter function used for Mesh::mark_elements, it will checks if 
@@ -153,7 +174,8 @@ private:
 
 
 public:
-    T_Omega(Mesh& mesh);
+    T_Omega(Mesh& mesh, bool enable_preconditioner=false);
+    ~T_Omega();
 
     bool assemble_system();
 
@@ -161,7 +183,11 @@ public:
 
     bool solve_system();
 
+    bool solve_pc_system();
+
     scalar_t compute_L2_error();
+
+    void finalize();
 
 };
 

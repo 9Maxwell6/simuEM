@@ -282,19 +282,19 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
     const Block& block_1 = *block_list[0];
     const Block& block_2 = *block_list[1];
 
-    if((!block_1.is_base_block) || (!block_2.is_base_block))
-    {
-        Logger::error("FEM_System::generate_coupling_block_dof - block_1 or block_2 not base block, hence no dof hash table.");
-        return false;
-    }
+    //if((!block_1.is_base_block) || (!block_2.is_base_block))
+    //{
+    //    Logger::error("FEM_System::generate_coupling_block_dof - block_1 or block_2 not base block, hence no dof hash table.");
+    //    return false;
+    //}
     
     const std::vector<Element*>& elements = (fe_block_key_.find(block) != fe_block_key_.end()) 
                                                 ? mesh_.get_element_group(fe_block_key_.at(block))
                                                 : mesh_.get_mesh_elements();
 
     
-    const util::Block_Hash& bh_1 = get_block_hash(block_1);
-    const util::Block_Hash& bh_2 = get_block_hash(block_2);
+    const util::Block_Hash& bh_1 = get_block_hash(block_1, 0);
+    const util::Block_Hash& bh_2 = get_block_hash(block_2, 1);
 
     size_t n_node_dof_1   = bh_1.get_node_count();
     size_t n_edge_dof_1   = bh_1.get_edge_count();
@@ -330,8 +330,8 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
     const FEM_Space * fe_space_1 = fe_space_list[0];
     const FEM_Space * fe_space_2 = fe_space_list[1];
 
-    const std::vector<dof_idx>* fe_block_dof_1 = get_block_dof(block_1);
-    const std::vector<dof_idx>* fe_block_dof_2 = get_block_dof(block_2);
+    const std::vector<dof_idx>* fe_block_dof_1 = get_block_dof(block_1,0);
+    const std::vector<dof_idx>* fe_block_dof_2 = get_block_dof(block_2,1);
 
 
     std::vector<dof_idx> fe_shared_block_dof_1;
@@ -494,8 +494,10 @@ Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key, co
     if(block != nullptr && block->is_base_block 
                         && (fe_space.get_function_space() == get_block_space(*block)->get_function_space())
                         && (get_group_key(*block)   == group_key)){
+        new_block.row_size = block->row_size / get_block_space(*block, 0)->get_vdim() * fe_space.get_vdim();
+        new_block.col_size = block->col_size / get_block_space(*block, 1)->get_vdim() * fe_space.get_vdim();
         fe_block_dof_[new_block] = get_block_dof(*block);
-        return new_block;        fe_block_dof_[new_block] = get_block_dof(*block);
+        return new_block;
 
     }
 
@@ -545,6 +547,8 @@ Block FEM_System::register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_sp
 
     std::array<const std::vector<dof_idx>*,2>& block_dof_pair = coupled_block_dof_[new_block];
 
+    // TODO: change this to avoid copy, this is for test only!!
+    std::array<util::Block_Hash,2>& block_hash_pair = coupled_block_hash_[new_block];
 
 
     if(block_1 != nullptr && (fe_space_1.get_function_space() == get_block_space(*block_1, 0)->get_function_space())
@@ -554,11 +558,16 @@ Block FEM_System::register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_sp
         new_block.row_size = block_1->row_size / get_block_space(*block_1, 0)->get_vdim() * fe_space_1.get_vdim();
         block_dof_pair[0] = get_block_dof(*block_1, 0);
 
+        block_hash_pair[0] = get_block_hash(*block_1, 0);  // for test!!!
+
     }else if(block_1 != nullptr && (fe_space_1.get_function_space() == get_block_space(*block_1, 1)->get_function_space())
                                 && (fe_space_1.get_basis_order()    == get_block_space(*block_1, 1)->get_basis_order())
                                 && (get_group_key(*block_1)   == group_key)){
         new_block.row_size = block_1->col_size / get_block_space(*block_1, 1)->get_vdim() * fe_space_1.get_vdim();
         block_dof_pair[0] = get_block_dof(*block_1, 1);
+
+        block_hash_pair[0] = get_block_hash(*block_1, 1);   // for test!!!
+
 
     }else if(
         generate_block_dof(new_block, fe_space_1, 0)){;
@@ -609,17 +618,17 @@ Block FEM_System::register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_sp
  */
 Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& block_2, const Key shared_group_key)
 {
-    FEM_Space * fe_space_1;
-    FEM_Space * fe_space_2;
-    auto it_1 = fe_block_space_.find(block_1);
-    auto it_2 = fe_block_space_.find(block_2);
-    if (it_1 != fe_block_space_.end() && it_2 != fe_block_space_.end()){
-        fe_space_1 = it_1->second;
-        fe_space_2 = it_2->second;
-    }else{
-        Logger::error("FEM_System::register_FE_space_coupling - block not found: return bad block");
-        return {0,0,0,0,0,false};
-    }
+    const FEM_Space * fe_space_1 = get_block_space(block_1, 0);
+    const FEM_Space * fe_space_2 = get_block_space(block_2, 1);
+    //auto it_1 = fe_block_space_.find(block_1);
+    //auto it_2 = fe_block_space_.find(block_2);
+    //if (it_1 != fe_block_space_.end() && it_2 != fe_block_space_.end()){
+    //    fe_space_1 = it_1->second;
+    //    fe_space_2 = it_2->second;
+    //}else{
+    //    Logger::error("FEM_System::register_FE_space_coupling - block not found: return bad block");
+    //    return {0,0,0,0,0,false};
+    //}
 
     // create uninitialized block
     block_id_++;
@@ -666,10 +675,10 @@ Dirichlet_BC FEM_System::register_Dirichlet_BC(const Block& block, const Key& gr
     
     
 
-    FEM_Space* fe_space = const_cast<FEM_Space*>(get_block_space(block));
+    FEM_Space* fe_space = const_cast<FEM_Space*>(get_block_space(block,0));  // get row space for coupled block
     for (const auto& [geometry, count] : geometry_map) fe_space->add_basis_shape(to_basis_shape(geometry));
 
-    const util::Block_Hash& bh = get_block_hash(block);
+    const util::Block_Hash& bh = get_block_hash(block,0); // get block hash in row space for coupled block
 
     // get offset for edge/face/cell dof, node dof index start from 0 hence does not need offset.
     size_t offset_edge   = bh.get_node_count();
@@ -683,7 +692,17 @@ Dirichlet_BC FEM_System::register_Dirichlet_BC(const Block& block, const Key& gr
     // for block hash 1
     auto get_id_handler = [&](size_t offset, auto... args) {
         if (std::optional<size_t> id_o = bh.get_exist_id(args...)) {
-            bc_element_global_dof.push_back(offset + *id_o);
+            //*
+            for(int v=0; v<fe_space->get_vdim(); ++v)
+            {
+                if(fe_space->get_layout()==0){
+                    bc_element_global_dof.push_back((offset + *id_o) + v*block.row_size/fe_space->get_vdim());
+                }else if(fe_space->get_layout()==1){
+                    bc_element_global_dof.push_back((offset + *id_o) * fe_space->get_vdim() + v);
+                }
+            }
+            //*/
+            //bc_element_global_dof.push_back(offset + *id_o);
         } else {
             error_dof_flag = true;
         }
@@ -804,6 +823,16 @@ const std::array<const std::vector<dof_idx> * ,2>& FEM_System::get_coupled_block
     return empty;
 }
 
+const std::array<util::Block_Hash, 2>& FEM_System::get_coupled_block_hash(const Block& block) const
+{
+    auto it = coupled_block_hash_.find(block);
+    if (it != coupled_block_hash_.end()) return it->second;
+
+    Logger::error("FEM_System::get_coupled_block_hash - failed: block not found, return empty list of block_hash.");
+    static const std::array<util::Block_Hash ,2> empty{};
+    return empty;
+}
+
 
 const FEM_Space*            FEM_System::get_block_space(const Block& block, int idx) const
 {
@@ -824,8 +853,22 @@ const std::vector<dof_idx>* FEM_System::get_block_dof(const Block& block, int id
     }else if(idx == 0 || idx == 1){
         return get_coupled_block_dof(block)[idx];
     }else{
-        Logger::error("FEM_System::get_block_space - invalid idx: " + std::to_string(idx) + ".");
+        Logger::error("FEM_System::get_block_dof - invalid idx: " + std::to_string(idx) + ".");
         return nullptr;
+    }
+}
+
+
+const util::Block_Hash& FEM_System::get_block_hash(const Block& block, int idx) const
+{
+    if(block.is_base_block){
+        return get_block_hash(block);
+    }else if(idx == 0 || idx == 1){
+        return get_coupled_block_hash(block)[idx];
+    }else{
+        Logger::error("FEM_System::get_block_hash - invalid idx: " + std::to_string(idx) + ".");
+        static util::Block_Hash bh;
+        return bh;
     }
 }
 

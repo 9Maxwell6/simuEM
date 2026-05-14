@@ -238,7 +238,15 @@ void DoF_Manager::register_face_dof(Basis_Shape shape, const size_t* node_idx, i
     }
 }
 
-
+void DoF_Manager::register_cell_dof(Basis_Shape shape, const size_t* node_idx, int entity_idx, int n_dof_per_cell)
+{
+    switch (shape) 
+    {        
+    case Basis_Shape::TRIANGLE:    for (int j = 0; j < n_dof_per_cell; ++j) cell_h_.get_id(node_idx[0], node_idx[1], node_idx[2], j);              break;
+    case Basis_Shape::TETRAHEDRON: for (int j = 0; j < n_dof_per_cell; ++j) cell_h_.get_id(node_idx[0], node_idx[1], node_idx[2], node_idx[3], j); break;
+    default: Logger::error("DoF_Manager::register_element_dof - unknown Basis_Shape: return false");
+    }
+}
 
 
 
@@ -452,6 +460,15 @@ void DoF_Manager::register_face(Basis_Shape shape, const size_t* node_idx, int e
     }
 }
 
+void DoF_Manager::register_cell(Basis_Shape shape, const size_t* node_idx, int entity_idx)
+{
+    switch (shape) 
+    {        
+    case Basis_Shape::TRIANGLE:    cell_h_.get_id(node_idx[0], node_idx[1], node_idx[2], 0);              break;
+    case Basis_Shape::TETRAHEDRON: cell_h_.get_id(node_idx[0], node_idx[1], node_idx[2], node_idx[3], 0); break;
+    default: Logger::error("DoF_Manager::register_cell - unknown Basis_Shape: return false");
+    }
+}
 
 
 

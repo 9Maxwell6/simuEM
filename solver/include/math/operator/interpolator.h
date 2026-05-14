@@ -22,7 +22,7 @@ protected:
 
 
 public:
-    static constexpr int SIZE = 2;
+    static constexpr int SIZE = 3;
 
 };
 
@@ -107,6 +107,46 @@ public:
 
     template<int phy_dim, int ref_dim, typename Mat_Type>
     void static interpolate_element(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
+    
+};
+
+
+
+
+
+
+
+
+
+
+class Identity_Mapping : public Interpolator
+{
+private:
+    void static do_once(const FEM_Space* space_1, const FEM_Space* space_2, DoF_Manager* dm, const std::array<size_t,4>* e_size=nullptr)
+    {
+        Space s_1 = space_1->get_function_space();
+        Space s_2 = space_2->get_function_space();
+        if(s_1 != s_2 || space_1->get_vdim() != space_2->get_vdim())
+            Logger::error("Identity_Mapping: require space 1 == space 2 .");
+
+        if(dm){
+            if(!dm->is_ready())
+                if(e_size){
+                    dm->initialize((*e_size)[0], (*e_size)[1], (*e_size)[2], (*e_size)[3]);
+                }else{
+                    dm->initialize();
+                }
+
+        }else{
+            Logger::error("Identity_Mapping: missing hash table.");
+        }
+    }
+
+public:
+    static constexpr int INTERPOLATOR_ID = 2;
+
+    template<int phy_dim, int ref_dim, typename Mat_Type>
+    void static direct_mapping(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix);
     
 };
 

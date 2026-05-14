@@ -171,9 +171,11 @@ public:
     const std::array<const Block*,                 2>& get_coupled_block(const Block& block) const;
     const std::array<const FEM_Space *,            2>& get_coupled_block_space(const Block& block) const;
     const std::array<const std::vector<dof_idx> * ,2>& get_coupled_block_dof(const Block& block) const; 
+    const std::array<util::Block_Hash,             2>& get_coupled_block_hash(const Block& block) const; 
 
     const FEM_Space*            get_block_space(const Block& block, int idx) const;
     const std::vector<dof_idx>* get_block_dof(const Block& block, int idx) const; 
+    const util::Block_Hash& get_block_hash(const Block& block, int idx) const; 
 
     const FEM_Space* get_block_row_space(const Block& block) const;
     const FEM_Space* get_block_col_space(const Block& block) const;

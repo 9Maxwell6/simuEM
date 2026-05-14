@@ -119,6 +119,47 @@ void Block_Rack::build_linear_system()
 
 
 
+void Block_Rack::extract_block_system()
+{
+    local_row_size_.resize(n_row_);
+    local_col_size_.resize(n_col_);
+
+    block_lhs_.resize(n_row_*n_col_);
+    block_rhs_.resize(n_row_);
+    block_x_.resize(n_row_);
+
+    for (size_d i = 0; i < n_row_; ++i)
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+
+    for (size_d j = 0; j < n_col_; ++j)
+        la_kernel::get_local_size_mat(rack_[0 * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
+
+    la_kernel::extract_block_mat(local_row_size_, local_col_size_, lhs_, block_lhs_);
+    la_kernel::extract_block_vec(local_row_size_, rhs_, block_rhs_);
+    la_kernel::extract_block_vec(local_row_size_, x_, block_x_);
+
+}
+
+
+
+void Block_Rack::assemble_block_lhs()
+{
+    la_kernel::create_nest_mat(n_row_, n_col_, block_lhs_, lhs_);
+}
+
+
+void Block_Rack::assemble_block_rhs()
+{
+    la_kernel::create_nest_vec(block_rhs_, rhs_);
+}
+
+
+void Block_Rack::assemble_block_x()
+{
+    la_kernel::create_nest_vec(block_x_, x_);
+}
+
+
 
 std::string Block_Rack::print_block_rack() const
 {
@@ -160,4 +201,32 @@ void Block_Rack::delete_data()
                 la_kernel::destroy_vec(block->vec);
         }
     }
+}
+
+
+void Block_Rack::finalize()
+{
+    for(G_Matrix mat : block_lhs_) la_kernel::destroy_mat(mat);
+    for(G_Vector vec : block_rhs_) la_kernel::destroy_vec(vec);
+    for(G_Vector vec : block_x_) la_kernel::destroy_vec(vec);
+
+    block_lhs_.clear();
+    block_rhs_.clear();
+    block_x_.clear();
+
+    la_kernel::destroy_mat(lhs_);
+    la_kernel::destroy_vec(rhs_);
+    la_kernel::destroy_vec(x_);
+
+    
+
+
+}
+
+Block_Rack::~Block_Rack()
+{
+    la_kernel::destroy_mat(lhs_);
+    la_kernel::destroy_vec(rhs_);
+    la_kernel::destroy_vec(x_);
+
 }

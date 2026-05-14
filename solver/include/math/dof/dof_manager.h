@@ -61,9 +61,10 @@ public:
     void register_face_dof(Basis_Shape shape, const size_t* node_idx, int n_dof_per_face);
     void register_cell_dof(Basis_Shape shape, const size_t* node_idx, int n_dof_per_cell);
 
-    void register_node_dof(Basis_Shape shape, const size_t* node_idx, int n_dof_per_node, int entity_idx);
-    void register_edge_dof(Basis_Shape shape, const size_t* node_idx, int n_dof_per_edge, int entity_idx);
-    void register_face_dof(Basis_Shape shape, const size_t* node_idx, int n_dof_per_face, int entity_idx);
+    void register_node_dof(Basis_Shape shape, const size_t* node_idx, int entity_idx, int n_dof_per_node);
+    void register_edge_dof(Basis_Shape shape, const size_t* node_idx, int entity_idx, int n_dof_per_edge);
+    void register_face_dof(Basis_Shape shape, const size_t* node_idx, int entity_idx, int n_dof_per_face);
+    void register_cell_dof(Basis_Shape shape, const size_t* node_idx, int entity_idx, int n_dof_per_face);
 
     
     // ignore dof (should not mix-use with dof-involved function)
@@ -76,6 +77,8 @@ public:
     void register_node(Basis_Shape shape, const size_t* node_idx, int entity_idx);
     void register_edge(Basis_Shape shape, const size_t* node_idx, int entity_idx);
     void register_face(Basis_Shape shape, const size_t* node_idx, int entity_idx);
+    void register_cell(Basis_Shape shape, const size_t* node_idx, int entity_idx);
+
     
 
     //TODO

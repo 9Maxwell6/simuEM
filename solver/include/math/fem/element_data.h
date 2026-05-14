@@ -36,7 +36,7 @@ struct Element_Data
 {
     const Mesh* mesh;
 
-    // [n_node, n_edge, n_face, n_cell]
+    // [n_node, n_edge, n_face, n_cell]  used for initialize dof_manager
     const std::array<size_t,4>* entity_size;
 
     const Element* e;

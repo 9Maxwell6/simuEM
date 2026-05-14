@@ -16,9 +16,7 @@ namespace petsc_util
  */
 PetscErrorCode petsc_initialize(int* argc, char*** argv) 
 {
-    PetscFunctionBeginUser;
-    PetscCall(PetscInitialize(argc, argv, nullptr, nullptr));
-    PetscFunctionReturn(PETSC_SUCCESS);
+    return PetscInitialize(argc, argv, nullptr, nullptr);
 }
 
 
@@ -31,9 +29,7 @@ PetscErrorCode petsc_initialize(int* argc, char*** argv)
  */
 PetscErrorCode petsc_finalize() 
 {
-    PetscFunctionBeginUser;
-    PetscCall(PetscFinalize());
-    PetscFunctionReturn(PETSC_SUCCESS);
+    return PetscFinalize();
 }
 
 
@@ -162,6 +158,117 @@ PetscErrorCode petsc_create_nest_vec(const std::vector<Vec>& block_vec, Vec &vec
     PetscCall(VecRestoreArray(vec, &dst));
     PetscFunctionReturn(PETSC_SUCCESS);
 }
+
+
+
+
+
+PetscErrorCode petsc_get_local_size_mat(Mat mat, PetscInt* n_row, PetscInt* n_col)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatGetLocalSize(mat, n_row, n_col));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_extract_block_mat(const std::vector<PetscInt>& row_local_sizes, 
+                                       const std::vector<PetscInt>& col_local_sizes, 
+                                       Mat mat, std::vector<Mat>& blocks)
+{
+    PetscFunctionBeginUser;
+    const PetscInt row_size = static_cast<PetscInt>(row_local_sizes.size());
+    const PetscInt col_size = static_cast<PetscInt>(col_local_sizes.size());
+    MPI_Comm comm;
+    PetscCall(PetscObjectGetComm((PetscObject)mat, &comm));
+
+    // Row ISs: stride from this rank's starting global row, length = local size of block-row i
+    PetscInt rstart, rend;
+    PetscCall(MatGetOwnershipRange(mat, &rstart, &rend));
+    std::vector<IS> isrow(row_size);
+    {
+        PetscInt off = rstart;
+        for (PetscInt i = 0; i < row_size; ++i) {
+            PetscCall(ISCreateStride(comm, row_local_sizes[i], off, 1, &isrow[i]));
+            off += row_local_sizes[i];
+        }
+    }
+
+    // Column ISs: same idea using column ownership range
+    PetscInt cstart, cend;
+    PetscCall(MatGetOwnershipRangeColumn(mat, &cstart, &cend));
+    std::vector<IS> iscol(col_size);
+    {
+        PetscInt off = cstart;
+        for (PetscInt j = 0; j < col_size; ++j) {
+            PetscCall(ISCreateStride(comm, col_local_sizes[j], off, 1, &iscol[j]));
+            off += col_local_sizes[j];
+        }
+    }
+
+    // Extract M*N blocks
+    blocks.assign(row_size * col_size, nullptr);
+    for (PetscInt i = 0; i < row_size; ++i) {
+        for (PetscInt j = 0; j < col_size; ++j) {
+            // And critically — are the indices in range?
+            PetscInt rmin, rmax, cmin, cmax;
+            PetscCall(ISGetMinMax(isrow[i], &rmin, &rmax));
+            PetscCall(ISGetMinMax(iscol[j], &cmin, &cmax));
+            PetscCall(MatCreateSubMatrix(mat, isrow[i], iscol[j], MAT_INITIAL_MATRIX, &blocks[i * col_size + j]));
+        }
+    }
+
+    for (auto& is : isrow) PetscCall(ISDestroy(&is));
+    for (auto& is : iscol) PetscCall(ISDestroy(&is));
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_extract_block_vec(const std::vector<PetscInt>& row_local_sizes, Vec vec, std::vector<Vec>& blocks)
+{
+    PetscFunctionBeginUser;
+    const PetscInt row_size = static_cast<PetscInt>(row_local_sizes.size());
+
+    MPI_Comm comm;
+    PetscCall(PetscObjectGetComm((PetscObject)vec, &comm));
+
+    // Row ISs: stride from this rank's starting global row, length = local size of block-row i
+    PetscInt rstart, rend;
+    PetscCall(VecGetOwnershipRange(vec, &rstart, &rend));
+    std::vector<IS> isrow(row_size);
+    {
+        PetscInt off = rstart;
+        for (PetscInt i = 0; i < row_size; ++i) {
+            PetscCall(ISCreateStride(comm, row_local_sizes[i], off, 1, &isrow[i]));
+            off += row_local_sizes[i];
+        }
+    }
+
+    // Build each block vector and scatter the relevant slab into it
+    blocks.assign(row_size, nullptr);
+    for (PetscInt i = 0; i < row_size; ++i) {
+        PetscCall(VecCreate(comm, &blocks[i]));
+        PetscCall(VecSetSizes(blocks[i], row_local_sizes[i], PETSC_DECIDE));
+        PetscCall(VecSetFromOptions(blocks[i]));
+
+        VecScatter scatter;
+        PetscCall(VecScatterCreate(vec, isrow[i], blocks[i], NULL, &scatter));
+        PetscCall(VecScatterBegin(scatter, vec, blocks[i], INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterEnd  (scatter, vec, blocks[i], INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterDestroy(&scatter));
+    }
+
+    for (auto& is : isrow) PetscCall(ISDestroy(&is));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
 
 
 
@@ -440,6 +547,40 @@ PetscErrorCode petsc_resize_vec_list(std::vector<Vec>& vec_list, size_t size)
 
 
 
+/**
+ * @brief Report KSP convergence after a solve.
+ *
+ * @param[in]  ksp          KSP solver context (already solved)
+ * @param[out] successful   set to true if the solver converged
+ * @param[out] iterations   number of iterations performed
+ * @param[in ] label        optional label printed with the diagnostics
+ * 
+ * @return                  PETSC_SUCCESS on success
+ */
+PetscErrorCode petsc_ksp_convergence(KSP ksp, bool *successful, int *iterations, const std::string &label)
+{
+    PetscFunctionBeginUser;
+
+    KSPConvergedReason reason;
+    PetscInt           its;
+    PetscCall(KSPGetConvergedReason(ksp, &reason));
+    PetscCall(KSPGetIterationNumber(ksp, &its));
+
+    const bool ok = (reason >= 0);
+    if (iterations) *iterations = (int)its;
+    if (successful) *successful = ok;
+
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD,
+        "%s %s in %d iterations (reason %d)\n",
+        label.c_str(),
+        (ok ? "converged" : "did NOT converge"),
+        (int)its, (int)reason));
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
 
 
 // ==================================================== for debug ======================================================
@@ -449,7 +590,7 @@ PetscErrorCode petsc_print_mat(Mat mat, const std::string& name)
     PetscFunctionBeginUser;
     if (!name.empty()) PetscCall(PetscPrintf(PETSC_COMM_WORLD, "--- %s ---\n", name.c_str()));
     PetscCall(MatView(mat, PETSC_VIEWER_STDOUT_WORLD));
-    return PETSC_SUCCESS;
+    PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode petsc_print_vec(Vec vec, const std::string& name) 
@@ -457,7 +598,7 @@ PetscErrorCode petsc_print_vec(Vec vec, const std::string& name)
     PetscFunctionBeginUser;
     if (!name.empty()) PetscCall(PetscPrintf(PETSC_COMM_WORLD, "--- %s ---\n", name.c_str()));
     PetscCall(VecView(vec, PETSC_VIEWER_STDOUT_WORLD));
-    return PETSC_SUCCESS;
+    PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 
@@ -470,7 +611,7 @@ PetscErrorCode petsc_save_ascii_mat(Mat mat, const std::string& file_name)
     PetscCall(PetscViewerASCIIOpen(PETSC_COMM_WORLD, filepath.c_str(), &viewer_out));
     PetscCall(MatView(mat, viewer_out));
     PetscCall(PetscViewerDestroy(&viewer_out));
-    return PETSC_SUCCESS;
+    PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 
@@ -483,7 +624,16 @@ PetscErrorCode petsc_save_ascii_vec(Vec vec, const std::string& file_name)
     PetscCall(PetscViewerASCIIOpen(PETSC_COMM_WORLD, filepath.c_str(), &viewer_out));
     PetscCall(VecView(vec, viewer_out));
     PetscCall(PetscViewerDestroy(&viewer_out));
-    return PETSC_SUCCESS;
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode petsc_print_memory_usage(const char *label)
+{
+    PetscFunctionBeginUser;
+    PetscLogDouble mem;
+    PetscCall(PetscMemoryGetCurrentUsage(&mem));
+    std::cout << "[" << label << "] Memory: " << mem / 1024.0 / 1024.0 << " MB" << std::endl;
+    PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 

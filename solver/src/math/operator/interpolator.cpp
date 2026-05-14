@@ -411,3 +411,79 @@ void Interpolator__grad_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, r
 }
 INSTANTIATE_ELEMENT_MAT_TEMPLATE(Interpolator__grad_H1_to_Hcurl, interpolate_element)
 
+
+
+
+
+
+
+
+
+
+
+template<int phy_dim, int ref_dim, typename Mat_Type>
+void Identity_Mapping::direct_mapping(Element_Data<phy_dim, ref_dim>& e_data, Mat_Type& element_matrix)
+{
+    std::call_once(e_data.check->interpolator_check[INTERPOLATOR_ID], [&]{ do_once(e_data.space_1, e_data.space_2, e_data.dof_manager, e_data.entity_size); }); 
+
+    const Element* e = e_data.e;
+    const size_t * e_node = e->get_node_idx();
+    Basis_Shape e_shape = e_data.b_shape;
+
+    const FEM_Space* fe_space = e_data.shape_space_1;
+
+    int n_dof_per_node = fe_space->get_n_dof_per_node();
+    int n_dof_per_edge = fe_space->get_n_dof_per_edge();
+    int n_dof_per_face = fe_space->get_n_dof_per_face();
+    int n_dof_per_cell = fe_space->get_n_dof_per_cell();
+
+    int local_dof_idx = 0;
+
+    if(n_dof_per_node > 0) for(int i=0; i<e->get_n_node(); ++i) 
+    {
+        // skip node if previously visited.
+        if(e_data.dof_manager->get_node_id(e_shape, e_node, i).exist){ local_dof_idx+=n_dof_per_node; continue; }
+        for(int j=0; j<n_dof_per_node; ++j){
+            element_matrix(local_dof_idx, local_dof_idx) += 1;
+            local_dof_idx++;
+        }
+        e_data.dof_manager->pending_operation([&e_data, e_node, i]() { e_data.dof_manager->register_node(e_data.b_shape, e_node, i); });
+    }
+
+    if(n_dof_per_edge > 0) for(int i=0; i<e->get_n_edge(); ++i) 
+    {
+        // skip edge if previously visited.
+        if(e_data.dof_manager->get_edge_id(e_shape, e_node, i).exist) { local_dof_idx+=n_dof_per_edge; continue; }
+        for(int j=0; j<n_dof_per_edge; ++j){
+            element_matrix(local_dof_idx, local_dof_idx) += 1;
+            local_dof_idx++;
+        }
+        e_data.dof_manager->pending_operation([&e_data, e_node, i]() { e_data.dof_manager->register_edge(e_data.b_shape, e_node, i); });
+    }
+
+    if(n_dof_per_face > 0) for(int i=0; i<e->get_n_face(); ++i) 
+    {
+        // skip face if previously visited.
+        if(e_data.dof_manager->get_face_id(e_shape, e_node, i).exist) { local_dof_idx+=n_dof_per_face; continue; }
+        for(int j=0; j<n_dof_per_face; ++j){
+            element_matrix(local_dof_idx, local_dof_idx) += 1;
+            local_dof_idx++;
+        }
+        e_data.dof_manager->pending_operation([&e_data, e_node, i]() { e_data.dof_manager->register_face(e_data.b_shape, e_node, i); });
+    }
+
+    for(int i=0; i<e->get_n_cell(); ++i) 
+    {
+        // skip cell if previously visited.
+        if(e_data.dof_manager->get_cell_id(e_shape, e_node, i).exist) { local_dof_idx+=n_dof_per_cell; continue; }
+        for(int j=0; j<n_dof_per_cell; ++j){
+            element_matrix(local_dof_idx, local_dof_idx) += 1;
+            local_dof_idx++;
+        }
+        e_data.dof_manager->pending_operation([&e_data, e_node, i]() { e_data.dof_manager->register_cell(e_data.b_shape, e_node, i); });
+    }
+    
+
+
+}
+INSTANTIATE_ELEMENT_MAT_TEMPLATE(Identity_Mapping, direct_mapping)

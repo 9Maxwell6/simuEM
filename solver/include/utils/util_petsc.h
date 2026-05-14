@@ -2,6 +2,8 @@
 
 #ifdef LOAD_PETSC
     #include <petsc.h>
+    #include <petscsys.h>
+
 
 #include "math/data_format.h"
 
@@ -21,6 +23,11 @@ PetscErrorCode petsc_create_transpose(const Mat mat_A, Mat &mat_B);
 
 PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, const std::vector<Mat> &block_mat, Mat& mat);
 PetscErrorCode petsc_create_nest_vec(const std::vector<Vec> &block_vec, Vec &vec);
+
+PetscErrorCode petsc_get_local_size_mat(Mat mat, PetscInt* n_row, PetscInt* n_col);
+
+PetscErrorCode petsc_extract_block_mat(const std::vector<PetscInt>& row_local_sizes, const std::vector<PetscInt>& col_local_sizes, Mat mat, std::vector<Mat>& blocks);
+PetscErrorCode petsc_extract_block_vec(const std::vector<PetscInt>& row_local_sizes, Vec vec, std::vector<Vec>& blocks);
 
 
 PetscErrorCode petsc_add_to_mat(PetscInt row_size, const PetscInt rows[],
@@ -60,14 +67,16 @@ PetscErrorCode petsc_resize_mat_list(std::vector<Mat>& mat_list, size_t size);
 PetscErrorCode petsc_resize_vec_list(std::vector<Vec>& vec_list, size_t size);
 
 
+PetscErrorCode petsc_ksp_convergence(KSP ksp, bool *successful, int *iterations, const std::string &label = "KSP");
 
-    // for debug
+// for debug
 
 PetscErrorCode petsc_print_mat(Mat mat, const std::string& name = "");
 PetscErrorCode petsc_print_vec(Mat mat, const std::string& name = "");
 PetscErrorCode petsc_save_ascii_mat(Mat mat, const std::string& file_name);
 PetscErrorCode petsc_save_ascii_vec(Vec vec, const std::string& file_name);
 
+PetscErrorCode petsc_print_memory_usage(const char *label);
 
 }
 

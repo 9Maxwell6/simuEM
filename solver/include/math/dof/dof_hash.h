@@ -30,7 +30,7 @@ private:
     void rehash_1(size_t new_size);
 
 public:
-    Hash_Node(size_t initial_size_1=0);
+    Hash_Node(size_t initial_size_1=2);
 
     size_t get_id(size_t p0, size_t p_dof);
     Hash_ID exist(size_t p0, size_t p_dof);
@@ -51,7 +51,7 @@ private:
     void rehash_2(size_t new_size);
 
 public:
-    Hash_Edge(size_t initial_size_2=0);
+    Hash_Edge(size_t initial_size_2=2);
 
     size_t get_id(size_t p0, size_t p1, size_t p_dof);
     Hash_ID exist(size_t p0, size_t p1, size_t p_dof);
@@ -78,7 +78,7 @@ private:
     void rehash_4(size_t new_size);
 
 public:
-    Hash_Face(size_t initial_size_3=0, size_t initial_size_4=0);
+    Hash_Face(size_t initial_size_3=2, size_t initial_size_4=2);
 
     size_t get_id(size_t p0, size_t p1, size_t p2, size_t p_dof);
     Hash_ID exist(size_t p0, size_t p1, size_t p2, size_t p_dof);
@@ -107,7 +107,7 @@ private:
 
 
 public:
-    Hash_Cell(size_t initial_size_3=0, size_t initial_size_4=0);
+    Hash_Cell(size_t initial_size_3=2, size_t initial_size_4=2);
 
     size_t get_id(size_t p0, size_t p1, size_t p2, size_t p_dof);
     Hash_ID exist(size_t p0, size_t p1, size_t p2, size_t p_dof);

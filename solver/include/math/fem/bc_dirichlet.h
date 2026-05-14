@@ -56,6 +56,7 @@ struct Dirichlet_BC
 
 
     bool apply_to_system(Block_Rack& br);
+    bool apply_to_system(G_Matrix lhs, G_Vector rhs, G_Vector x);
 
 };
 

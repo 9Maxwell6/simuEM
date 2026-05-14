@@ -82,10 +82,52 @@ void create_nest_vec(const std::vector<G_Vector>& block_vec, G_Vector &vec)
 
 
 
+
+
+void get_local_size_mat(G_Matrix mat, size_d* n_row, size_d* n_col)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_get_local_size_mat(mat, n_row, n_col);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::get_local_size_mat: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+
+
+void extract_block_mat(const std::vector<size_d>& row_local_sizes, const std::vector<size_d>& col_local_sizes, G_Matrix mat, std::vector<G_Matrix>& blocks)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_extract_block_mat(row_local_sizes, col_local_sizes, mat, blocks);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::extract_block_mat: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+
+void extract_block_vec(const std::vector<size_d>& row_local_sizes, G_Vector mat, std::vector<G_Vector>& blocks)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_extract_block_vec(row_local_sizes, mat, blocks);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::extract_block_vec: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+
 void destroy_mat(G_Matrix& mat)
 {
     #ifdef LOAD_PETSC
-        petsc_util::petsc_destroy_mat(mat);
+        if(mat) petsc_util::petsc_destroy_mat(mat);
     #else
         mat.reset();
     #endif
@@ -96,7 +138,7 @@ void destroy_mat(G_Matrix& mat)
 void destroy_vec(G_Vector& vec)
 {
     #ifdef LOAD_PETSC
-        petsc_util::petsc_destroy_vec(vec);
+        if(vec) petsc_util::petsc_destroy_vec(vec);
     #else
         vec.reset();
     #endif

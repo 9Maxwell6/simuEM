@@ -34,6 +34,11 @@ void create_transpose(const G_Matrix mat_A, G_Matrix &mat_B);
 void create_nest_mat(size_d b_row_size, size_d b_col_size, const std::vector<G_Matrix> &block_mat, G_Matrix& mat);
 void create_nest_vec(const std::vector<G_Vector>& block_vec, G_Vector &vec);
 
+void get_local_size_mat(G_Matrix mat, size_d* n_row, size_d* n_col);
+
+void extract_block_mat(const std::vector<size_d>& row_local_sizes, const std::vector<size_d>& col_local_sizes, G_Matrix mat, std::vector<G_Matrix>& blocks);
+void extract_block_vec(const std::vector<size_d>& row_local_sizes, G_Vector vec, std::vector<G_Vector>& blocks);
+
 
 void destroy_mat(G_Matrix& mat);
 void destroy_vec(G_Vector& vec);

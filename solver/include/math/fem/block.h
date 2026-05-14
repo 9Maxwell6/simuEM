@@ -29,6 +29,8 @@ struct Block
 
     // matrix operation:
     void block_transpose(const Block& block);
+
+    ~Block();
 };
 
 

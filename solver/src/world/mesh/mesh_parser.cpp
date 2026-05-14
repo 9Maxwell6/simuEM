@@ -288,15 +288,28 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
         }
     }
 
-    for (Element* el : mesh.elements_) {
+    Key global_key = mesh.generate_key(mesh.dim_);  // mesh key to all elements in mesh.
+    mesh.key_domain.push_back(global_key);
+    mesh.element_group[global_key] = mesh.elements_;
+    auto& all_type = mesh.element_geometry_size_group[global_key];
+    mesh.element_group_description[global_key] = "Global elements";
+
+    for (Element* el : mesh.elements_)
         element_map_md[el->get_id()] = el; 
-    }
 
     std::array<size_t, 4> count = mesh.count_node_edge_face_cell(mesh.elements_);
     mesh.n_node_   = count[0];
     mesh.n_edge_   = count[1];
     mesh.n_face_   = count[2];
     mesh.n_cell_ = count[3];
+
+    mesh.element_size_group[global_key] = {mesh.n_node_, mesh.n_edge_, mesh.n_face_, mesh.n_cell_};
+
+    Logger::mesh_entity(mesh.dim_, -1, global_key.id, 
+                                      mesh.element_group[global_key].size(), 
+                                      mesh.element_geometry_size_group[global_key].size(),
+                                      mesh.element_size_group[global_key],
+                                      mesh.element_group_description[global_key]);
 
     //Logger::info("Node number: " + std::to_string(mesh.n_node_));
     Logger::info("Edge number: " + std::to_string(mesh.n_edge_));
@@ -377,6 +390,7 @@ Mesh Mesh_Parser::load_gmsh(const std::string& filename)
                 if(mesh.dim_== dim){
                     for (size_t j = 0; j < n_elements; ++j)
                     {
+                        all_type[type] += n_elements;
                         auto it = element_map_md.find(element_tags[i][j]);  // element id = element_tags[i][j]
                         if (it != element_map_md.end()) {
                             e_group.push_back(it->second);
