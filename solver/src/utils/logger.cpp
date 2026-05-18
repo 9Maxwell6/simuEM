@@ -89,17 +89,18 @@ void Logger::start_timer(const std::string& label)
     timers_[label] = std::chrono::high_resolution_clock::now();
 }
 
-void Logger::stop_timer(const std::string& label)
+double Logger::stop_timer(const std::string& label)
 {
     auto it = timers_.find(label);
     if (it == timers_.end()) {
         Logger::error("Logger::stop_timer - Timer ["+label+"] not found.\n");
-        return;
+        return -1.;
     }
     auto elapsed = std::chrono::high_resolution_clock::now() - it->second;
-    auto ms = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-    Logger::info("["+label+"] elapsed: " + std::to_string(ms / 1'000'000.0) + "s.");
+    auto seconds = std::chrono::duration_cast<std::chrono::duration<double>>(elapsed).count();
+    Logger::info("["+label+"] elapsed: " + std::to_string(seconds) + "s.");
     timers_.erase(it);
+    return seconds;
 }
 
 

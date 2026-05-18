@@ -142,6 +142,71 @@ void Block_Rack::extract_block_system()
 
 
 
+void Block_Rack::extract_block_lhs()
+{
+    local_row_size_.resize(n_row_);
+    block_rhs_.resize(n_row_);
+
+    for (size_d i = 0; i < n_row_; ++i)
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+
+    la_kernel::extract_block_vec(local_row_size_, rhs_, block_rhs_);
+}
+
+void Block_Rack::extract_block_x()
+{
+    local_row_size_.resize(n_row_);
+    block_x_.resize(n_row_);
+
+    for (size_d i = 0; i < n_row_; ++i)
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+
+    la_kernel::extract_block_vec(local_row_size_, x_, block_x_);
+}
+
+
+
+
+
+void Block_Rack::extract_block_rhs()
+{
+    local_row_size_.resize(n_row_);
+    local_col_size_.resize(n_col_);
+
+    block_lhs_.resize(n_row_*n_col_);
+
+    for (size_d i = 0; i < n_row_; ++i)
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+
+    for (size_d j = 0; j < n_col_; ++j)
+        la_kernel::get_local_size_mat(rack_[0 * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
+
+    la_kernel::extract_block_mat(local_row_size_, local_col_size_, lhs_, block_lhs_);
+}
+
+
+std::vector<size_d>& Block_Rack::get_local_row_size()
+{
+    if(local_row_size_.size()>0) return local_row_size_;
+    local_row_size_.resize(n_row_);
+    for (size_d i = 0; i < n_row_; ++i)
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+
+    return local_row_size_;
+}
+
+std::vector<size_d>& Block_Rack::get_local_col_size()
+{
+    if(local_col_size_.size()>0) return local_col_size_;
+    local_col_size_.resize(n_col_);
+    for (size_d j = 0; j < n_col_; ++j)
+        la_kernel::get_local_size_mat(rack_[0 * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
+
+    return local_col_size_;
+}
+
+
+
 void Block_Rack::assemble_block_lhs()
 {
     la_kernel::create_nest_mat(n_row_, n_col_, block_lhs_, lhs_);

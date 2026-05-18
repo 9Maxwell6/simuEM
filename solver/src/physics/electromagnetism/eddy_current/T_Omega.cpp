@@ -1,4 +1,4 @@
-#include "physics/electromagnetism/formulation/T_Omega.h"
+#include "physics/electromagnetism/eddy_current/T_Omega.h"
 
 // for test
 #include <fstream>
@@ -551,17 +551,10 @@ bool T_Omega::solve_system()
         // Solve
         KSPSolve(ksp, rhs, x);
 
-        // Check convergence
-        KSPConvergedReason reason;
-        KSPGetConvergedReason(ksp, &reason);
-        if (reason < 0) {
-            PetscPrintf(PETSC_COMM_WORLD, "KSP did not converge: reason %d\n", reason);
-        } else {
-            PetscInt its;
-            KSPGetIterationNumber(ksp, &its);
-            PetscPrintf(PETSC_COMM_WORLD, "Converged in %d iterations\n", its);
-            successful_flag = true;
-        }
+        // Convergence iterations
+        petsc_util::petsc_ksp_convergence(ksp, nullptr, &n_iteration_, "direct solver");
+
+        Logger::info("[T-Omega] - total interations: "+std::to_string(n_iteration_)+".");
 
         // for debug, load matrix to txt file.
         petsc_util::petsc_save_ascii_mat(lhs, "lhs_mat.txt");
@@ -570,10 +563,14 @@ bool T_Omega::solve_system()
 
         // Clean up
         KSPDestroy(&ksp);
+
+        br_system_.extract_block_system();
+        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_o.txt");
+        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_t.txt");
+
     
     }else{
-        //return solve_pc_system();
-        int total_iterations = 0;
+        return solve_pc_system_2();
         int iteration_buffer = 0;
 
         // single symmetric Gauss-Seidel sweep to the global system
@@ -635,7 +632,7 @@ bool T_Omega::solve_system()
         
         KSPSolve(ksp, rho_1, gamma_1);       // L*γ_1=ρ_1
         petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "L*γ_1  = ρ_1");
-        total_iterations += iteration_buffer;
+        n_iteration_ += iteration_buffer;
 
         petsc_util::petsc_save_ascii_vec(gamma_1, "gamma_1.txt");
 
@@ -651,7 +648,7 @@ bool T_Omega::solve_system()
 
         KSPSolve(ksp, zeta_1, kappa_1);       // Q*κ_1=ζ_1 
         petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q*κ_1  = ζ_1 ");
-        total_iterations += iteration_buffer;
+        n_iteration_ += iteration_buffer;
 
         petsc_util::petsc_save_ascii_vec(kappa_1, "kappa_1.txt");
 
@@ -668,7 +665,7 @@ bool T_Omega::solve_system()
 
         KSPSolve(ksp, zeta_2, kappa_2);       // Q*κ_1=ζ_1 
         petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q_Omega*κ_2  = ζ_2");
-        total_iterations += iteration_buffer;
+        n_iteration_ += iteration_buffer;
 
         // update
         // [x_t] = [x_t] + P*γ_1 + G*κ_1
@@ -689,7 +686,7 @@ bool T_Omega::solve_system()
         // single symmetric Gauss-Seidel sweep to the global system
         MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
 
-        Logger::info("T-Omega with preconditioner, total interations: "+std::to_string(total_iterations)+".");
+        Logger::info("T-Omega with preconditioner, total interations: "+std::to_string(n_iteration_)+".");
 
         petsc_util::petsc_save_ascii_vec(br_system_.get_x(), "x_vec_pc.txt");
 
@@ -735,14 +732,25 @@ bool T_Omega::solve_pc_system()
 
     bool successful_flag = false;
 
-    int total_iterations = 0;
-    int iteration_buffer = 0;
+    int iteration_buffer = 0;    
 
     // single symmetric Gauss-Seidel sweep to the global system
     MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
 
+    petsc_util::petsc_save_ascii_vec(br_system_.get_x(), "x_vec_pc_0step.txt");
+
     // switch to block-wise operations
     br_system_.extract_block_system();
+
+    G_Matrix T   = br_system_.get_block_lhs(1,1);
+    G_Matrix T_c = br_system_.get_block_lhs(1,0);
+    G_Matrix O   = br_system_.get_block_lhs(0,0);
+    G_Matrix O_c = br_system_.get_block_lhs(0,1);
+
+    petsc_util::petsc_save_ascii_mat(T, "T.txt");
+    petsc_util::petsc_save_ascii_mat(T_c, "T_c.txt");
+    petsc_util::petsc_save_ascii_mat(O, "O.txt");
+    petsc_util::petsc_save_ascii_mat(O_c, "O_c.txt");
 
     /**
      *  block system view:
@@ -753,35 +761,38 @@ bool T_Omega::solve_pc_system()
      */
 
     Vec tmp;
-    // ρ_1 = P^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o]) 
-    // ζ_1 = G^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o])
     MatCreateVecs(br_system_.get_block_lhs(1,1), NULL, &tmp); 
     MatMult(br_system_.get_block_lhs(1,1), br_system_.get_block_x(1), tmp);         // tmp=[T] * [x_t]
     MatMultAdd(br_system_.get_block_lhs(1,0), br_system_.get_block_x(0), tmp, tmp); // tmp=tmp + [coupling_t]*[x_o]
     VecAYPX(tmp, -1.0, br_system_.get_block_rhs(1));                                // tmp=[r_t] - tmp
 
+    // ρ_1 = P^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o]) 
     Vec rho_1;
     MatCreateVecs(pc_P_.mat, &rho_1, NULL); 
     MatMultTranspose(pc_P_.mat, tmp, rho_1);      // ρ_1 = P^T * tmp
 
-
+    // ζ_1 = G^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o])
     Vec zeta_1;
     MatCreateVecs(pc_G_T_.mat, &zeta_1, NULL); 
     MatMultTranspose(pc_G_T_.mat, tmp, zeta_1);     // ζ_1 = G^T * tmp
 
 
-    // ζ_2 = I^T * ([r_o] - [Omega]*[x_o] - [coupling_o]*[x_t])
     MatCreateVecs(br_system_.get_block_lhs(0,0), NULL, &tmp); 
-    MatMult(br_system_.get_block_lhs(0,0), br_system_.get_block_x(0), tmp);         // tmp=[T] * [x_t]
-    MatMultAdd(br_system_.get_block_lhs(0,1), br_system_.get_block_x(1), tmp, tmp); // tmp=tmp + [coupling_t]*[x_o]
-    VecAYPX(tmp, -1.0, br_system_.get_block_rhs(0));                                // tmp=[r_t] - tmp
+    MatMult(br_system_.get_block_lhs(0,0), br_system_.get_block_x(0), tmp);         // tmp=[Omega] * [x_o]
+    MatMultAdd(br_system_.get_block_lhs(0,1), br_system_.get_block_x(1), tmp, tmp); // tmp=tmp + [coupling_o]*[x_t]
+    VecAYPX(tmp, -1.0, br_system_.get_block_rhs(0));                                // tmp=[r_o] - tmp
 
+
+    // ζ_2 = I^T * ([r_o] - [Omega]*[x_o] - [coupling_o]*[x_t])
     Vec zeta_2;
     MatCreateVecs(pc_I_.mat, &zeta_2, NULL); 
     MatMultTranspose(pc_I_.mat, tmp, zeta_2);     // ζ_2 = I^T * tmp
 
+
     // ζ_2 = I^T * ([r_o] - [Omega]*[x_o] - [coupling_o]*[x_t])  +  G^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o])
-    VecAXPY(zeta_2, 1.0, zeta_1);
+    //VecAXPY(zeta_2, 1.0, zeta_1);
+
+    
 
     // ready to solve
     KSP ksp;
@@ -800,54 +811,79 @@ bool T_Omega::solve_pc_system()
 
     Vec gamma_1;
     MatCreateVecs(pc_L_.mat, &gamma_1,  NULL);
+    petsc_util::petsc_save_ascii_vec(gamma_1, "gamma_1.txt");
+    VecSet(gamma_1, 0.0);
+    petsc_util::petsc_save_ascii_vec(gamma_1, "gamma_1_ini.txt");
     
     pc_bc_T_1_v_.apply_to_system(pc_L_.mat, rho_1, gamma_1);
+
+
     
     KSPSolve(ksp, rho_1, gamma_1);       // L*γ_1=ρ_1
     petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "L*γ_1  = ρ_1");
-    total_iterations += iteration_buffer;
-
-    petsc_util::petsc_save_ascii_vec(gamma_1, "gamma_1.txt");
+    n_iteration_ += iteration_buffer;
 
 
+    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_t_0");
+    // => [x_t] = [x_t] + P*γ_1
+    MatMultAdd(pc_P_.mat, gamma_1, br_system_.get_block_x(1), br_system_.get_block_x(1));
+    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_t_1");
 
-    // global 
+
+    // global     
+
+
     KSPReset(ksp);
     // Q_global * κ_global  = ζ_2_global
     KSPSetOperators(ksp, pc_global_Q_.mat, pc_global_Q_.mat);
 
     Vec kappa_2;
     MatCreateVecs(pc_global_Q_.mat, &kappa_2, NULL);
+    VecSet(kappa_2, 0.0);
     
     pc_bc_global_.apply_to_system(pc_global_Q_.mat, zeta_2, kappa_2);
 
     KSPSolve(ksp, zeta_2, kappa_2);       // Q_global * κ_global  = ζ_2_global
+    petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q*κ  = ζ");
+    n_iteration_ += iteration_buffer;
 
 
-
-    petsc_util::petsc_save_ascii_mat(pc_Q_Omega_.mat, "pc_Q_Omega_.txt");
 
 
     // [x_t] = [x_t] + P*γ_1 + G*κ_1
     // [x_0] = [x_o] + I*κ_2 
     // 
-    // => [x_t] = [x_t] + P*γ_1 + G*kappa_global
-    MatMultAdd(pc_P_.mat, gamma_1, br_system_.get_block_x(1), br_system_.get_block_x(1));
-    MatMultAdd(pc_G_T_.mat, kappa_2, br_system_.get_block_x(1), br_system_.get_block_x(1));
+    // => [x_t] = [x_t] + G*kappa_global
+    //MatMultAdd(pc_G_T_.mat, kappa_2, br_system_.get_block_x(1), br_system_.get_block_x(1));
+
+
+    //bc_T_1_.apply_to_vec(br_system_.get_block_x(1));
+
+    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_o_0");
 
     //    [x_o] = [x_o] + I*kappa_global
     MatMultAdd(pc_I_.mat, kappa_2, br_system_.get_block_x(0), br_system_.get_block_x(0));
     //    [x_global] = [x_global] + I*κ_2   
 
+    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_o_1");
+
+
+    //bc_Omega_out_.apply_to_vec(br_system_.get_block_x(0));
+    //bc_Omega_in_.apply_to_vec(br_system_.get_block_x(0));
 
     br_system_.assemble_block_x();
 
     // single symmetric Gauss-Seidel sweep to the global system
+    petsc_util::petsc_save_ascii_mat(lhs, "lhs_final.txt");
+    petsc_util::petsc_save_ascii_vec(rhs, "rhs_final.txt");
+    petsc_util::petsc_save_ascii_vec(x, "x_final_before.txt");
+
     MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
 
-    Logger::info("T-Omega with preconditioner, total interations: "+std::to_string(total_iterations)+".");
+    petsc_util::petsc_save_ascii_vec(x, "x_final");
 
-    petsc_util::petsc_save_ascii_vec(br_system_.get_x(), "x_vec_pc.txt");
+    Logger::info("T-Omega with preconditioner, total interations: "+std::to_string(n_iteration_)+".");
+
 
     KSPDestroy(&ksp);
     VecDestroy(&tmp);
@@ -856,6 +892,37 @@ bool T_Omega::solve_pc_system()
     VecDestroy(&zeta_2);
     VecDestroy(&gamma_1);
     VecDestroy(&kappa_2);
+    return true;
+}
+
+
+
+
+
+bool T_Omega::solve_pc_system_2()
+{
+    const G_Matrix lhs = br_system_.get_lhs();
+    const G_Vector rhs = br_system_.get_rhs();
+    const G_Vector x   = br_system_.get_x();
+
+    bool successful_flag = false;
+
+
+    br_system_.extract_block_system();
+
+    T_Omega_AMS::AMS_Info ams_info;
+
+    PetscCall(T_Omega_AMS::solve_AMS(
+        ams_info,
+        pc_P_.mat, pc_G_T_.mat, pc_I_.mat, pc_L_.mat, pc_global_Q_.mat, 
+        &br_system_,
+        &pc_bc_T_1_v_, &pc_bc_global_,
+        1e-8, 200, false));
+
+    n_iteration_ = ams_info.n_iteration;
+
+    br_system_.assemble_block_x();
+
     return true;
 }
 

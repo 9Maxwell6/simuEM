@@ -43,6 +43,18 @@ private:
     Dirichlet_BC bc_;
 
 
+    // preconditioner
+    H1_Space           T_H1_v_;
+    H1_Space           T_H1_s_;
+    Block              pc_P_;
+    Block              pc_G_;
+    Block              pc_L_;   
+    Block              pc_Q_;  
+
+    Dirichlet_BC bc_v_;
+    Dirichlet_BC bc_s_;
+
+
     Block_Rack br_system_;
 
 
@@ -58,7 +70,11 @@ public:
 
     bool assemble_system();
 
-    bool solve_system();
+    bool assemble_pc_system();
+
+    int solve_system();
+
+    int solve_pc_system();
 
     scalar_t compute_L2_error();
 

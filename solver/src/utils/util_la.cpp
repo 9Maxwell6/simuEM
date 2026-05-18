@@ -111,10 +111,10 @@ void extract_block_mat(const std::vector<size_d>& row_local_sizes, const std::ve
 
 
 
-void extract_block_vec(const std::vector<size_d>& row_local_sizes, G_Vector mat, std::vector<G_Vector>& blocks)
+void extract_block_vec(const std::vector<size_d>& row_local_sizes, G_Vector vec, std::vector<G_Vector>& blocks)
 {
     #ifdef LOAD_PETSC
-        petsc_util::petsc_extract_block_vec(row_local_sizes, mat, blocks);
+        petsc_util::petsc_extract_block_vec(row_local_sizes, vec, blocks);
     #else
         // TODO: implement with eigen library.
         Logger::error("la_kernel::extract_block_vec: default implementation not ready, only petsc version available.");

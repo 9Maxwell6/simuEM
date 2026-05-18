@@ -52,8 +52,6 @@ private:
     std::vector<G_Vector>  block_x_;
 
     
-
-    
 public:
     Block_Rack(){};
     Block_Rack(size_t n_row, size_t n_col);
@@ -69,6 +67,14 @@ public:
     void build_linear_system();
 
     void extract_block_system();
+    void extract_block_lhs();
+    void extract_block_rhs();
+    void extract_block_x();
+
+    std::vector<size_d>& get_local_row_size();
+    std::vector<size_d>& get_local_col_size();
+
+    void split_vec(G_Vector vec);
 
 
     void delete_data();

@@ -29,6 +29,8 @@ Poisson::Poisson(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
 
     space_ = H1_Space(mesh.get_mesh_dimension(), 1);
 
+    H1_s_ = H1_Space(mesh.get_mesh_dimension(), 1);
+
     key_true_boundary_ = mesh_.get_keys_true_boundary()[0];  // there must be only one true boundary.
     std::string true_boundary_description = mesh.get_group_description(key_true_boundary_);
     Logger::info("Poisson - Found simulation boundary: " + true_boundary_description);
@@ -52,6 +54,24 @@ Poisson::Poisson(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
     bc_ = fe_system_.register_Dirichlet_BC(dof_field_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
     
     Logger::block_info(dof_field_.id, dof_field_.row_offset, dof_field_.col_offset, dof_field_.row_size, dof_field_.col_size);
+
+
+    Logger::info("[Poisson preconditioner] - initialize preconditioner in H1 global field. ");
+    pc_Q_ = fe_system_.register_dual_FE_space(H1_s_, H1_s_, key_interior_, nullptr, nullptr);
+    Logger::block_info(pc_Q_.id, 
+                       pc_Q_.row_offset, 
+                       pc_Q_.col_offset, 
+                       pc_Q_.row_size, 
+                       pc_Q_.col_size);
+
+
+    Logger::info("[Poisson preconditioner] - initialize dof mapping from global H1 to omega H1 field.");
+    pc_I_ = fe_system_.register_FE_space_coupling(dof_field_, pc_Q_, key_interior_);
+    Logger::block_info(pc_I_.id, 
+                       pc_I_.row_offset, 
+                       pc_I_.col_offset, 
+                       pc_I_.row_size, 
+                       pc_I_.col_size);
 
 
 
@@ -138,6 +158,23 @@ bool Poisson::assemble_system()
 
 
 
+bool Poisson::assemble_pc_system()
+{
+    Logger::info("[Poisson - preconditioner] - assemble preconditioner in H1 Omega field.");
+    assemble_mat(fe_system_.assemble_mat_data(pc_Q_), [&](auto& e_data, auto& mat) {
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(1, e_data, mat);
+    });
+
+
+    Logger::info("[Poisson - preconditioner] - assemble dof mapping from global H1 to omega H1 field.");
+    assemble_mat(fe_system_.assemble_mat_data(pc_I_), [&](auto& e_data, auto& mat) {
+        Identity_Mapping::direct_mapping(e_data, mat);
+    });
+
+    return true;
+}
+
+
 
 bool Poisson::solve_system()
 {
@@ -203,6 +240,84 @@ bool Poisson::solve_system()
     return successful_flag;
 }
 
+
+
+
+bool Poisson::solve_pc_system()
+{
+    const G_Matrix lhs = br_system_.get_lhs();
+    const G_Vector rhs = br_system_.get_rhs();
+    const G_Vector x   = br_system_.get_x();
+
+    int n_iteration_ = 0;
+    int iteration_buffer = 0;
+
+    bool successful_flag = false;
+#ifdef LOAD_PETSC
+
+     // single symmetric Gauss-Seidel sweep
+    MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
+
+    br_system_.extract_block_system();
+
+    //G_Matrix T   = br_system_.get_block_lhs(0,0);
+
+    Vec tmp;
+    MatCreateVecs(br_system_.get_block_lhs(0,0), NULL, &tmp); 
+    MatMult(br_system_.get_block_lhs(0,0), br_system_.get_block_x(0), tmp);         // tmp=[Omega] * [x_o]
+    VecAYPX(tmp, -1.0, br_system_.get_block_rhs(0));                                // tmp=[r_o] - tmp
+
+
+    Vec zeta_1;
+    MatCreateVecs(pc_I_.mat, &zeta_1, NULL); 
+    MatMultTranspose(pc_I_.mat, tmp, zeta_1); 
+
+
+    // ready to solve
+    KSP ksp;
+    KSPCreate(PETSC_COMM_WORLD, &ksp);
+    KSPSetType(ksp, KSPGMRES);
+    //KSPSetType(ksp, KSPCG);            // need SPD
+    PC pc;
+    KSPGetPC(ksp, &pc);
+    PCSetType(pc, PCHYPRE);
+    PCHYPRESetType(pc, "boomeramg");     // enable hypre AMG
+    KSPSetFromOptions(ksp);
+
+    // Q * κ_1  = ζ_1
+    KSPSetOperators(ksp, pc_Q_.mat, pc_Q_.mat);
+
+    Vec kappa_1;
+    MatCreateVecs(pc_Q_.mat, &kappa_1, NULL);
+    VecSet(kappa_1, 0.0);
+    
+    bc_.apply_to_system(pc_Q_.mat, zeta_1, kappa_1);
+
+    KSPSolve(ksp, zeta_1, kappa_1);       // Q_1 * κ_1  = ζ_1
+    petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q*κ  = ζ");
+    n_iteration_ += iteration_buffer;
+
+    // [x_0] = [x_o] + I*κ_2 
+    // 
+    // => [x_t] = [x_t] + G*kappa_global
+    MatMultAdd(pc_I_.mat, kappa_1, br_system_.get_block_x(0), br_system_.get_block_x(0));
+
+    br_system_.assemble_block_x();
+
+    MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
+
+    // Clean up
+    KSPDestroy(&ksp);
+    VecDestroy(&tmp);
+    VecDestroy(&zeta_1);
+    VecDestroy(&kappa_1);
+
+#else
+    Logger::error("[CurlCurl] - this solver require petsc support!");
+#endif
+
+    return successful_flag;
+}
 
 
 
@@ -356,10 +471,12 @@ int main(int argc, char** argv) {
 
             Logger::start_timer("Assemble Poisson matrix system");
             P.assemble_system();
+            P.assemble_pc_system();
             Logger::stop_timer("Assemble Poisson matrix system");
 
             Logger::start_timer("Solve Poisson matrix system");
             P.solve_system();
+            //P.solve_pc_system();
             Logger::stop_timer("Solve Poisson matrix system");
 
             Logger::start_timer("Compute L2 error.");

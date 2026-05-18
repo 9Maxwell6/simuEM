@@ -17,7 +17,7 @@
 
 //#include <config.h>
 #include "world/mesh/mesh_parser.h"
-#include "physics/electromagnetism/formulation/T_Omega.h"
+#include "physics/electromagnetism/eddy_current/T_Omega.h"
 #include "physics/electromagnetism/mfem_eddy_current.h"
 
 
@@ -99,19 +99,26 @@ int main(int argc, char** argv)
             //{"test_cc_10.geo", 0.01562500}
         };
 
-        const std::string dat_path = DATA_OUTPUT_DIR + std::string("/T_Omega_l2.dat");
+        std::string file_str = enable_preconditioner ? "/T_Omega_l2_pc.dat" : "/T_Omega_l2.dat";
+
+        const std::string dat_path = DATA_OUTPUT_DIR + file_str;
         std::ofstream l2_convergence(dat_path);
-        l2_convergence << "# h                        L2_error\n";
+        l2_convergence << "# h                        #cell    L2_error         #iteration     assemble[s]            solve[s]\n";
         l2_convergence << std::scientific << std::setprecision(15);
         
 
         for (const auto& [mesh_file, h] : mesh_sweep) {
             petsc_util::petsc_print_memory_usage("iter N start");
             scalar_t l2_error;
+            size_t n_element = 0;
+            int n_iteration = -1;
+            double assemble_time = 0.;
+            double solving_time = 0.;
             {
                 Logger::start_timer("Loading mesh");
                 Mesh_Parser mp(Mesh_Format::GMSH);
                 Mesh mesh = mp.load_mesh(SCRIPT_PATH + mesh_file);
+                n_element = mesh.get_mesh_elements().size();
                 Logger::stop_timer("Loading mesh");
 
                 Logger::start_timer("Initialize T-Omega solver");
@@ -120,21 +127,23 @@ int main(int argc, char** argv)
 
                 Logger::start_timer("Assemble T-Omega matrix system");
                 T_O.assemble_system();
-                Logger::stop_timer("Assemble T-Omega matrix system");
+                assemble_time += Logger::stop_timer("Assemble T-Omega matrix system");
 
                 if(enable_preconditioner){
                     Logger::start_timer("Assemble T-Omega preconditioner");
                     T_O.assemble_preconditioner();
-                    Logger::stop_timer("Assemble T-Omega preconditioner");
+                    assemble_time += Logger::stop_timer("Assemble T-Omega preconditioner");
                 }
 
                 Logger::start_timer("Solve T-Omega matrix system");
                 T_O.solve_system();
-                Logger::stop_timer("Solve T-Omega matrix system");
+                solving_time = Logger::stop_timer("Solve T-Omega matrix system");
 
                 Logger::start_timer("Compute L2 error.");
                 l2_error = T_O.compute_L2_error();
                 Logger::stop_timer("Compute L2 error.");
+
+                n_iteration = T_O.get_n_iteration();
 
                 T_O.finalize();
             }
@@ -143,7 +152,11 @@ int main(int argc, char** argv)
             ss << std::scientific << std::setprecision(15) << l2_error;
             Logger::info("[T-Omega] h = " + std::to_string(h) + "  L2 error: " + ss.str());
 
-            l2_convergence << h << "  " << l2_error << "\n";
+            l2_convergence << h << "  " << n_element 
+                                << "  " << l2_error 
+                                << "  " << n_iteration
+                                << "  " << assemble_time
+                                << "  " << solving_time << "\n";
             l2_convergence.flush();   // persist after every run — a crash on the
                                 // finest mesh won't lose the earlier points
             petsc_util::petsc_print_memory_usage("iter N end");

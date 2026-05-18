@@ -51,7 +51,7 @@ public:
 
     static void start_timer(const std::string& label);
 
-    static void stop_timer(const std::string& label);
+    static double stop_timer(const std::string& label);
 
     // Save all collected logs to a file at once
     static void export_to_file(const std::string& filename);

@@ -49,3 +49,22 @@ bool Dirichlet_BC::apply_to_system(G_Matrix lhs, G_Vector rhs, G_Vector x)
     la_kernel::zero_row_col_mat(bc_dofs, 1., lhs, x, rhs);
     return true;
 }
+
+bool Dirichlet_BC::apply_to_mat(G_Matrix mat)
+{
+    la_kernel::zero_row_col_mat(bc_dofs, 1., mat, NULL, NULL);
+    
+    return true;
+}
+
+bool Dirichlet_BC::apply_to_vec(G_Vector vec)
+{
+    switch (bc_type) 
+    {
+        case Dirichlet_Type::HOMOGENEOUS: { la_kernel::set_value_vec(bc_dofs, std::vector<scalar_t>(bc_dofs.size(), 0.), vec); break; }
+        case Dirichlet_Type::CONSTANT:    { la_kernel::set_value_vec(bc_dofs, std::vector<scalar_t>(bc_dofs.size(), bc_values[0]), vec); break;}
+        case Dirichlet_Type::FIELD:       { la_kernel::set_value_vec(bc_dofs, bc_values, vec); break;}
+    }
+    
+    return true;
+}

@@ -45,6 +45,13 @@ private:
 
     Block_Rack br_system_;
 
+    // preconditioner
+    H1_Space           H1_s_;
+
+    Block              pc_I_;  
+    Block              pc_Q_;  
+
+
 
     int dim_;
 
@@ -58,7 +65,11 @@ public:
 
     bool assemble_system();
 
+    bool assemble_pc_system();
+
     bool solve_system();
+
+    bool solve_pc_system();
 
     scalar_t compute_L2_error();
 

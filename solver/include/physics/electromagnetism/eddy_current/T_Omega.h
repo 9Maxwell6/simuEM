@@ -18,6 +18,9 @@
 #include "utils/util_string.h"
 #include "utils/util_constant.h"
 
+#include "physics/electromagnetism/eddy_current/auxiliary_solver.h"
+
+
 
 
 #include <functional>
@@ -39,6 +42,8 @@ class T_Omega
 
 private:
     bool enable_pc_ = false;  // preconditioner flag
+
+    int n_iteration_ = 0;
 
     Mesh& mesh_;
     FEM_System fe_system_;
@@ -185,7 +190,11 @@ public:
 
     bool solve_pc_system();
 
+    bool solve_pc_system_2();
+
     scalar_t compute_L2_error();
+
+    int get_n_iteration() const { return n_iteration_; }
 
     void finalize();
 

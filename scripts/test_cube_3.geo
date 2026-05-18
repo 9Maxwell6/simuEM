@@ -72,7 +72,7 @@ Surface Loop(1) = {1, 2, 3, 4, 5, 6};
 Volume(1) = {1};
 
 
-Physical Volume("space", 1) = {1};
+Physical Volume("Conductor 1", 1) = {1};
 
 
 Physical Surface("True Boundary 1", 10) = {1, 2, 3, 4, 5, 6};

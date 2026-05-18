@@ -1,2 +1,2 @@
-add_subdirectory(formulation)
+add_subdirectory(eddy_current)
 
