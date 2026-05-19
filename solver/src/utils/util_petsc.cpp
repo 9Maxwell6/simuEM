@@ -162,6 +162,28 @@ PetscErrorCode petsc_create_nest_vec(const std::vector<Vec>& block_vec, Vec &vec
 
 
 
+PetscErrorCode petsc_write_to_vec(const std::vector<Vec>& block_vec, Vec vec)
+{
+    PetscFunctionBeginUser;
+    // PRECONDITION: vec already exists with size = sum of block_vec sizes
+    PetscScalar *dst;
+    PetscCall(VecGetArray(vec, &dst));
+    PetscInt offset = 0;
+    for (auto& v : block_vec) {
+        PetscInt n;
+        PetscCall(VecGetLocalSize(v, &n));
+        const PetscScalar *src;
+        PetscCall(VecGetArrayRead(v, &src));
+        PetscCall(PetscArraycpy(dst + offset, src, n));
+        PetscCall(VecRestoreArrayRead(v, &src));
+        offset += n;
+    }
+    PetscCall(VecRestoreArray(vec, &dst));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
 
 PetscErrorCode petsc_get_local_size_mat(Mat mat, PetscInt* n_row, PetscInt* n_col)
 {

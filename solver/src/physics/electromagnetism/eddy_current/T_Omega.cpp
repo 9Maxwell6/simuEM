@@ -233,6 +233,10 @@ T_Omega::T_Omega(Mesh& mesh, bool enable_preconditioner) : mesh_(mesh), enable_p
                        pc_I_.col_size);
     
     pc_bc_global_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
+
+    pc_bc_global_O1_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
+    pc_bc_global_O2_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
+    pc_bc_global_T_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
     
     pc_bc_T_1_v_ = fe_system_.register_Dirichlet_BC(pc_L_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
     pc_bc_T_1_s_ = fe_system_.register_Dirichlet_BC(pc_Q_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
@@ -240,6 +244,7 @@ T_Omega::T_Omega(Mesh& mesh, bool enable_preconditioner) : mesh_(mesh), enable_p
     pc_bc_Omega_out_ = fe_system_.register_Dirichlet_BC(pc_Q_Omega_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
 
     pc_bc_Omega_in_ = fe_system_.register_Dirichlet_BC(pc_Q_Omega_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
+    
 
 
 
@@ -502,6 +507,7 @@ bool T_Omega::assemble_preconditioner()
     petsc_util::petsc_save_ascii_mat(pc_Q_.mat, "Q_mat.txt");
     petsc_util::petsc_save_ascii_mat(pc_G_T_.mat, "G_T_mat.txt");
     petsc_util::petsc_save_ascii_mat(pc_I_.mat, "pc_I_mat.txt");
+    petsc_util::petsc_save_ascii_mat(pc_global_Q_.mat, "global_Q_mat.txt");
 
 
     return true;
@@ -910,18 +916,20 @@ bool T_Omega::solve_pc_system_2()
 
     br_system_.extract_block_system();
 
+    petsc_util::petsc_save_ascii_vec(rhs, "rhs_initial.txt");
+
     T_Omega_AMS::AMS_Info ams_info;
 
     PetscCall(T_Omega_AMS::solve_AMS(
         ams_info,
         pc_P_.mat, pc_G_T_.mat, pc_I_.mat, pc_L_.mat, pc_global_Q_.mat, 
         &br_system_,
-        &pc_bc_T_1_v_, &pc_bc_global_,
-        1e-8, 200, false));
+        &pc_bc_T_1_v_, &pc_bc_global_O1_, &pc_bc_global_O2_, &pc_bc_global_T_,
+        1e-10, PETSC_DEFAULT, true));
 
     n_iteration_ = ams_info.n_iteration;
 
-    br_system_.assemble_block_x();
+    //br_system_.assemble_block_x();
 
     return true;
 }

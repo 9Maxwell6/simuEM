@@ -14,7 +14,7 @@ plt.rcParams["axes.titlesize"] = 11
 plt.rcParams["legend.fontsize"] = 9
 
 def main():
-    ap = argparse.ArgumentParser(description="Plot FEM convergence (h vs L2 error).")
+    ap = argparse.ArgumentParser(description="Plot solver iterations vs h.")
     ap.add_argument("files", nargs="+",
                     help="one or more .dat files; columns: h, #cell, L2_error, #iter, assemble, solve")
     ap.add_argument("-o", "--output", help="save figure to this file instead of showing it")
@@ -26,27 +26,27 @@ def main():
     fig, ax = plt.subplots(figsize=(6, 5))
     ax.set_prop_cycle(color=plt.cm.Set1.colors)
     for path in args.files:
-        h, err = np.loadtxt(path, comments="#", usecols=(0, 2), unpack=True)
+        h, nit = np.loadtxt(path, comments="#", usecols=(0, 3), unpack=True)
         order = np.argsort(h)
-        h, err = h[order], err[order]
+        h, nit = h[order], nit[order]
 
         if args.last_n is not None and args.last_n < len(h):
-            h_fit, err_fit = h[:args.last_n], err[:args.last_n]
+            h_fit, nit_fit = h[:args.last_n], nit[:args.last_n]
         else:
-            h_fit, err_fit = h, err
+            h_fit, nit_fit = h, nit
 
-        slope, intercept = np.polyfit(np.log(h_fit), np.log(err_fit), 1)
+        slope, intercept = np.polyfit(np.log(h_fit), np.log(nit_fit), 1)
         fit = np.exp(intercept) * h ** slope
 
         label = os.path.basename(path).replace("_", r"\_")
-        line, = ax.loglog(h, err, "+-", markersize=7, linewidth=0.7,
+        line, = ax.loglog(h, nit, "+-", markersize=7, linewidth=0.7,
                           label=f"{label}  ($\\sim h^{{{slope:.3f}}}$)")
         ax.loglog(h, fit, "--", linewidth=0.7, alpha=0.6, color=line.get_color())
 
-        print(f"{label}: convergence rate = {slope:.4f}")
+        print(f"{label}: iteration slope = {slope:.4f}")
 
     ax.set_xlabel(r"$h$")
-    ax.set_ylabel(r"$\|u - u_h\|_{\text{\scriptsize 0}}$")
+    ax.set_ylabel(r"\# iterations")
     ax.grid(True, which="both", alpha=0.3)
     ax.legend()
     ax.invert_xaxis()

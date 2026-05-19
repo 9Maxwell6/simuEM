@@ -15,7 +15,9 @@ typedef struct AMS_Context
     Vec zeta,  kappa;                 // size   nV (Q-space RHS / sol)
     Block_Rack* br_system;
     Dirichlet_BC *bc_v;                   // for L (vector / 3D nodal space)
-    Dirichlet_BC *bc_s;                   // for Q (scalar nodal space)
+    Dirichlet_BC *bc_s1;                   // for Q (scalar nodal space)
+    Dirichlet_BC *bc_s2;                   // for Q (scalar nodal space)
+    Dirichlet_BC *bc_s3;                   // for Q (scalar nodal space)
 } AMS_Context;
 
 typedef struct AMS_Info 
@@ -38,7 +40,7 @@ PetscErrorCode solve_AMS(
     AMS_Info& AMS_info,
     Mat P, Mat G, Mat I, Mat L, Mat Q,
     Block_Rack* br_system,
-    Dirichlet_BC *bc_v, Dirichlet_BC *bc_s,
+    Dirichlet_BC *bc_v, Dirichlet_BC *bc_s1, Dirichlet_BC *bc_s2, Dirichlet_BC *bc_s3,
     PetscReal rtol = 1e-10, PetscInt max_iters = PETSC_DEFAULT, bool enable_monitor = false);
 
 

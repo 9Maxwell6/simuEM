@@ -72,6 +72,9 @@ private:
     H1_Space           global_H1;
     Block              pc_global_Q_;
     Dirichlet_BC       pc_bc_global_;
+    Dirichlet_BC       pc_bc_global_O1_;
+    Dirichlet_BC       pc_bc_global_O2_;
+    Dirichlet_BC       pc_bc_global_T_;
 
     Dirichlet_BC bc_Omega_out_;
     Dirichlet_BC bc_Omega_in_;

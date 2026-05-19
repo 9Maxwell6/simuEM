@@ -24,6 +24,9 @@ PetscErrorCode petsc_create_transpose(const Mat mat_A, Mat &mat_B);
 PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, const std::vector<Mat> &block_mat, Mat& mat);
 PetscErrorCode petsc_create_nest_vec(const std::vector<Vec> &block_vec, Vec &vec);
 
+PetscErrorCode petsc_write_to_vec(const std::vector<Vec>& block_vec, Vec vec);
+
+
 PetscErrorCode petsc_get_local_size_mat(Mat mat, PetscInt* n_row, PetscInt* n_col);
 
 PetscErrorCode petsc_extract_block_mat(const std::vector<PetscInt>& row_local_sizes, const std::vector<PetscInt>& col_local_sizes, Mat mat, std::vector<Mat>& blocks);

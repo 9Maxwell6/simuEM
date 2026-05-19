@@ -84,6 +84,20 @@ void create_nest_vec(const std::vector<G_Vector>& block_vec, G_Vector &vec)
 
 
 
+void write_to_vec(const std::vector<G_Vector>& block_vec, G_Vector vec)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_write_to_vec(block_vec, vec);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::petsc_write_to_vec: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+
+
 void get_local_size_mat(G_Matrix mat, size_d* n_row, size_d* n_col)
 {
     #ifdef LOAD_PETSC

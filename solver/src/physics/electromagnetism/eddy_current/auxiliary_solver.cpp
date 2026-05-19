@@ -10,7 +10,7 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     PetscCall(PCShellGetContext(pc, (void**)&ctx));
 
     const Mat A = ctx->br_system->get_lhs();
-    const Vec br_x  = ctx->br_system->get_x();
+    //const Vec br_x  = ctx->br_system->get_x();
 
 
 
@@ -64,16 +64,50 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     PetscCall(MatMultTranspose(ctx->P, ctx->tmp_1, ctx->rho));
     PetscCall(MatMultTranspose(ctx->G, ctx->tmp_1, ctx->zeta));
 
+    //petsc_util::petsc_save_ascii_vec(ctx->zeta, "zeta_T0.txt");
+
+    //ctx->bc_s3->apply_to_vec(ctx->zeta);
+
+    //PetscCall(VecScale(ctx->zeta, 0.5));
+    //PetscCall(VecScale(ctx->tmp_2, 0.5));
+
+
+
+    //for(dof_idx id : ctx->bc_s3->bc_dofs)
+    //    std::cout<<id<<std::endl;
+    //std::cout<<"total T-BC size: "<<ctx->bc_s3->bc_dofs.size()<<std::endl;
+
+    //petsc_util::petsc_save_ascii_vec(ctx->zeta, "zeta_T.txt");
+    
+
+    //PetscCall(MatMultTranspose(ctx->I, ctx->tmp_2, ctx->zeta));
+
+    petsc_util::petsc_save_ascii_vec(ctx->zeta, "zeta_O.txt");
+
+    //exit(0);
+
     //    zeta = zeta + I^T * tmp_2   (H1)
     PetscCall(MatMultTransposeAdd(ctx->I, ctx->tmp_2, ctx->zeta, ctx->zeta));
+
+    
  
     // -- Step 4: enforce Dirichlet on inner-solve RHS and initial guess,
     //            then solve each inner system with one BoomerAMG V-cycle.
     PetscCall(VecSet(ctx->gamma, 0.));
     PetscCall(VecSet(ctx->kappa, 0.));
+
+    petsc_util::petsc_save_ascii_vec(ctx->rho, "rho_00.txt");
  
-    ctx->bc_v->apply_to_vec(ctx->rho);
-    ctx->bc_s->apply_to_vec(ctx->zeta);
+    ctx->bc_v->apply_to_vec(ctx->rho);   // ??
+    ctx->bc_s1->apply_to_vec(ctx->zeta);  // ??
+    ctx->bc_s2->apply_to_vec(ctx->zeta);
+    ctx->bc_s3->apply_to_vec(ctx->zeta);
+
+    petsc_util::petsc_save_ascii_vec(rt, "rt.txt");
+
+    petsc_util::petsc_save_ascii_vec(ctx->rho, "rho.txt");
+
+    petsc_util::petsc_save_ascii_vec(ctx->zeta, "zeta.txt");
  
     //    Single BoomerAMG V-cycle for each (no inner GMRES; KSPPREONLY).
     PetscCall(KSPSolve(ctx->inner_L_ksp, ctx->rho,  ctx->gamma));
@@ -82,10 +116,16 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     petsc_util::petsc_save_ascii_vec(ctx->gamma, "gamma.txt");
     petsc_util::petsc_save_ascii_vec(ctx->kappa, "kappa.txt");
 
+    //ctx->bc_s1->apply_to_vec(ctx->kappa);
+    //ctx->bc_s2->apply_to_vec(ctx->kappa);
+    //ctx->bc_s3->apply_to_vec(ctx->kappa);
+
  
     // -- Step 5: transfer corrections back to E_h
     //    xt = xt + P*gamma_1 + G*kappa
+    //    xt = xt + P*gamma_1
     PetscCall(MatMultAdd(ctx->P, ctx->gamma, xt, xt));
+    //    xt = xt + G*kappa
     PetscCall(MatMultAdd(ctx->G, ctx->kappa, xt, xt));
     //    xo = xo + I*kappa
     PetscCall(MatMultAdd(ctx->I, ctx->kappa, xo, xo));
@@ -93,7 +133,22 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     petsc_util::petsc_save_ascii_vec(xo, "xo.txt");
     petsc_util::petsc_save_ascii_vec(xt, "xt.txt");
 
-    la_kernel::create_nest_vec(block_x, x);
+    /*
+    PetscReal xt_norm, Gk_norm, kappa_norm, zeta_norm;
+    PetscCall(VecNorm(xt, NORM_2, &xt_norm));
+    PetscCall(VecNorm(ctx->kappa, NORM_2, &kappa_norm));
+    PetscCall(VecNorm(ctx->zeta,  NORM_2, &zeta_norm));
+    PetscCall(MatMult(ctx->G, ctx->kappa, ctx->tmp_1));  // borrow tmp_1
+    PetscCall(VecNorm(ctx->tmp_1, NORM_2, &Gk_norm));
+    PetscPrintf(PETSC_COMM_WORLD,
+        "[AMS] ||xt||=%.3e  ||zeta||=%.3e  ||kappa||=%.3e  ||G*kappa||=%.3e\n",
+        (double)xt_norm, (double)zeta_norm, (double)kappa_norm, (double)Gk_norm);
+    //*/
+
+    
+    
+
+    la_kernel::write_to_vec(block_x, x);
 
     petsc_util::petsc_save_ascii_vec(x, "x_02.txt");
 
@@ -101,7 +156,7 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     // -- Step 6: post-smoother (continues from updated z)
     PetscCall(MatSOR(A, r, 1., SOR_SYMMETRIC_SWEEP, 0., 1, 1, x));
 
-    PetscCall(VecCopy(x, br_x));
+    //PetscCall(VecCopy(x, br_x));
     
     petsc_util::petsc_save_ascii_vec(x, "x_03.txt");
 
@@ -135,7 +190,7 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     AMS_Info& AMS_info,
     Mat P, Mat G, Mat I, Mat L, Mat Q,
     Block_Rack* br_system,
-    Dirichlet_BC *bc_v, Dirichlet_BC *bc_s,
+    Dirichlet_BC *bc_v, Dirichlet_BC *bc_s1, Dirichlet_BC *bc_s2, Dirichlet_BC *bc_s3,
     PetscReal rtol, PetscInt max_iters, bool enable_monitor)
 {
     AMS_Context *ctx;
@@ -144,7 +199,11 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     PetscFunctionBeginUser;
 
     bc_v->apply_to_mat(L);
-    bc_s->apply_to_mat(Q);
+    bc_s1->apply_to_mat(Q);
+    bc_s2->apply_to_mat(Q);
+    bc_s3->apply_to_mat(Q);
+
+    petsc_util::petsc_save_ascii_mat(L, "L_initial.txt");
  
     // ---------- Allocate context ----------
     PetscCall(PetscNew(&ctx));
@@ -155,7 +214,9 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     ctx->Q = Q;
     ctx->br_system = br_system;
     ctx->bc_v = bc_v;
-    ctx->bc_s = bc_s;
+    ctx->bc_s1 = bc_s1;
+    ctx->bc_s2 = bc_s2;
+    ctx->bc_s3 = bc_s3;
  
     // ---------- Inner KSP for L: PREONLY + BoomerAMG (single V-cycle) ----------
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_L_ksp));
@@ -180,6 +241,7 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
         PetscCall(PCSetType(pc_in, PCHYPRE));
         PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
     }
+
     PetscCall(KSPSetOptionsPrefix(ctx->inner_Q_ksp, "inner_Q_"));
     PetscCall(KSPSetOperators(ctx->inner_Q_ksp, Q, Q));
     PetscCall(KSPSetFromOptions(ctx->inner_Q_ksp));
@@ -193,13 +255,19 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     PetscCall(MatCreateVecs(L, &ctx->gamma, &ctx->rho));  // size 3 * #node in T-field
     PetscCall(MatCreateVecs(Q, &ctx->kappa, &ctx->zeta)); // size     #node in global field
  
-    // ---------- Outer KSP: FGMRES + PCShell(AMS) ----------
+    // ---------- Outer KSP + PCShell(AMS) ----------
     const Mat A = ctx->br_system->get_lhs();
     const Vec r = ctx->br_system->get_rhs();
     const Vec x = ctx->br_system->get_x();
 
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &outer));
-    PetscCall(KSPSetType(outer, KSPGMRES));     // FGMRES, NOT CG (inner is non-sym)
+    PetscCall(KSPSetType(outer, KSPGMRES));     
+
+    //PetscCall(KSPSetType(outer, KSPFGMRES));
+    //PetscCall(KSPSetPCSide(outer, PC_RIGHT));
+    //PetscCall(KSPSetNormType(outer, KSP_NORM_UNPRECONDITIONED));
+    //PetscCall(KSPGMRESSetRestart(outer, 200));
+
     PetscCall(KSPSetOperators(outer, A, A));
     PetscCall(KSPSetTolerances(outer, rtol, PETSC_DEFAULT, PETSC_DEFAULT, max_iters));
 

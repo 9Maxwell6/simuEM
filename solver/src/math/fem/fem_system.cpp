@@ -652,7 +652,7 @@ Block FEM_System::register_FE_space_coupling(const Block& block_1, const Block& 
     }else{
         Logger::error("FEM_System::register_FE_space_coupling - coupling block initialization failed, return bad block.");
         return {0,0,0,0,0,false};
-    }    
+    }
 }
 
 

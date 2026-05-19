@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
         const std::string dat_path = DATA_OUTPUT_DIR + file_str;
         std::ofstream l2_convergence(dat_path);
-        l2_convergence << "# h                        #cell    L2_error         #iteration     assemble[s]            solve[s]\n";
+        l2_convergence << "# h                    #cell      L2_error           #iteration     assemble[s]            solve[s]\n";
         l2_convergence << std::scientific << std::setprecision(15);
         
 
