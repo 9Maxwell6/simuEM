@@ -443,7 +443,7 @@ PetscErrorCode solve_AMS(PetscInt& n_iter,
     PetscCall(KSPGetIterationNumber(outer, &iters));
     PetscCall(KSPGetResidualNorm   (outer, &rnorm));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD,
-        "[AMS] outer FGMRES: iters=%" PetscInt_FMT
+        "[AMS] outer GMRES: iters=%" PetscInt_FMT
         ", final ||r||=%.3e, reason=%d\n",
         iters, (double)rnorm, (int)reason));
  

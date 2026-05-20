@@ -44,6 +44,7 @@ private:
     bool enable_pc_ = false;  // preconditioner flag
 
     int n_iteration_ = 0;
+    double system_condition_ = 0.;
 
     Mesh& mesh_;
     FEM_System fe_system_;
@@ -57,34 +58,23 @@ private:
     Block              dof_coupling_1_;
     Block              dof_coupling_tp_1_;
 
-    H1_Space           T_H1_v_; //  vector H1 field in T
-    H1_Space           T_H1_s_; //  scalar H1 field in T
-    Block              pc_P_;   //  edge interpolation matrix for preconditioner.
-    Block              pc_G_;   //  discrete gradient matrix  for preconditioner.
-    Block              pc_L_;   //  L = integral_{ σ^-1  ∇u : ∇v  + μ u.v  dx }    (H1)^3 x (H1)^3
-    Block              pc_Q_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1   inside T
-
-    //Block              pc_I_Omega_;   //  discrete gradient matrix  for preconditioner.
-    Block              pc_Q_Omega_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1   inside Omega
-
-    Block              pc_G_T_;
-    Block              pc_I_;
-    H1_Space           global_H1;
-    Block              pc_global_Q_;
-    Dirichlet_BC       pc_bc_global_;
-    Dirichlet_BC       pc_bc_global_O1_;
-    Dirichlet_BC       pc_bc_global_O2_;
-    Dirichlet_BC       pc_bc_global_T_;
-
     Dirichlet_BC bc_Omega_out_;
     Dirichlet_BC bc_Omega_in_;
-
     Dirichlet_BC bc_T_1_;
 
 
-    Dirichlet_BC pc_bc_Omega_out_;
-    Dirichlet_BC pc_bc_Omega_in_;
+    // for preconditioner
+    H1_Space           T_H1_v_; //  vector H1 field in T
+    H1_Space           T_H1_s_; //  scalar H1 field in T
+    Block              pc_P_;   //  edge interpolation matrix for preconditioner.
+    Block              pc_L_;   //  L = integral_{ σ^-1  ∇u : ∇v  + μ u.v  dx }    (H1)^3 x (H1)^3
 
+    Block              pc_G_; //  discrete gradient matrix  for preconditioner.
+    Block              pc_I_;
+    H1_Space           global_H1;
+    Block              pc_Q_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1  in global mesh
+
+    Dirichlet_BC pc_bc_O_s_;
     Dirichlet_BC pc_bc_T_1_v_;
     Dirichlet_BC pc_bc_T_1_s_;
     
@@ -198,6 +188,7 @@ public:
     scalar_t compute_L2_error();
 
     int get_n_iteration() const { return n_iteration_; }
+    double get_system_condition() const { return system_condition_; }
 
     void finalize();
 

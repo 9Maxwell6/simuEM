@@ -78,10 +78,10 @@ PetscErrorCode petsc_init_vec(PetscInt size, Vec& vec)
 /**
  * @brief Create a virtual transpose view of a matrix.
  *
- * @note A must be at least created.
+ * @note mat_A must be at least created.
  *
- * @param A  source matrix.
- * @param B  transpose view of A.
+ * @param mat_A  source matrix.
+ * @param mat_B  transpose view of mat_A.
  * 
  * @return PetscErrorCode  PETSC_SUCCESS on success.
  */
@@ -602,6 +602,68 @@ PetscErrorCode petsc_ksp_convergence(KSP ksp, bool *successful, int *iterations,
 }
 
 
+
+
+PetscErrorCode petsc_estimate_condition_number(Mat mat, PetscReal *cond)
+{
+    KSP        ksp;
+    PC         pc;
+    Vec        x, b;
+    PetscReal  sigma_max, sigma_min;
+
+    PetscFunctionBeginUser;
+
+    // Dummy RHS / solution vectors compatible with mat
+    PetscCall(MatCreateVecs(mat, &x, &b));
+    PetscCall(VecSet(b, 1.0));
+    PetscCall(VecSet(x, 0.0));
+
+    PetscCall(KSPCreate(PetscObjectComm((PetscObject)mat), &ksp));
+    PetscCall(KSPSetOperators(ksp, mat, mat));
+    PetscCall(KSPSetType(ksp, KSPGMRES));
+
+    // -pc_type none : condition number of mat itself.
+    // For the preconditioned operator, set PCJACOBI / PCILU / etc. instead.
+    PetscCall(KSPGetPC(ksp, &pc));
+    PetscCall(PCSetType(pc, PCNONE));
+
+    // *** Must be set before KSPSetUp / KSPSolve ***
+    PetscCall(KSPSetComputeSingularValues(ksp, PETSC_TRUE));
+
+    // Avoid restarts — restarts destroy the singular value estimates.
+    PetscCall(KSPGMRESSetRestart(ksp, 1000));
+
+    PetscCall(KSPSetTolerances(ksp, 1e-10, PETSC_DEFAULT, PETSC_DEFAULT, 1000));
+
+    // Optional: live monitor of the singular value estimates each iteration
+    // (mirrors -ksp_monitor_singular_value).
+    PetscViewerAndFormat *vf;
+    PetscCall(PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
+                                         PETSC_VIEWER_DEFAULT, &vf));
+    PetscCall(KSPMonitorSet(
+        ksp,
+        (PetscErrorCode(*)(KSP, PetscInt, PetscReal, void *))KSPMonitorSingularValue,
+        vf,
+        (PetscErrorCode(*)(void **))PetscViewerAndFormatDestroy));
+
+    // Let users override anything from the command line if they want.
+    PetscCall(KSPSetFromOptions(ksp));
+
+    PetscCall(KSPSolve(ksp, b, x));
+
+    PetscCall(KSPComputeExtremeSingularValues(ksp, &sigma_max, &sigma_min));
+
+    PetscPrintf(PETSC_COMM_WORLD, "sigma_max = %g, sigma_min = %g, cond ~ %g\n",
+                (double)sigma_max, (double)sigma_min,
+                (double)(sigma_max / sigma_min));
+
+    if (cond) *cond = sigma_max / sigma_min;
+
+    PetscCall(KSPDestroy(&ksp));
+    PetscCall(VecDestroy(&x));
+    PetscCall(VecDestroy(&b));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
 
 
 

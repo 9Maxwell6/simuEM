@@ -72,6 +72,9 @@ PetscErrorCode petsc_resize_vec_list(std::vector<Vec>& vec_list, size_t size);
 
 PetscErrorCode petsc_ksp_convergence(KSP ksp, bool *successful, int *iterations, const std::string &label = "KSP");
 
+PetscErrorCode petsc_estimate_condition_number(Mat mat, PetscReal *cond);
+
+
 // for debug
 
 PetscErrorCode petsc_print_mat(Mat mat, const std::string& name = "");

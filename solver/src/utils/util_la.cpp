@@ -296,4 +296,18 @@ void resize_vec_list(std::vector<G_Vector>& vec_list, size_t size)
 
 
 
+
+void estimate_condition_number(G_Matrix mat, real_t *cond)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_estimate_condition_number(mat, cond);
+    #else
+        // TODO: implement with eigen library.
+        Logger::error("la_kernel::estimate_condition_number: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+
 }

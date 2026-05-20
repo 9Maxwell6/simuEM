@@ -44,7 +44,7 @@ using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 
     #if defined(PETSC_USE_COMPLEX)
         
-        using real_t  = PetscScalar;  // std::complex<double>
+        using real_t  = PetscReal;  
         using cplx_t  = PetscScalar;  // std::complex<double>
     #else
         using real_t  = PetscScalar;  // double

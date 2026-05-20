@@ -94,7 +94,7 @@ int main(int argc, char** argv)
             {"test_cc_5.geo", 0.088388348},
             {"test_cc_6.geo", 0.062500000},
             {"test_cc_7.geo", 0.044200000},
-            //{"test_cc_8.geo", 0.031250000},
+            {"test_cc_8.geo", 0.031250000},
             //{"test_cc_9.geo", 0.022100000},
             //{"test_cc_10.geo", 0.01562500}
         };
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
         const std::string dat_path = DATA_OUTPUT_DIR + file_str;
         std::ofstream l2_convergence(dat_path);
-        l2_convergence << "# h                    #cell      L2_error           #iteration     assemble[s]            solve[s]\n";
+        l2_convergence << "# h                    #cell      L2_error           #iteration      condition_number     assemble[s]            solve[s]\n";
         l2_convergence << std::scientific << std::setprecision(15);
         
 
@@ -112,6 +112,7 @@ int main(int argc, char** argv)
             scalar_t l2_error;
             size_t n_element = 0;
             int n_iteration = -1;
+            double condition_numbder = 0.;
             double assemble_time = 0.;
             double solving_time = 0.;
             {
@@ -144,6 +145,7 @@ int main(int argc, char** argv)
                 Logger::stop_timer("Compute L2 error.");
 
                 n_iteration = T_O.get_n_iteration();
+                condition_numbder = T_O.get_system_condition();
 
                 T_O.finalize();
             }
@@ -155,6 +157,7 @@ int main(int argc, char** argv)
             l2_convergence << h << "  " << n_element 
                                 << "  " << l2_error 
                                 << "  " << n_iteration
+                                << "  " << condition_numbder
                                 << "  " << assemble_time
                                 << "  " << solving_time << "\n";
             l2_convergence.flush();   // persist after every run — a crash on the

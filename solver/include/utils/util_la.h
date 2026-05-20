@@ -65,5 +65,9 @@ void resize_mat_list(std::vector<G_Matrix>& mat_list, size_t size);
 void resize_vec_list(std::vector<G_Vector>& vec_list, size_t size);
 
 
+void estimate_condition_number(G_Matrix mat, real_t *cond);
+
+
+
 
 }

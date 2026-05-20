@@ -22,7 +22,8 @@ typedef struct AMS_Context
 
 typedef struct AMS_Info 
 {
-    PetscInt n_iteration = 0;
+    PetscInt  n_iteration = 0;
+    PetscReal condition_number = 0.;
 } AMS_Info;
 
 

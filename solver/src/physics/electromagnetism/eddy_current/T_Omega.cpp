@@ -164,16 +164,6 @@ T_Omega::T_Omega(Mesh& mesh, bool enable_preconditioner) : mesh_(mesh), enable_p
                        pc_P_.row_size, 
                        pc_P_.col_size);
 
-    
-
-    Logger::info("[T_Omega preconditioner] - initialize descrete gradient matrix. ");
-    pc_G_ = fe_system_.register_dual_FE_space(T_space_1_, T_H1_s_, key_conductor_1_, &dof_T_1_, nullptr);
-    Logger::block_info(pc_G_.id, 
-                       pc_G_.row_offset, 
-                       pc_G_.col_offset, 
-                       pc_G_.row_size, 
-                       pc_G_.col_size);
-
     Logger::info("[T_Omega preconditioner] - initialize preconditioner in (H1)^3. ");
     pc_L_ = fe_system_.register_dual_FE_space(T_H1_v_, T_H1_v_, key_conductor_1_, &pc_P_, &pc_P_);
     Logger::block_info(pc_L_.id, 
@@ -182,68 +172,37 @@ T_Omega::T_Omega(Mesh& mesh, bool enable_preconditioner) : mesh_(mesh), enable_p
                        pc_L_.row_size, 
                        pc_L_.col_size);
 
-    Logger::info("[T_Omega preconditioner] - initialize preconditioner in H1. ");
-    pc_Q_ = fe_system_.register_dual_FE_space(T_H1_s_, T_H1_s_, key_conductor_1_, &pc_G_, &pc_G_);
+    Logger::info("[T_Omega preconditioner] - initialize preconditioner in H1 global field. ");
+    //pc_Q_ = fe_system_.register_FE_space(Omega_space_, key_Omega_, &dof_Omega_);  // TODO debug this
+    pc_Q_ = fe_system_.register_dual_FE_space(global_H1, global_H1, key_global_, nullptr, nullptr);
     Logger::block_info(pc_Q_.id, 
                        pc_Q_.row_offset, 
                        pc_Q_.col_offset, 
                        pc_Q_.row_size, 
                        pc_Q_.col_size);
 
-    //Logger::info("[T_Omega preconditioner] - initialize descrete gradient matrix for Omega field. ");
-    //pc_I_Omega_ = fe_system_.register_FE_space(Omega_space_, T_H1_s_, key_Omega_, &dof_Omega_);
-    //Logger::block_info(pc_I_Omega_.id, 
-    //                   pc_I_Omega_.row_offset, 
-    //                   pc_I_Omega_.col_offset, 
-    //                   pc_I_Omega_.row_size, 
-    //                   pc_I_Omega_.col_size);
-
-    Logger::info("[T_Omega preconditioner] - initialize preconditioner in H1 Omega field. ");
-    //pc_Q_Omega_ = fe_system_.register_FE_space(Omega_space_, key_Omega_, &dof_Omega_);  // TODO debug this
-    pc_Q_Omega_ = fe_system_.register_dual_FE_space(Omega_space_, Omega_space_, key_Omega_, &dof_Omega_, &dof_Omega_);
-    Logger::block_info(pc_Q_Omega_.id, 
-                       pc_Q_Omega_.row_offset, 
-                       pc_Q_Omega_.col_offset, 
-                       pc_Q_Omega_.row_size, 
-                       pc_Q_Omega_.col_size);
-
-    Logger::info("[T_Omega preconditioner] - initialize preconditioner in H1 global field. ");
-    //pc_Q_Omega_ = fe_system_.register_FE_space(Omega_space_, key_Omega_, &dof_Omega_);  // TODO debug this
-    pc_global_Q_ = fe_system_.register_dual_FE_space(global_H1, global_H1, key_global_, nullptr, nullptr);
-    Logger::block_info(pc_global_Q_.id, 
-                       pc_global_Q_.row_offset, 
-                       pc_global_Q_.col_offset, 
-                       pc_global_Q_.row_size, 
-                       pc_global_Q_.col_size);
-
     Logger::info("[T_Omega preconditioner] - initialize descrete gradient matrix from global H1 to T Hcurl field.");
-    pc_G_T_ = fe_system_.register_FE_space_coupling(dof_T_1_, pc_global_Q_, key_conductor_1_);
-    Logger::block_info(pc_G_T_.id, 
-                       pc_G_T_.row_offset, 
-                       pc_G_T_.col_offset, 
-                       pc_G_T_.row_size, 
-                       pc_G_T_.col_size);
+    pc_G_ = fe_system_.register_FE_space_coupling(dof_T_1_, pc_Q_, key_conductor_1_);
+    Logger::block_info(pc_G_.id, 
+                       pc_G_.row_offset, 
+                       pc_G_.col_offset, 
+                       pc_G_.row_size, 
+                       pc_G_.col_size);
 
     Logger::info("[T_Omega preconditioner] - initialize dof mapping from global H1 to omega H1 field.");
-    pc_I_ = fe_system_.register_FE_space_coupling(dof_Omega_, pc_global_Q_, key_Omega_);
+    pc_I_ = fe_system_.register_FE_space_coupling(dof_Omega_, pc_Q_, key_Omega_);
     Logger::block_info(pc_I_.id, 
                        pc_I_.row_offset, 
                        pc_I_.col_offset, 
                        pc_I_.row_size, 
                        pc_I_.col_size);
     
-    pc_bc_global_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
 
-    pc_bc_global_O1_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
-    pc_bc_global_O2_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
-    pc_bc_global_T_ = fe_system_.register_Dirichlet_BC(pc_global_Q_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
-    
+    pc_bc_O_s_ = fe_system_.register_Dirichlet_BC(pc_Q_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
+
     pc_bc_T_1_v_ = fe_system_.register_Dirichlet_BC(pc_L_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
     pc_bc_T_1_s_ = fe_system_.register_Dirichlet_BC(pc_Q_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
 
-    pc_bc_Omega_out_ = fe_system_.register_Dirichlet_BC(pc_Q_Omega_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
-
-    pc_bc_Omega_in_ = fe_system_.register_Dirichlet_BC(pc_Q_Omega_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
     
 
 
@@ -440,6 +399,7 @@ bool T_Omega::assemble_system()
     bc_Omega_in_.apply_to_system(br_system_);
     bc_T_1_.apply_to_system(br_system_);
 
+    //petsc_util::petsc_save_ascii_mat(br_system_.get_lhs(), "lhs.txt");
     
     return true;
 }
@@ -454,11 +414,6 @@ bool T_Omega::assemble_preconditioner()
         Interpolator__H1_to_Hcurl::interpolate_element(e_data, mat);
     });
 
-    Logger::info("[T_Omega - preconditioner] - assemble discrete gradient matrix.");
-    assemble_mat(fe_system_.assemble_mat_data(pc_G_), [&](auto& e_data, auto& mat) {
-        Interpolator__grad_H1_to_Hcurl::interpolate_element(e_data, mat);
-    });
-
     Logger::info("[T_Omega - preconditioner] - assemble preconditioner in (H1)^3.");
     assemble_mat(fe_system_.assemble_mat_data(pc_L_), [&](auto& e_data, auto& mat) {
         double inv_sigma = 1;
@@ -467,29 +422,15 @@ bool T_Omega::assemble_preconditioner()
         Integrator_H1__s_V__V::assemble_element_matrix(-mu, e_data, mat);
     });
 
-    Logger::info("[T_Omega - preconditioner] - assemble preconditioner in H1.");
+    Logger::info("[T_Omega - preconditioner] - assemble preconditioner in H1 global field.");
     assemble_mat(fe_system_.assemble_mat_data(pc_Q_), [&](auto& e_data, auto& mat) {
         double mu = 1;
         Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
         //Integrator__s_S__S::assemble_element_matrix(mu, e_data, mat);
     });
 
-    Logger::info("[T_Omega - preconditioner] - assemble preconditioner in H1 Omega field.");
-    assemble_mat(fe_system_.assemble_mat_data(pc_Q_Omega_), [&](auto& e_data, auto& mat) {
-        double mu = 1;
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        //Integrator__s_S__S::assemble_element_matrix(mu, e_data, mat);
-    });
-
-    Logger::info("[T_Omega - preconditioner] - assemble preconditioner in H1 global field.");
-    assemble_mat(fe_system_.assemble_mat_data(pc_global_Q_), [&](auto& e_data, auto& mat) {
-        double mu = 1;
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        //Integrator__s_S__S::assemble_element_matrix(mu, e_data, mat);
-    });
-
     Logger::info("[T_Omega - preconditioner] - assemble discrete gradient matrix.");
-    assemble_mat(fe_system_.assemble_mat_data(pc_G_T_), [&](auto& e_data, auto& mat) {
+    assemble_mat(fe_system_.assemble_mat_data(pc_G_), [&](auto& e_data, auto& mat) {
         Interpolator__grad_H1_to_Hcurl::interpolate_element(e_data, mat);
     });
 
@@ -501,13 +442,11 @@ bool T_Omega::assemble_preconditioner()
 
 
     // for debug
-    petsc_util::petsc_save_ascii_mat(pc_P_.mat, "P_mat.txt");
-    petsc_util::petsc_save_ascii_mat(pc_G_.mat, "G_mat.txt");
-    petsc_util::petsc_save_ascii_mat(pc_L_.mat, "L_mat.txt");
-    petsc_util::petsc_save_ascii_mat(pc_Q_.mat, "Q_mat.txt");
-    petsc_util::petsc_save_ascii_mat(pc_G_T_.mat, "G_T_mat.txt");
-    petsc_util::petsc_save_ascii_mat(pc_I_.mat, "pc_I_mat.txt");
-    petsc_util::petsc_save_ascii_mat(pc_global_Q_.mat, "global_Q_mat.txt");
+    //petsc_util::petsc_save_ascii_mat(pc_P_.mat, "P_mat.txt");
+    //petsc_util::petsc_save_ascii_mat(pc_G_.mat, "G_mat.txt");
+    //petsc_util::petsc_save_ascii_mat(pc_L_.mat, "L_mat.txt");
+    //petsc_util::petsc_save_ascii_mat(pc_G_.mat, "G_T_mat.txt");
+    //petsc_util::petsc_save_ascii_mat(pc_I_.mat, "pc_I_mat.txt");
 
 
     return true;
@@ -535,6 +474,7 @@ bool T_Omega::solve_system()
         // Set solver type
         //KSPSetType(ksp, KSPMINRES);
         KSPSetType(ksp, KSPGMRES);
+        PetscCall(KSPGMRESSetRestart(ksp, 10000)); 
 
         // Configure the preconditioner (e.g., Jacobi)
         PC pc;
@@ -554,170 +494,46 @@ bool T_Omega::solve_system()
         // Allow command-line overrides (e.g., -ksp_type, -pc_type)
         KSPSetFromOptions(ksp);
 
+        // for computing condition number
+        PetscCall(KSPSetComputeSingularValues(ksp, PETSC_TRUE));
+
         // Solve
         KSPSolve(ksp, rhs, x);
 
         // Convergence iterations
         petsc_util::petsc_ksp_convergence(ksp, nullptr, &n_iteration_, "direct solver");
 
+        PetscReal          smax, smin;
+        PetscCall(KSPComputeExtremeSingularValues(ksp, &smax, &smin));
+        system_condition_ = (double) smax / smin;
+
         Logger::info("[T-Omega] - total interations: "+std::to_string(n_iteration_)+".");
 
         // for debug, load matrix to txt file.
-        petsc_util::petsc_save_ascii_mat(lhs, "lhs_mat.txt");
-        petsc_util::petsc_save_ascii_vec(x, "x_vec.txt");
-        petsc_util::petsc_save_ascii_vec(rhs, "rhs_vec.txt");
+        //petsc_util::petsc_save_ascii_mat(lhs, "lhs_mat.txt");
+        //petsc_util::petsc_save_ascii_vec(x, "x_vec.txt");
+        //petsc_util::petsc_save_ascii_vec(rhs, "rhs_vec.txt");
 
         // Clean up
         KSPDestroy(&ksp);
 
-        br_system_.extract_block_system();
-        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_o.txt");
-        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_t.txt");
-
     
     }else{
-        return solve_pc_system_2();
-        int iteration_buffer = 0;
 
-        // single symmetric Gauss-Seidel sweep to the global system
-        PetscCall(MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x));
-
-        // switch to block-wise operations
         br_system_.extract_block_system();
 
-        /**
-         *  block system view:
-         * 
-         *      [   Omega    ] [ coupling_o ]  *  [x_o]  =  [r_o]
-         *      [ coupling_t ] [     T      ]     [x_t]     [r_t]    
-         * 
-         */
+        T_Omega_AMS::AMS_Info ams_info;
 
-        Vec tmp;
-        // ρ_1 = P^T * ( [r_t] - [T]*[x_t] )
-        // ρ_1 = P^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o]) 
-        // ζ_1 = G^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o])
-        MatCreateVecs(br_system_.get_block_lhs(1,1), NULL, &tmp); 
-        MatMult(br_system_.get_block_lhs(1,1), br_system_.get_block_x(1), tmp);         // tmp=[T] * [x_t]
-        MatMultAdd(br_system_.get_block_lhs(1,0), br_system_.get_block_x(0), tmp, tmp); // tmp=tmp + [coupling_t]*[x_o]
-        VecAYPX(tmp, -1.0, br_system_.get_block_rhs(1));                                // tmp=[r_t] - tmp
+        PetscCall(T_Omega_AMS::solve_AMS(
+            ams_info,
+            pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_L_.mat, pc_Q_.mat, 
+            &br_system_,
+            &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, NULL,
+            1e-10, PETSC_DEFAULT, true));
 
-        Vec rho_1;
-        MatCreateVecs(pc_P_.mat, &rho_1, NULL); 
-        MatMultTranspose(pc_P_.mat, tmp, rho_1);      // ρ_1 = P^T * tmp
-
-        Vec zeta_1;
-        MatCreateVecs(pc_G_.mat, &zeta_1, NULL); 
-        MatMultTranspose(pc_G_.mat, tmp, zeta_1);     // ζ_1 = G^T * tmp
-
-        // ζ_2 = [r_o] - [Omega]*[x_o] - [coupling_o]*[x_t]
-        Vec zeta_2;
-        MatCreateVecs(br_system_.get_block_lhs(0,0), NULL, &zeta_2); 
-        MatMult(br_system_.get_block_lhs(0,0), br_system_.get_block_x(0), zeta_2);            // ζ_2=[Omega] * [x_o]
-        MatMultAdd(br_system_.get_block_lhs(0,1), br_system_.get_block_x(1), zeta_2, zeta_2); // ζ_2=ζ_2 + [coupling_o]*[x_t]
-        VecAYPX(zeta_2, -1.0, br_system_.get_block_rhs(0));                                   // ζ_2=[r_o] - ζ_2
-
-        // ready to solve
-        KSP ksp;
-        KSPCreate(PETSC_COMM_WORLD, &ksp);
-        KSPSetType(ksp, KSPGMRES);
-        //KSPSetType(ksp, KSPCG);            // need SPD
-        PC pc;
-        KSPGetPC(ksp, &pc);
-        PCSetType(pc, PCHYPRE);
-        PCHYPRESetType(pc, "boomeramg");     // enable hypre AMG
-        KSPSetFromOptions(ksp);
-
-        // L*γ_1  = ρ_1
-        KSPSetOperators(ksp, pc_L_.mat, pc_L_.mat);
-
-        Vec gamma_1;
-        MatCreateVecs(pc_L_.mat, &gamma_1,  NULL);
-        
-        pc_bc_T_1_v_.apply_to_system(pc_L_.mat, rho_1, gamma_1);
-        
-        KSPSolve(ksp, rho_1, gamma_1);       // L*γ_1=ρ_1
-        petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "L*γ_1  = ρ_1");
-        n_iteration_ += iteration_buffer;
-
-        petsc_util::petsc_save_ascii_vec(gamma_1, "gamma_1.txt");
-
-        
-        KSPReset(ksp);
-        // Q*κ_1  = ζ_1 
-        KSPSetOperators(ksp, pc_Q_.mat, pc_Q_.mat);
-    
-        Vec kappa_1;
-        MatCreateVecs(pc_Q_.mat, &kappa_1, NULL);
-
-        pc_bc_T_1_s_.apply_to_system(pc_Q_.mat, zeta_1, kappa_1);
-
-        KSPSolve(ksp, zeta_1, kappa_1);       // Q*κ_1=ζ_1 
-        petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q*κ_1  = ζ_1 ");
-        n_iteration_ += iteration_buffer;
-
-        petsc_util::petsc_save_ascii_vec(kappa_1, "kappa_1.txt");
-
-
-        KSPReset(ksp);
-        // Q_Omega*κ_2  = ζ_2
-        KSPSetOperators(ksp, pc_Q_Omega_.mat, pc_Q_Omega_.mat);
-    
-        Vec kappa_2;
-        MatCreateVecs(pc_Q_Omega_.mat, &kappa_2, NULL);
-        
-        pc_bc_Omega_out_.apply_to_system(pc_Q_Omega_.mat, zeta_2, kappa_2);
-        pc_bc_Omega_in_.apply_to_system(pc_Q_Omega_.mat, zeta_2, kappa_2);
-
-        KSPSolve(ksp, zeta_2, kappa_2);       // Q*κ_1=ζ_1 
-        petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q_Omega*κ_2  = ζ_2");
-        n_iteration_ += iteration_buffer;
-
-        // update
-        // [x_t] = [x_t] + P*γ_1 + G*κ_1
-        //  1. [x_t] =  [x_t] + P*γ_1
-        MatMultAdd(pc_P_.mat, gamma_1, br_system_.get_block_x(1), br_system_.get_block_x(1));
-        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_block_gamma1_pc.txt");
-        //  2. [x_t] =  [x_t] + G*κ_1
-        MatMultAdd(pc_G_.mat, kappa_1, br_system_.get_block_x(1), br_system_.get_block_x(1));
-        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_block_kappa1_pc.txt");
-
-        // [x_o] = [x_o] + κ_2 
-        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_block_kappa2_0_pc.txt");
-        VecAXPY(br_system_.get_block_x(0), 1.0, kappa_2);    // x_o = x_o + kappa_2
-        petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_block_kappa2_pc.txt");
-
-        br_system_.assemble_block_x();
-
-        // single symmetric Gauss-Seidel sweep to the global system
-        MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
-
-        Logger::info("T-Omega with preconditioner, total interations: "+std::to_string(n_iteration_)+".");
-
-        petsc_util::petsc_save_ascii_vec(br_system_.get_x(), "x_vec_pc.txt");
-
-        KSPDestroy(&ksp);
-        VecDestroy(&tmp);
-        VecDestroy(&rho_1);
-        VecDestroy(&zeta_1);
-        VecDestroy(&zeta_2);
-        VecDestroy(&gamma_1);
-        VecDestroy(&kappa_1);
-        VecDestroy(&kappa_2);
-        MatDestroy(&pc_P_.mat);
-        MatDestroy(&pc_G_.mat);
-        MatDestroy(&pc_L_.mat);
-        MatDestroy(&pc_Q_.mat);
-        MatDestroy(&pc_Q_Omega_.mat);
-
-        VecDestroy(&pc_P_.vec);
-        VecDestroy(&pc_G_.vec);
-        VecDestroy(&pc_L_.vec);
-        VecDestroy(&pc_Q_.vec);
-        VecDestroy(&pc_Q_Omega_.vec);
-        
-        
-
+        n_iteration_ = ams_info.n_iteration;
+        system_condition_ = ams_info.condition_number;
+            
     }
     
 
@@ -728,178 +544,6 @@ bool T_Omega::solve_system()
     return successful_flag;
 }
 
-
-
-bool T_Omega::solve_pc_system()
-{
-    const G_Matrix lhs = br_system_.get_lhs();
-    const G_Vector rhs = br_system_.get_rhs();
-    const G_Vector x   = br_system_.get_x();
-
-    bool successful_flag = false;
-
-    int iteration_buffer = 0;    
-
-    // single symmetric Gauss-Seidel sweep to the global system
-    MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
-
-    petsc_util::petsc_save_ascii_vec(br_system_.get_x(), "x_vec_pc_0step.txt");
-
-    // switch to block-wise operations
-    br_system_.extract_block_system();
-
-    G_Matrix T   = br_system_.get_block_lhs(1,1);
-    G_Matrix T_c = br_system_.get_block_lhs(1,0);
-    G_Matrix O   = br_system_.get_block_lhs(0,0);
-    G_Matrix O_c = br_system_.get_block_lhs(0,1);
-
-    petsc_util::petsc_save_ascii_mat(T, "T.txt");
-    petsc_util::petsc_save_ascii_mat(T_c, "T_c.txt");
-    petsc_util::petsc_save_ascii_mat(O, "O.txt");
-    petsc_util::petsc_save_ascii_mat(O_c, "O_c.txt");
-
-    /**
-     *  block system view:
-     * 
-     *      [   Omega    ] [ coupling_o ]  *  [x_o]  =  [r_o]
-     *      [ coupling_t ] [     T      ]     [x_t]     [r_t]    
-     * 
-     */
-
-    Vec tmp;
-    MatCreateVecs(br_system_.get_block_lhs(1,1), NULL, &tmp); 
-    MatMult(br_system_.get_block_lhs(1,1), br_system_.get_block_x(1), tmp);         // tmp=[T] * [x_t]
-    MatMultAdd(br_system_.get_block_lhs(1,0), br_system_.get_block_x(0), tmp, tmp); // tmp=tmp + [coupling_t]*[x_o]
-    VecAYPX(tmp, -1.0, br_system_.get_block_rhs(1));                                // tmp=[r_t] - tmp
-
-    // ρ_1 = P^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o]) 
-    Vec rho_1;
-    MatCreateVecs(pc_P_.mat, &rho_1, NULL); 
-    MatMultTranspose(pc_P_.mat, tmp, rho_1);      // ρ_1 = P^T * tmp
-
-    // ζ_1 = G^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o])
-    Vec zeta_1;
-    MatCreateVecs(pc_G_T_.mat, &zeta_1, NULL); 
-    MatMultTranspose(pc_G_T_.mat, tmp, zeta_1);     // ζ_1 = G^T * tmp
-
-
-    MatCreateVecs(br_system_.get_block_lhs(0,0), NULL, &tmp); 
-    MatMult(br_system_.get_block_lhs(0,0), br_system_.get_block_x(0), tmp);         // tmp=[Omega] * [x_o]
-    MatMultAdd(br_system_.get_block_lhs(0,1), br_system_.get_block_x(1), tmp, tmp); // tmp=tmp + [coupling_o]*[x_t]
-    VecAYPX(tmp, -1.0, br_system_.get_block_rhs(0));                                // tmp=[r_o] - tmp
-
-
-    // ζ_2 = I^T * ([r_o] - [Omega]*[x_o] - [coupling_o]*[x_t])
-    Vec zeta_2;
-    MatCreateVecs(pc_I_.mat, &zeta_2, NULL); 
-    MatMultTranspose(pc_I_.mat, tmp, zeta_2);     // ζ_2 = I^T * tmp
-
-
-    // ζ_2 = I^T * ([r_o] - [Omega]*[x_o] - [coupling_o]*[x_t])  +  G^T * ( [r_t] - [T]*[x_t] - [coupling_t]*[x_o])
-    //VecAXPY(zeta_2, 1.0, zeta_1);
-
-    
-
-    // ready to solve
-    KSP ksp;
-    KSPCreate(PETSC_COMM_WORLD, &ksp);
-    KSPSetType(ksp, KSPGMRES);
-    //KSPSetType(ksp, KSPCG);            // need SPD
-    PC pc;
-    KSPGetPC(ksp, &pc);
-    PCSetType(pc, PCHYPRE);
-    PCHYPRESetType(pc, "boomeramg");     // enable hypre AMG
-    KSPSetFromOptions(ksp);
-
-
-    // L*γ_1  = ρ_1
-    KSPSetOperators(ksp, pc_L_.mat, pc_L_.mat);
-
-    Vec gamma_1;
-    MatCreateVecs(pc_L_.mat, &gamma_1,  NULL);
-    petsc_util::petsc_save_ascii_vec(gamma_1, "gamma_1.txt");
-    VecSet(gamma_1, 0.0);
-    petsc_util::petsc_save_ascii_vec(gamma_1, "gamma_1_ini.txt");
-    
-    pc_bc_T_1_v_.apply_to_system(pc_L_.mat, rho_1, gamma_1);
-
-
-    
-    KSPSolve(ksp, rho_1, gamma_1);       // L*γ_1=ρ_1
-    petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "L*γ_1  = ρ_1");
-    n_iteration_ += iteration_buffer;
-
-
-    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_t_0");
-    // => [x_t] = [x_t] + P*γ_1
-    MatMultAdd(pc_P_.mat, gamma_1, br_system_.get_block_x(1), br_system_.get_block_x(1));
-    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(1), "x_t_1");
-
-
-    // global     
-
-
-    KSPReset(ksp);
-    // Q_global * κ_global  = ζ_2_global
-    KSPSetOperators(ksp, pc_global_Q_.mat, pc_global_Q_.mat);
-
-    Vec kappa_2;
-    MatCreateVecs(pc_global_Q_.mat, &kappa_2, NULL);
-    VecSet(kappa_2, 0.0);
-    
-    pc_bc_global_.apply_to_system(pc_global_Q_.mat, zeta_2, kappa_2);
-
-    KSPSolve(ksp, zeta_2, kappa_2);       // Q_global * κ_global  = ζ_2_global
-    petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q*κ  = ζ");
-    n_iteration_ += iteration_buffer;
-
-
-
-
-    // [x_t] = [x_t] + P*γ_1 + G*κ_1
-    // [x_0] = [x_o] + I*κ_2 
-    // 
-    // => [x_t] = [x_t] + G*kappa_global
-    //MatMultAdd(pc_G_T_.mat, kappa_2, br_system_.get_block_x(1), br_system_.get_block_x(1));
-
-
-    //bc_T_1_.apply_to_vec(br_system_.get_block_x(1));
-
-    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_o_0");
-
-    //    [x_o] = [x_o] + I*kappa_global
-    MatMultAdd(pc_I_.mat, kappa_2, br_system_.get_block_x(0), br_system_.get_block_x(0));
-    //    [x_global] = [x_global] + I*κ_2   
-
-    petsc_util::petsc_save_ascii_vec(br_system_.get_block_x(0), "x_o_1");
-
-
-    //bc_Omega_out_.apply_to_vec(br_system_.get_block_x(0));
-    //bc_Omega_in_.apply_to_vec(br_system_.get_block_x(0));
-
-    br_system_.assemble_block_x();
-
-    // single symmetric Gauss-Seidel sweep to the global system
-    petsc_util::petsc_save_ascii_mat(lhs, "lhs_final.txt");
-    petsc_util::petsc_save_ascii_vec(rhs, "rhs_final.txt");
-    petsc_util::petsc_save_ascii_vec(x, "x_final_before.txt");
-
-    MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
-
-    petsc_util::petsc_save_ascii_vec(x, "x_final");
-
-    Logger::info("T-Omega with preconditioner, total interations: "+std::to_string(n_iteration_)+".");
-
-
-    KSPDestroy(&ksp);
-    VecDestroy(&tmp);
-    VecDestroy(&rho_1);
-    VecDestroy(&zeta_1);
-    VecDestroy(&zeta_2);
-    VecDestroy(&gamma_1);
-    VecDestroy(&kappa_2);
-    return true;
-}
 
 
 
@@ -916,15 +560,13 @@ bool T_Omega::solve_pc_system_2()
 
     br_system_.extract_block_system();
 
-    petsc_util::petsc_save_ascii_vec(rhs, "rhs_initial.txt");
-
     T_Omega_AMS::AMS_Info ams_info;
 
     PetscCall(T_Omega_AMS::solve_AMS(
         ams_info,
-        pc_P_.mat, pc_G_T_.mat, pc_I_.mat, pc_L_.mat, pc_global_Q_.mat, 
+        pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_L_.mat, pc_Q_.mat, 
         &br_system_,
-        &pc_bc_T_1_v_, &pc_bc_global_O1_, &pc_bc_global_O2_, &pc_bc_global_T_,
+        &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, NULL,
         1e-10, PETSC_DEFAULT, true));
 
     n_iteration_ = ams_info.n_iteration;
@@ -1073,12 +715,8 @@ void T_Omega::finalize()
     la_kernel::destroy_mat(pc_P_.mat);
     la_kernel::destroy_mat(pc_G_.mat);
     la_kernel::destroy_mat(pc_L_.mat);
-    la_kernel::destroy_mat(pc_Q_.mat);
-
-    la_kernel::destroy_mat(pc_Q_Omega_.mat);
-    la_kernel::destroy_mat(pc_G_T_.mat);
     la_kernel::destroy_mat(pc_I_.mat);
-    la_kernel::destroy_mat(pc_global_Q_.mat);
+    la_kernel::destroy_mat(pc_Q_.mat);
 
     la_kernel::destroy_vec(dof_Omega_.vec);
     la_kernel::destroy_vec(dof_T_1_.vec);
@@ -1086,14 +724,10 @@ void T_Omega::finalize()
     la_kernel::destroy_vec(dof_coupling_tp_1_.vec);
 
     la_kernel::destroy_vec(pc_P_.vec);
-    la_kernel::destroy_vec(pc_G_.vec);
     la_kernel::destroy_vec(pc_L_.vec);
-    la_kernel::destroy_vec(pc_Q_.vec);
-
-    la_kernel::destroy_vec(pc_Q_Omega_.vec);
-    la_kernel::destroy_vec(pc_G_T_.vec);
+    la_kernel::destroy_vec(pc_G_.vec);
     la_kernel::destroy_vec(pc_I_.vec);
-    la_kernel::destroy_vec(pc_global_Q_.vec);
+    la_kernel::destroy_vec(pc_Q_.vec);
     
     br_system_.finalize();
 }
@@ -1108,12 +742,8 @@ T_Omega::~T_Omega()
     la_kernel::destroy_mat(pc_P_.mat);
     la_kernel::destroy_mat(pc_G_.mat);
     la_kernel::destroy_mat(pc_L_.mat);
-    la_kernel::destroy_mat(pc_Q_.mat);
-
-    la_kernel::destroy_mat(pc_Q_Omega_.mat);
-    la_kernel::destroy_mat(pc_G_T_.mat);
     la_kernel::destroy_mat(pc_I_.mat);
-    la_kernel::destroy_mat(pc_global_Q_.mat);
+    la_kernel::destroy_mat(pc_Q_.mat);
 
     la_kernel::destroy_vec(dof_Omega_.vec);
     la_kernel::destroy_vec(dof_T_1_.vec);
@@ -1123,12 +753,8 @@ T_Omega::~T_Omega()
     la_kernel::destroy_vec(pc_P_.vec);
     la_kernel::destroy_vec(pc_G_.vec);
     la_kernel::destroy_vec(pc_L_.vec);
-    la_kernel::destroy_vec(pc_Q_.vec);
-
-    la_kernel::destroy_vec(pc_Q_Omega_.vec);
-    la_kernel::destroy_vec(pc_G_T_.vec);
     la_kernel::destroy_vec(pc_I_.vec);
-    la_kernel::destroy_vec(pc_global_Q_.vec);
+    la_kernel::destroy_vec(pc_Q_.vec);
 
     br_system_.finalize();
 

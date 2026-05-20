@@ -14,7 +14,7 @@ plt.rcParams["axes.titlesize"] = 11
 plt.rcParams["legend.fontsize"] = 9
  
 def main():
-    ap = argparse.ArgumentParser(description="Plot solver iterations vs h.")
+    ap = argparse.ArgumentParser(description="Plot condition number vs h.")
     ap.add_argument("files", nargs="+",
                     help="one or more .dat files; columns: h, #cell, L2_error, #iter, cond, assemble, solve")
     ap.add_argument("-o", "--output", help="save figure to this file instead of showing it")
@@ -30,31 +30,31 @@ def main():
     fig, ax = plt.subplots(figsize=(6, 5))
     ax.set_prop_cycle(color=plt.cm.Set1.colors)
     for path in args.files:
-        h, nit = np.loadtxt(path, comments="#", usecols=(0, 3), unpack=True)
+        h, kappa = np.loadtxt(path, comments="#", usecols=(0, 4), unpack=True)
         order = np.argsort(h)
-        h, nit = h[order], nit[order]
+        h, kappa = h[order], kappa[order]
  
         label = os.path.basename(path).replace("_", r"\_")
  
         if args.no_fit:
-            ax.loglog(h, nit, "+-", markersize=7, linewidth=0.7, label=label)
+            ax.loglog(h, kappa, "+-", markersize=7, linewidth=0.7, label=label)
         else:
             if args.last_n is not None and args.last_n < len(h):
-                h_fit, nit_fit = h[:args.last_n], nit[:args.last_n]
+                h_fit, k_fit = h[:args.last_n], kappa[:args.last_n]
             else:
-                h_fit, nit_fit = h, nit
+                h_fit, k_fit = h, kappa
  
-            slope, intercept = np.polyfit(np.log(h_fit), np.log(nit_fit), 1)
+            slope, intercept = np.polyfit(np.log(h_fit), np.log(k_fit), 1)
             fit = np.exp(intercept) * h ** slope
  
-            line, = ax.loglog(h, nit, "+-", markersize=7, linewidth=0.7,
+            line, = ax.loglog(h, kappa, "+-", markersize=7, linewidth=0.7,
                               label=f"{label}  ($\\sim h^{{{slope:.3f}}}$)")
             ax.loglog(h, fit, "--", linewidth=0.7, alpha=0.6, color=line.get_color())
  
-            print(f"{label}: iteration slope = {slope:.4f}")
+            print(f"{label}: condition number slope = {slope:.4f}")
  
     ax.set_xlabel(r"$h$")
-    ax.set_ylabel(r"\# iterations")
+    ax.set_ylabel(r"$\kappa(A)$")
     ax.grid(True, which="both", alpha=0.3)
     ax.legend()
     ax.invert_xaxis()
