@@ -199,6 +199,7 @@ T_Omega::T_Omega(Mesh& mesh, bool enable_preconditioner) : mesh_(mesh), enable_p
     
 
     pc_bc_O_s_ = fe_system_.register_Dirichlet_BC(pc_Q_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
+    pc_bc_O_s_in_ = fe_system_.register_Dirichlet_BC(pc_Q_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
 
     pc_bc_T_1_v_ = fe_system_.register_Dirichlet_BC(pc_L_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
     pc_bc_T_1_s_ = fe_system_.register_Dirichlet_BC(pc_Q_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
@@ -473,8 +474,9 @@ bool T_Omega::solve_system()
 
         // Set solver type
         //KSPSetType(ksp, KSPMINRES);
-        KSPSetType(ksp, KSPGMRES);
-        PetscCall(KSPGMRESSetRestart(ksp, 10000)); 
+        KSPSetType(ksp, KSPCGS);
+        //KSPSetType(ksp, KSPGMRES);
+        //PetscCall(KSPGMRESSetRestart(ksp, 10000)); 
 
         // Configure the preconditioner (e.g., Jacobi)
         PC pc;
@@ -522,13 +524,16 @@ bool T_Omega::solve_system()
 
         br_system_.extract_block_system();
 
+        //la_kernel::zero_row_mat(bc_T_1_.get_dof_idx(), 0, pc_G_.mat, NULL, NULL);
+        //la_kernel::zero_row_mat(bc_Omega_in_.get_dof_idx(), 0, pc_I_.mat, NULL, NULL);
+
         T_Omega_AMS::AMS_Info ams_info;
 
         PetscCall(T_Omega_AMS::solve_AMS(
             ams_info,
             pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_L_.mat, pc_Q_.mat, 
             &br_system_,
-            &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, NULL,
+            &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, &pc_bc_O_s_in_,
             1e-10, PETSC_DEFAULT, true));
 
         n_iteration_ = ams_info.n_iteration;
@@ -561,6 +566,8 @@ bool T_Omega::solve_pc_system_2()
     br_system_.extract_block_system();
 
     T_Omega_AMS::AMS_Info ams_info;
+
+    la_kernel::zero_row_mat(bc_T_1_.get_dof_idx(), 0, pc_G_.mat, NULL, NULL);
 
     PetscCall(T_Omega_AMS::solve_AMS(
         ams_info,

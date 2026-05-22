@@ -44,7 +44,6 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     const Vec ro = block_r[0];
     const Vec rt = block_r[1];
  
-    // -- Step 2-3: residual after pre-smooth, then project to auxiliary spaces
     //    tmp_1 = rt - [T]*xt - [coupling_t]*xo
     PetscCall(MatMult(T, xt, ctx->tmp_1));                    // tmp_1 = [T]*xt
     PetscCall(MatMultAdd(T_c, xo, ctx->tmp_1, ctx->tmp_1));   // tmp_1 = tmp_1 + [coupling_t]*xo
@@ -54,6 +53,7 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     PetscCall(MatMult(O, xo, ctx->tmp_2));                    // tmp_2 = [O]*xo
     PetscCall(MatMultAdd(O_c, xt, ctx->tmp_2, ctx->tmp_2));   // tmp_2 = tmp_2 + [coupling_o]*xt
     PetscCall(VecAYPX(ctx->tmp_2, -1., ro));                  // tmp_2 = ro - tmp_2
+
  
     //    rho  = P^T * tmp_1   ((H1)^3)
     //    zeta = G^T * tmp_1   (H1)
@@ -82,10 +82,22 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
 
     ctx->bc_s1->apply_to_vec(ctx->zeta);
 
+   
+
+    //Vec tmp_3;
+    //PetscCall(MatCreateVecs(ctx->I, NULL, &tmp_3));       // size #node in Omega-field
+
+
+    //PetscCall(MatMultTranspose(ctx->I, ctx->tmp_2, tmp_3));
+
+    //petsc_util::petsc_save_ascii_vec(tmp_3, "tmp_3.txt");
+
+    //ctx->bc_s3->apply_to_vec(tmp_3);
+    //petsc_util::petsc_save_ascii_vec(tmp_3, "tmp_3_0.txt");
+
     //    zeta = zeta + I^T * tmp_2   (H1)
     PetscCall(MatMultTransposeAdd(ctx->I, ctx->tmp_2, ctx->zeta, ctx->zeta));
 
-    
  
     //     enforce Dirichlet on inner-solve RHS and initial guess,
     //            then solve each inner system with one BoomerAMG V-cycle.
@@ -93,8 +105,8 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
     PetscCall(VecSet(ctx->kappa, 0.));
 
  
-    ctx->bc_v->apply_to_vec(ctx->rho);   // ??
-    ctx->bc_s2->apply_to_vec(ctx->zeta);  // ??
+    ctx->bc_v->apply_to_vec(ctx->rho);   
+    ctx->bc_s2->apply_to_vec(ctx->zeta); 
 
 
  
@@ -106,11 +118,18 @@ PetscErrorCode T_Omega_AMS::AMS_apply(PC pc, Vec r, Vec x)
 
     //    xt = xt + P*gamma_1 + G*kappa
     //    xt = xt + P*gamma_1
+    petsc_util::petsc_save_ascii_vec(xt, "xt_0.txt");
     PetscCall(MatMultAdd(ctx->P, ctx->gamma, xt, xt));
+    petsc_util::petsc_save_ascii_vec(xt, "xt_1.txt");
     //    xt = xt + G*kappa
     PetscCall(MatMultAdd(ctx->G, ctx->kappa, xt, xt));
+    petsc_util::petsc_save_ascii_vec(xt, "xt_2.txt");
     //    xo = xo + I*kappa
     PetscCall(MatMultAdd(ctx->I, ctx->kappa, xo, xo));
+
+    //petsc_util::petsc_save_ascii_mat(ctx->G, "G.txt");
+
+    //exit(0);
 
     /*
     PetscReal xt_norm, Gk_norm, kappa_norm, zeta_norm;
@@ -218,7 +237,7 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     PetscCall(KSPSetFromOptions(ctx->inner_Q_ksp));
     PetscCall(KSPSetUp(ctx->inner_Q_ksp));
  
-    // ---------- Scratch vectors ----------
+    // ---------- Initialize vectors ----------
     const Mat O   = ctx->br_system->get_block_lhs(0,0);
     const Mat T   = ctx->br_system->get_block_lhs(1,1);
     PetscCall(MatCreateVecs(T, NULL, &ctx->tmp_1));       // size #edge in T-field
@@ -232,8 +251,10 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     const Vec x = ctx->br_system->get_x();
 
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &outer));
-    PetscCall(KSPSetType(outer, KSPGMRES));   
-    PetscCall(KSPGMRESSetRestart(outer, 1000));  
+    //PetscCall(KSPSetType(outer, KSPGMRES));   
+    //PetscCall(KSPGMRESSetRestart(outer, 1000));  
+
+    KSPSetType(outer, KSPCGS);
 
     //PetscCall(KSPSetType(outer, KSPFGMRES));
     //PetscCall(KSPSetPCSide(outer, PC_RIGHT));

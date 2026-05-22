@@ -243,8 +243,15 @@ int CurlCurl::solve_system()
     // Allow command-line overrides (e.g., -ksp_type, -pc_type)
     KSPSetFromOptions(ksp);
 
+    // for computing condition number
+    PetscCall(KSPSetComputeSingularValues(ksp, PETSC_TRUE));
+
     // Solve
     KSPSolve(ksp, rhs, x);
+
+    PetscReal          smax, smin;
+    PetscCall(KSPComputeExtremeSingularValues(ksp, &smax, &smin));
+    system_condition_ = (double) smax / smin;
 
     // Check convergence
     KSPConvergedReason reason;
@@ -350,7 +357,7 @@ static PetscErrorCode AMS_destroy(PC pc)
 
 
 
-PetscErrorCode solve_AMS(PetscInt& n_iter,
+PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
     Mat A, Vec b, Vec x,
     Mat P, Mat G, Mat L, Mat Q,
     Dirichlet_BC *bc_v, Dirichlet_BC *bc_s,
@@ -431,9 +438,17 @@ PetscErrorCode solve_AMS(PetscInt& n_iter,
     PetscCall(PCShellSetName   (outer_pc, "AMS"));
  
     PetscCall(KSPSetFromOptions(outer)); 
+
+    // for computing condition number
+    PetscCall(KSPSetComputeSingularValues(outer, PETSC_TRUE));
+
     // ---------- Solve ----------
     PetscCall(VecSet(x, 0.0));
     PetscCall(KSPSolve(outer, b, x));
+
+    PetscReal          smax, smin;
+    PetscCall(KSPComputeExtremeSingularValues(outer, &smax, &smin));
+    system_condition = (double) smax / smin;
  
     // ---------- Report ----------
     KSPConvergedReason reason;
@@ -488,7 +503,7 @@ int CurlCurl::solve_pc_system()
     // P and G stay raw.
     
     int n_iteration = 0;
-    PetscCall(solve_AMS(n_iteration, 
+    PetscCall(solve_AMS(n_iteration, system_condition_,
                         A, b, x,
                         pc_P_.mat, pc_G_.mat, pc_L_.mat, pc_Q_.mat,
                         &bc_v_, &bc_s_,
@@ -644,11 +659,11 @@ int main(int argc, char** argv) {
         //{"test_cube_3.msh", 0.176776695},
     };
 
-     std::string file_str = enable_preconditioner ? "/curlcurl_l2_pc.dat" : "/curlcurl_l2.dat";
+    std::string file_str = enable_preconditioner ? "/curlcurl_l2_pc.dat" : "/curlcurl_l2.dat";
 
     const std::string dat_path = TEST_DATA_OUTPUT_DIR + file_str;
     std::ofstream l2_convergence(dat_path);
-    l2_convergence << "# h                   #element      L2_error      #iteration   assemble[s]      solve[s]\n";
+    l2_convergence << "# h                   #element      L2_error      #iteration      condition_number   assemble[s]      solve[s]\n";
     l2_convergence << std::scientific << std::setprecision(15);
     
 
@@ -656,6 +671,7 @@ int main(int argc, char** argv) {
         scalar_t l2_error;
         size_t n_element = 0;
         int n_iteration = 0;
+        double system_condition = 0.;
         double assemble_time = 0.;
         double solving_time = 0.;
         {
@@ -682,6 +698,8 @@ int main(int argc, char** argv) {
             }
             solving_time = Logger::stop_timer("Solve CurlCurl matrix system");
 
+            system_condition = P.get_condition_number();
+
             Logger::start_timer("Compute L2 error.");
             l2_error = P.compute_L2_error();
             Logger::stop_timer("Compute L2 error.");
@@ -694,6 +712,7 @@ int main(int argc, char** argv) {
         l2_convergence << h << "  " << n_element
                             << "  " << l2_error
                             << "  " << n_iteration
+                            << "  " << system_condition
                             << "  " << assemble_time
                             << "  " << solving_time << "\n";
         l2_convergence.flush();   // persist after every run — a crash on the

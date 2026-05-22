@@ -77,6 +77,9 @@ private:
     Dirichlet_BC pc_bc_O_s_;
     Dirichlet_BC pc_bc_T_1_v_;
     Dirichlet_BC pc_bc_T_1_s_;
+
+    //for test
+    Dirichlet_BC pc_bc_O_s_in_;
     
 
 

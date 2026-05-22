@@ -60,6 +60,8 @@ struct Dirichlet_BC
 
     bool apply_to_mat(G_Matrix mat);
     bool apply_to_vec(G_Vector vec);
+
+    std::vector<dof_idx>& get_dof_idx() { return bc_dofs; }
 };
 
 

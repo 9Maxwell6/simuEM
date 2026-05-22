@@ -176,13 +176,12 @@ bool Poisson::assemble_pc_system()
 
 
 
-bool Poisson::solve_system()
+int Poisson::solve_system()
 {
     const G_Matrix lhs = br_system_.get_lhs();
     const G_Vector rhs = br_system_.get_rhs();
     const G_Vector x   = br_system_.get_x();
 
-    bool successful_flag = false;
 #ifdef LOAD_PETSC
     // for text
     KSP ksp;
@@ -197,7 +196,7 @@ bool Poisson::solve_system()
 
     // Optionally configure the preconditioner (e.g., Jacobi)
     PC pc;
-    KSPGetPC(ksp, &pc);    // <-- add this line
+    KSPGetPC(ksp, &pc);    
     //PCSetType(pc, PCHYPRE);
     //PCHYPRESetType(pc, "boomeramg");
 
@@ -213,19 +212,25 @@ bool Poisson::solve_system()
     // Allow command-line overrides (e.g., -ksp_type, -pc_type)
     KSPSetFromOptions(ksp);
 
+    // for computing condition number
+    PetscCall(KSPSetComputeSingularValues(ksp, PETSC_TRUE));
+
     // Solve
     KSPSolve(ksp, rhs, x);
 
+    PetscReal          smax, smin;
+    PetscCall(KSPComputeExtremeSingularValues(ksp, &smax, &smin));
+    system_condition_ = (double) smax / smin;
+
     // Check convergence
     KSPConvergedReason reason;
+    PetscInt its;
     KSPGetConvergedReason(ksp, &reason);
     if (reason < 0) {
         PetscPrintf(PETSC_COMM_WORLD, "KSP did not converge: reason %d\n", reason);
     } else {
-        PetscInt its;
         KSPGetIterationNumber(ksp, &its);
         PetscPrintf(PETSC_COMM_WORLD, "Converged in %d iterations\n", its);
-        successful_flag = true;
     }
     petsc_util::petsc_save_ascii_mat(lhs, "poisson_lhs_mat.txt");
     petsc_util::petsc_save_ascii_vec(x, "poisson_x_vec.txt");
@@ -237,86 +242,199 @@ bool Poisson::solve_system()
     Logger::error("[Poisson] - this solver require petsc support!");
 #endif
 
-    return successful_flag;
+    return its;
 }
 
 
 
+typedef struct AMSContext_s {
+    Mat A, I, Q;
+    KSP inner_Q_ksp;     
+    Vec tmp;                          // size #edge
+    Vec zeta,  kappa;                 // size   #node (Q-space RHS / sol)
+    Dirichlet_BC *bc_s;               // for Q (scalar nodal space)
+} AMSContext;
 
-bool Poisson::solve_pc_system()
+
+
+static PetscErrorCode AMS_apply(PC pc, Vec r, Vec z)
 {
-    const G_Matrix lhs = br_system_.get_lhs();
-    const G_Vector rhs = br_system_.get_rhs();
-    const G_Vector x   = br_system_.get_x();
+    AMSContext *ctx;
+    PetscFunctionBeginUser;
+    PetscCall(PCShellGetContext(pc, (void**)&ctx));
+ 
+    PetscCall(VecZeroEntries(z));
 
+ 
+    // single Gauss-Seidel
+    PetscCall(MatSOR(ctx->A, r, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, z));
+ 
+    //    tmp = r - A z
+    PetscCall(MatMult(ctx->A, z, ctx->tmp));
+    PetscCall(VecAYPX(ctx->tmp, -1.0, r));
+    
+    //    zeta = I^T * tmp   (H1)
+    PetscCall(MatMultTranspose(ctx->I, ctx->tmp, ctx->zeta));
+ 
+    PetscCall(VecSet(ctx->kappa, 0.0));
+ 
+    ctx->bc_s->apply_to_system(ctx->Q, ctx->zeta, ctx->kappa);
+ 
+    //    Single BoomerAMG V-cycle for each
+    PetscCall(KSPSolve(ctx->inner_Q_ksp, ctx->zeta, ctx->kappa));
+ 
+    //    z = z + I*kappa
+    PetscCall(MatMultAdd(ctx->I, ctx->kappa, z, z));
+
+ 
+    // -- post-smoother (continues from updated z)
+    PetscCall(MatSOR(ctx->A, r, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, z));
+ 
+    PetscFunctionReturn(0);
+}
+
+
+
+static PetscErrorCode AMS_destroy(PC pc)
+{
+    AMSContext *ctx;
+    PetscFunctionBeginUser;
+    PetscCall(PCShellGetContext(pc, (void**)&ctx));
+    PetscCall(KSPDestroy(&ctx->inner_Q_ksp));
+    PetscCall(VecDestroy(&ctx->tmp));
+    PetscCall(VecDestroy(&ctx->zeta));
+    PetscCall(VecDestroy(&ctx->kappa));
+    PetscCall(PetscFree(ctx));
+    PetscFunctionReturn(0);
+}
+
+
+
+PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
+    Mat A, Vec b, Vec x,
+    Mat I, Mat Q,
+    Dirichlet_BC *bc_s,
+    PetscReal rtol = 1e-10, PetscInt max_iters = PETSC_DEFAULT)
+{
+    AMSContext *ctx;
+    KSP outer;
+    PC  outer_pc;
+    PetscFunctionBeginUser;
+ 
+    // ---------- Allocate context ----------
+    PetscCall(PetscNew(&ctx));
+    ctx->A = A;  
+    ctx->I = I;  
+    ctx->Q = Q;
+    ctx->bc_s = bc_s;
+ 
+    // ---------- Inner KSP for Q ----------
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q_ksp));
+    PetscCall(KSPSetType(ctx->inner_Q_ksp, KSPPREONLY));
+    {
+        PC pc_in;
+        PetscCall(KSPGetPC(ctx->inner_Q_ksp, &pc_in));
+        PetscCall(PCSetType(pc_in, PCHYPRE));
+        PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
+    }
+    PetscCall(KSPSetOptionsPrefix(ctx->inner_Q_ksp, "inner_Q_"));
+    PetscCall(KSPSetOperators(ctx->inner_Q_ksp, Q, Q));
+    PetscCall(KSPSetFromOptions(ctx->inner_Q_ksp));
+    PetscCall(KSPSetUp(ctx->inner_Q_ksp));
+ 
+    // ---------- Scratch vectors ----------
+    PetscCall(MatCreateVecs(A, NULL, &ctx->tmp));    // size #edge
+    PetscCall(MatCreateVecs(Q, &ctx->kappa, &ctx->zeta)); // size   #node
+ 
+    // ---------- Outer KSP: FGMRES + PCShell(AMS) ----------
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &outer));
+    PetscCall(KSPSetType(outer, KSPGMRES));    
+    PetscCall(KSPSetOperators(outer, A, A));
+    PetscCall(KSPSetTolerances(outer, rtol, PETSC_DEFAULT, PETSC_DEFAULT, max_iters));
+
+    /*
+    PetscCall(KSPSetNormType(outer, KSP_NORM_UNPRECONDITIONED));  // monitor true ||r||
+    {
+        PetscViewerAndFormat *vf;
+        PetscCall(PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
+                                             PETSC_VIEWER_DEFAULT, &vf));
+        PetscCall(KSPMonitorSet(outer,
+            (PetscErrorCode (*)(KSP, PetscInt, PetscReal, void*))KSPMonitorTrueResidual,
+            vf,
+            (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy));
+    }
+    */
+ 
+    PetscCall(KSPGetPC(outer, &outer_pc));
+    PetscCall(PCSetType(outer_pc, PCSHELL));
+    PetscCall(PCShellSetContext(outer_pc, ctx));
+    PetscCall(PCShellSetApply  (outer_pc, AMS_apply));
+    PetscCall(PCShellSetDestroy(outer_pc, AMS_destroy));
+    PetscCall(PCShellSetName   (outer_pc, "AMS"));
+ 
+    PetscCall(KSPSetFromOptions(outer)); 
+
+    // for computing condition number
+    PetscCall(KSPSetComputeSingularValues(outer, PETSC_TRUE));
+
+    // ---------- Solve ----------
+    PetscCall(VecSet(x, 0.0));
+    PetscCall(KSPSolve(outer, b, x));
+
+    PetscReal          smax, smin;
+    PetscCall(KSPComputeExtremeSingularValues(outer, &smax, &smin));
+    system_condition = (double) smax / smin;
+ 
+    // ---------- Report ----------
+    KSPConvergedReason reason;
+    PetscInt           iters;
+    PetscReal          rnorm;
+    PetscCall(KSPGetConvergedReason(outer, &reason));
+    PetscCall(KSPGetIterationNumber(outer, &iters));
+    PetscCall(KSPGetResidualNorm   (outer, &rnorm));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD,
+        "[AMS] outer GMRES: iters=%" PetscInt_FMT
+        ", final ||r||=%.3e, reason=%d\n",
+        iters, (double)rnorm, (int)reason));
+ 
+    PetscCall(KSPDestroy(&outer));
+    n_iter = iters;
+
+    PetscFunctionReturn(0);
+}
+
+
+int Poisson::solve_pc_system()
+{
     int n_iteration_ = 0;
     int iteration_buffer = 0;
 
-    bool successful_flag = false;
 #ifdef LOAD_PETSC
-
-     // single symmetric Gauss-Seidel sweep
-    MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
 
     br_system_.extract_block_system();
 
-    //G_Matrix T   = br_system_.get_block_lhs(0,0);
-
-    Vec tmp;
-    MatCreateVecs(br_system_.get_block_lhs(0,0), NULL, &tmp); 
-    MatMult(br_system_.get_block_lhs(0,0), br_system_.get_block_x(0), tmp);         // tmp=[Omega] * [x_o]
-    VecAYPX(tmp, -1.0, br_system_.get_block_rhs(0));                                // tmp=[r_o] - tmp
-
-
-    Vec zeta_1;
-    MatCreateVecs(pc_I_.mat, &zeta_1, NULL); 
-    MatMultTranspose(pc_I_.mat, tmp, zeta_1); 
-
-
-    // ready to solve
-    KSP ksp;
-    KSPCreate(PETSC_COMM_WORLD, &ksp);
-    KSPSetType(ksp, KSPGMRES);
-    //KSPSetType(ksp, KSPCG);            // need SPD
-    PC pc;
-    KSPGetPC(ksp, &pc);
-    PCSetType(pc, PCHYPRE);
-    PCHYPRESetType(pc, "boomeramg");     // enable hypre AMG
-    KSPSetFromOptions(ksp);
-
-    // Q * κ_1  = ζ_1
-    KSPSetOperators(ksp, pc_Q_.mat, pc_Q_.mat);
-
-    Vec kappa_1;
-    MatCreateVecs(pc_Q_.mat, &kappa_1, NULL);
-    VecSet(kappa_1, 0.0);
+    Mat A = br_system_.get_block_lhs(0,0);
+    Vec b = br_system_.get_block_rhs(0);
+    Vec x = br_system_.get_block_x(0);
+ 
+    // pc_P_, pc_G_, pc_L_, pc_Q_ are already assembled.
+    // L (= pc_L_) and Q (= pc_Q_) must have Dirichlet BC applied to rows/cols.
+    // P and G stay raw.
     
-    bc_.apply_to_system(pc_Q_.mat, zeta_1, kappa_1);
-
-    KSPSolve(ksp, zeta_1, kappa_1);       // Q_1 * κ_1  = ζ_1
-    petsc_util::petsc_ksp_convergence(ksp, nullptr, &iteration_buffer, "Q*κ  = ζ");
-    n_iteration_ += iteration_buffer;
-
-    // [x_0] = [x_o] + I*κ_2 
-    // 
-    // => [x_t] = [x_t] + G*kappa_global
-    MatMultAdd(pc_I_.mat, kappa_1, br_system_.get_block_x(0), br_system_.get_block_x(0));
+    int n_iteration = 0;
+    PetscCall(solve_AMS(n_iteration, system_condition_,
+                        A, b, x,
+                        pc_I_.mat, pc_Q_.mat,
+                        &bc_,
+                        1e-8, 200));
 
     br_system_.assemble_block_x();
-
-    MatSOR(lhs, rhs, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, x);
-
-    // Clean up
-    KSPDestroy(&ksp);
-    VecDestroy(&tmp);
-    VecDestroy(&zeta_1);
-    VecDestroy(&kappa_1);
 
 #else
     Logger::error("[CurlCurl] - this solver require petsc support!");
 #endif
 
-    return successful_flag;
+    return n_iteration;
 }
 
 
@@ -424,12 +542,15 @@ int main(int argc, char** argv) {
     petsc_argv_list.push_back(argv[0]);
 
     std::string mesh_file = "test_cube_0.msh";
-
+    bool enable_preconditioner = false;
+    
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 
-        if (arg.rfind("--mesh=", 0) == 0) {
+        if(arg.rfind("--mesh=", 0) == 0) {
             mesh_file = arg.substr(7);
+        }else if(arg.rfind("--pc", 0) == 0){
+            enable_preconditioner = true;
         }else{
             petsc_argv_list.push_back(argv[i]);  // leave it for PETSc
         }
@@ -451,18 +572,26 @@ int main(int argc, char** argv) {
         {"test_cube_6.geo", 0.062500000},
     };
 
-    const std::string dat_path = TEST_DATA_OUTPUT_DIR + std::string("/poisson_l2.dat");
+    std::string file_str = enable_preconditioner ? "/poisson_l2_pc.dat" : "/poisson_l2.dat";
+
+    const std::string dat_path = TEST_DATA_OUTPUT_DIR + file_str;
     std::ofstream l2_convergence(dat_path);
-    l2_convergence << "# h                        L2_error\n";
+    l2_convergence << "# h                   #element      L2_error      #iteration      condition_number   assemble[s]      solve[s]\n";
     l2_convergence << std::scientific << std::setprecision(15);
     
 
     for (const auto& [mesh_file, h] : mesh_sweep) {
         scalar_t l2_error;
+        size_t n_element = 0;
+        int n_iteration = 0;
+        double system_condition = 0.;
+        double assemble_time = 0.;
+        double solving_time = 0.;
         {  
             Logger::start_timer("Loading mesh");
             Mesh_Parser mp(Mesh_Format::GMSH);
             Mesh mesh = mp.load_mesh(SCRIPT_PATH + mesh_file);
+            n_element = mesh.get_mesh_elements().size();
             Logger::stop_timer("Loading mesh");
 
             Logger::start_timer("Initialize Poisson solver");
@@ -471,13 +600,18 @@ int main(int argc, char** argv) {
 
             Logger::start_timer("Assemble Poisson matrix system");
             P.assemble_system();
-            P.assemble_pc_system();
-            Logger::stop_timer("Assemble Poisson matrix system");
+            if(enable_preconditioner) P.assemble_pc_system();
+            assemble_time = Logger::stop_timer("Assemble Poisson matrix system");
 
             Logger::start_timer("Solve Poisson matrix system");
-            P.solve_system();
-            //P.solve_pc_system();
-            Logger::stop_timer("Solve Poisson matrix system");
+            if(enable_preconditioner){
+                n_iteration = P.solve_pc_system();
+            }else{
+                n_iteration = P.solve_system();
+            }
+            solving_time = Logger::stop_timer("Solve Poisson matrix system");
+
+            system_condition = P.get_condition_number();
 
             Logger::start_timer("Compute L2 error.");
             l2_error = P.compute_L2_error();
@@ -488,7 +622,12 @@ int main(int argc, char** argv) {
         ss << std::scientific << std::setprecision(15) << l2_error;
         Logger::info("[Poisson] h = " + std::to_string(h) + "  L2 error: " + ss.str());
 
-        l2_convergence << h << "  " << l2_error << "\n";
+        l2_convergence << h << "  " << n_element
+                            << "  " << l2_error
+                            << "  " << n_iteration
+                            << "  " << system_condition
+                            << "  " << assemble_time
+                            << "  " << solving_time << "\n";
         l2_convergence.flush();  
     }
 

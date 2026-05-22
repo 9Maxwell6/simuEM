@@ -34,6 +34,8 @@ class Poisson
 {
 
 private:
+    double system_condition_ = 0.;
+    
     Mesh& mesh_;
     FEM_System fe_system_;
 
@@ -67,11 +69,13 @@ public:
 
     bool assemble_pc_system();
 
-    bool solve_system();
+    int solve_system();
 
-    bool solve_pc_system();
+    int solve_pc_system();
 
     scalar_t compute_L2_error();
+
+    double get_condition_number() {return system_condition_; }
 
 };
 

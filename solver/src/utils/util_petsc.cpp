@@ -362,6 +362,29 @@ PetscErrorCode petsc_zero_row_col_mat(const std::vector<PetscInt>& dofs, PetscSc
 
 
 
+/**
+ * @brief Zeros specified rows of a PETSc Mat, placing a given value on the diagonal, and change the rhs accordingly.
+ *
+ * @param dofs     global indices of the rows/columns to zero.
+ * @param diag_val value to place on the diagonal of the zeroed rows.
+ * @param mat      the Mat to modify (must already be assembled).
+ * @param x        optional solution Vec for preserving symmetry (can be nullptr).
+ * @param b        optional RHS Vec to be adjusted accordingly (can be nullptr).
+ * 
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_zero_row_mat(const std::vector<PetscInt>& dofs, PetscScalar diag_val, Mat mat, Vec x, Vec b)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatZeroRows(mat, dofs.size(), dofs.data(), diag_val, x, b));
+    PetscCall(MatAssemblyBegin(mat, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(mat, MAT_FINAL_ASSEMBLY));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
 
 /**
  * @brief Sets specified entries of a PETSc Vec to given values.
