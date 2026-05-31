@@ -268,6 +268,8 @@ static PetscErrorCode AMS_apply(PC pc, Vec r, Vec z)
  
     // single Gauss-Seidel
     PetscCall(MatSOR(ctx->A, r, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, z));
+
+    for(int n=0; n<100; ++n){
  
     //    tmp = r - A z
     PetscCall(MatMult(ctx->A, z, ctx->tmp));
@@ -285,6 +287,8 @@ static PetscErrorCode AMS_apply(PC pc, Vec r, Vec z)
  
     //    z = z + I*kappa
     PetscCall(MatMultAdd(ctx->I, ctx->kappa, z, z));
+
+    }
 
  
     // -- post-smoother (continues from updated z)
@@ -348,7 +352,8 @@ PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
  
     // ---------- Outer KSP: FGMRES + PCShell(AMS) ----------
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &outer));
-    PetscCall(KSPSetType(outer, KSPGMRES));    
+    //PetscCall(KSPSetType(outer, KSPGMRES));  
+    PetscCall(KSPSetType(outer, KSPCG));    
     PetscCall(KSPSetOperators(outer, A, A));
     PetscCall(KSPSetTolerances(outer, rtol, PETSC_DEFAULT, PETSC_DEFAULT, max_iters));
 
@@ -426,7 +431,7 @@ int Poisson::solve_pc_system()
                         A, b, x,
                         pc_I_.mat, pc_Q_.mat,
                         &bc_,
-                        1e-8, 200));
+                        1e-10, PETSC_DEFAULT));
 
     br_system_.assemble_block_x();
 

@@ -28,7 +28,11 @@ def main():
     args = ap.parse_args()
  
     fig, ax = plt.subplots(figsize=(6, 5))
-    ax.set_prop_cycle(color=plt.cm.Set1.colors)
+
+    colors = list(plt.cm.Set1.colors)
+    colors[5] = (0.4, 0.4, 0.4)          # replace yellow with gray
+    ax.set_prop_cycle(color=colors)
+
     for path in args.files:
         h, kappa = np.loadtxt(path, comments="#", usecols=(0, 4), unpack=True)
         order = np.argsort(h)

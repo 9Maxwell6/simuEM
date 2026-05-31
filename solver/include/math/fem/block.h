@@ -19,8 +19,8 @@ struct Block
 
     bool is_base_block;
 
-    G_Matrix mat;
-    G_Vector vec;  // only initialized if is_base_block == true; 
+    G_Matrix mat = nullptr;
+    G_Vector vec = nullptr;  // only initialized if is_base_block == true; 
 
 
     bool operator==(const Block& other) const { return id == other.id; }

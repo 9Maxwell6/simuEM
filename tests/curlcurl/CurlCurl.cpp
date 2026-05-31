@@ -223,19 +223,20 @@ int CurlCurl::solve_system()
 
     // Set solver type
     //KSPSetType(ksp, KSPMINRES);
-    KSPSetType(ksp, KSPGMRES);
+    //KSPSetType(ksp, KSPGMRES);
+    KSPSetType(ksp, KSPCG);
 
     // Optionally configure the preconditioner (e.g., Jacobi)
-    PC pc;
-    KSPGetPC(ksp, &pc);    // <-- add this line
+    //PC pc;
+    //KSPGetPC(ksp, &pc);   
     //PCSetType(pc, PCHYPRE);
     //PCHYPRESetType(pc, "boomeramg");
 
     //PCSetType(pc, PCNONE);
 
-    PCSetType(pc, PCSOR);           // SOR family (includes SGS)
-    PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP);
-    PCSORSetOmega(pc, 1.0);
+    //PCSetType(pc, PCSOR);           // SOR family (includes SGS)
+    //PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP);
+    //PCSORSetOmega(pc, 1.0);
 
     // Optionally set tolerances
     KSPSetTolerances(ksp, 1e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
@@ -297,12 +298,16 @@ static PetscErrorCode AMS_apply(PC pc, Vec r, Vec z)
  
     PetscCall(VecZeroEntries(z));
 
-    petsc_util::petsc_save_ascii_vec(z, "z_00.txt");
- 
     // single Gauss-Seidel
     PetscCall(MatSOR(ctx->A, r, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, z));
 
-    petsc_util::petsc_save_ascii_vec(z, "z_01.txt");
+
+    for(int n=0; n<1; ++n){
+
+    petsc_util::petsc_save_ascii_vec(z, "z.txt");
+ 
+    
+
  
     //    tmp = r - A z
     PetscCall(MatMult(ctx->A, z, ctx->tmp));
@@ -311,29 +316,73 @@ static PetscErrorCode AMS_apply(PC pc, Vec r, Vec z)
     //    rho  = P^T * tmp   ((H1)^3)
     //    zeta = G^T * tmp   (H1)
     PetscCall(MatMultTranspose(ctx->P, ctx->tmp, ctx->rho));
-    PetscCall(MatMultTranspose(ctx->G, ctx->tmp, ctx->zeta));
+    
  
 
     PetscCall(VecSet(ctx->gamma, 0.0));
-    PetscCall(VecSet(ctx->kappa, 0.0));
  
     ctx->bc_v->apply_to_system(ctx->L, ctx->rho,  ctx->gamma);
-    ctx->bc_s->apply_to_system(ctx->Q, ctx->zeta, ctx->kappa);
+    
+
+    //std::vector<dof_idx>&  bcv_list = ctx->bc_v->get_dof_idx();
+    //std::vector<dof_idx>&  bcs_list = ctx->bc_s->get_dof_idx();
+
+    /*
+    petsc_util::petsc_save_ascii_mat(ctx->L, "L.txt");
+    petsc_util::petsc_save_ascii_mat(ctx->Q, "Q.txt");
+
+    const std::string dat_path_v = TEST_DATA_OUTPUT_DIR + std::string("/bc_v.dat");
+    std::ofstream bcv(dat_path_v);    
+
+    for (const dof_idx& idx : bcv_list) {
+        bcv << idx << "\n";
+        bcv.flush();  
+    }
+
+    bcv.close();
+
+    const std::string dat_path_s = TEST_DATA_OUTPUT_DIR + std::string("/bc_s.dat");
+    std::ofstream bcs(dat_path_s);    
+
+    for (const dof_idx& idx : bcs_list) {
+        bcs << idx << "\n";
+        bcs.flush();  
+    }
+
+    bcs.close();
+
+    exit(0);
+
+    //*/
+
+
  
     //    Single BoomerAMG V-cycle for each
     PetscCall(KSPSolve(ctx->inner_L_ksp, ctx->rho,  ctx->gamma));
+    //    z = z + P*gamma
+    PetscCall(MatMultAdd(ctx->P, ctx->gamma, z, z));
+
+
+    PetscCall(MatMult(ctx->A, z, ctx->tmp));
+    PetscCall(VecAYPX(ctx->tmp, -1.0, r));
+    PetscCall(MatMultTranspose(ctx->G, ctx->tmp, ctx->zeta));
+
+    PetscCall(VecSet(ctx->kappa, 0.0));
+    ctx->bc_s->apply_to_system(ctx->Q, ctx->zeta, ctx->kappa);
+
+
     PetscCall(KSPSolve(ctx->inner_Q_ksp, ctx->zeta, ctx->kappa));
  
     //    z = z + P*gamma + G*kappa
-    PetscCall(MatMultAdd(ctx->P, ctx->gamma, z, z));
+    //PetscCall(MatMultAdd(ctx->P, ctx->gamma, z, z));
     PetscCall(MatMultAdd(ctx->G, ctx->kappa, z, z));
 
-    petsc_util::petsc_save_ascii_vec(z, "z_02.txt");
- 
-    // -- Step 6: post-smoother (continues from updated z)
+
+    }
+
+    // post-smoother (continues from updated z)
     PetscCall(MatSOR(ctx->A, r, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, z));
 
-    petsc_util::petsc_save_ascii_vec(z, "z_03.txt");
  
     PetscFunctionReturn(0);
 }
@@ -367,6 +416,9 @@ PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
     KSP outer;
     PC  outer_pc;
     PetscFunctionBeginUser;
+
+    bc_v->apply_to_mat(L);
+    bc_s->apply_to_mat(Q);
  
     // ---------- Allocate context ----------
     PetscCall(PetscNew(&ctx));
@@ -402,7 +454,16 @@ PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
         PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
     }
     PetscCall(KSPSetOptionsPrefix(ctx->inner_Q_ksp, "inner_Q_"));
-    PetscCall(KSPSetOperators(ctx->inner_Q_ksp, Q, Q));
+    Mat PP;
+    PetscCall(MatPtAP(A,G,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&PP));
+    bc_s->apply_to_mat(PP);
+    PetscCall(KSPSetOperators(ctx->inner_Q_ksp, PP, PP));
+    //PetscCall(KSPSetOperators(ctx->inner_Q_ksp, Q, Q));
+
+    //petsc_util::petsc_save_ascii_mat(Q, "Q.txt");
+    //petsc_util::petsc_save_ascii_mat(PP, "GAG.txt");
+    //exit(0);
+
     PetscCall(KSPSetFromOptions(ctx->inner_Q_ksp));
     PetscCall(KSPSetUp(ctx->inner_Q_ksp));
  
@@ -413,11 +474,12 @@ PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
  
     // ---------- Outer KSP: FGMRES + PCShell(AMS) ----------
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &outer));
-    PetscCall(KSPSetType(outer, KSPGMRES));    
+    //PetscCall(KSPSetType(outer, KSPGMRES));   
+    PetscCall(KSPSetType(outer, KSPCG));   
     PetscCall(KSPSetOperators(outer, A, A));
     PetscCall(KSPSetTolerances(outer, rtol, PETSC_DEFAULT, PETSC_DEFAULT, max_iters));
 
-    /*
+    ///*
     PetscCall(KSPSetNormType(outer, KSP_NORM_UNPRECONDITIONED));  // monitor true ||r||
     {
         PetscViewerAndFormat *vf;
@@ -428,7 +490,7 @@ PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
             vf,
             (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy));
     }
-    */
+    //*/
  
     PetscCall(KSPGetPC(outer, &outer_pc));
     PetscCall(PCSetType(outer_pc, PCSHELL));
@@ -501,13 +563,18 @@ int CurlCurl::solve_pc_system()
     // pc_P_, pc_G_, pc_L_, pc_Q_ are already assembled.
     // L (= pc_L_) and Q (= pc_Q_) must have Dirichlet BC applied to rows/cols.
     // P and G stay raw.
-    
+
+    petsc_util::petsc_save_ascii_mat(pc_G_.mat, "CurlCurl_G_mat_0.txt");
+    petsc_util::petsc_save_ascii_mat(pc_P_.mat, "CurlCurl_P_mat_0.txt");
+    petsc_util::petsc_save_ascii_mat(pc_L_.mat, "CurlCurl_L_mat_0.txt");
+    petsc_util::petsc_save_ascii_mat(pc_Q_.mat, "CurlCurl_Q_mat_0.txt");
+
     int n_iteration = 0;
     PetscCall(solve_AMS(n_iteration, system_condition_,
                         A, b, x,
                         pc_P_.mat, pc_G_.mat, pc_L_.mat, pc_Q_.mat,
                         &bc_v_, &bc_s_,
-                        1e-8, 200));
+                        1e-10, 200));
 
     br_system_.assemble_block_x();
 
@@ -656,6 +723,7 @@ int main(int argc, char** argv) {
         {"test_cube_4.geo", 0.125000000},
         {"test_cube_5.geo", 0.088388348},
         {"test_cube_6.geo", 0.062500000},
+        
         //{"test_cube_3.msh", 0.176776695},
     };
 

@@ -1,0 +1,4 @@
+
+add_executable(coupled_curlcurl coupled_curlcurl.cpp)
+target_link_libraries(coupled_curlcurl PRIVATE simu_core)
+add_test(NAME coupled_curlcurl COMMAND test_coupled_curlcurl)

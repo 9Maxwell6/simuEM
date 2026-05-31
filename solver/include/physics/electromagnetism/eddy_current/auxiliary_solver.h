@@ -9,15 +9,33 @@ namespace simu::T_Omega_AMS {
 typedef struct AMS_Context 
 {
     Mat P, G, I, L, Q;
+    Mat Q_T, Q_O, G_T, I_O;
+    //Mat X;
+
     KSP inner_L_ksp, inner_Q_ksp;     // built once, reused per PCApply
     Vec tmp_1, tmp_2;
     Vec rho,   gamma;                 // size 3*nV (L-space RHS / sol)
     Vec zeta,  kappa;                 // size   nV (Q-space RHS / sol)
     Block_Rack* br_system;
+
+    Vec zeta_1,  kappa_1;                 // size   nV (Q-space RHS / sol)
+    Vec zeta_2,  kappa_2;                 // size   nV (Q-space RHS / sol)
+
+    //Vec x;
+
     Dirichlet_BC *bc_v;                   // for L (vector / 3D nodal space)
     Dirichlet_BC *bc_s1;                   // for Q (scalar nodal space)
     Dirichlet_BC *bc_s2;                   // for Q (scalar nodal space)
     Dirichlet_BC *bc_s3;                   // for Q (scalar nodal space)
+
+    KSP inner_Q_T_ksp, inner_Q_O_ksp;     // built once, reused per PCApply
+    //KSP inner_X_ksp; 
+
+    Dirichlet_BC *bc_T__H1;                 
+    Dirichlet_BC *bc_Oo_H1;                  
+    Dirichlet_BC *bc_Oi_H1;   
+    
+    Dirichlet_BC *bc_T__Hcurl;   
 } AMS_Context;
 
 typedef struct AMS_Info 
@@ -39,9 +57,15 @@ PetscErrorCode AMS_destroy(PC pc);
 
 PetscErrorCode solve_AMS(
     AMS_Info& AMS_info,
+    Mat Q_T, Mat Q_O, Mat G_T, Mat I_O,
     Mat P, Mat G, Mat I, Mat L, Mat Q,
+    //Mat X,
     Block_Rack* br_system,
     Dirichlet_BC *bc_v, Dirichlet_BC *bc_s1, Dirichlet_BC *bc_s2, Dirichlet_BC *bc_s3,
+    Dirichlet_BC *bc_T__H1,                 
+    Dirichlet_BC *bc_Oo_H1,                  
+    Dirichlet_BC *bc_Oi_H1,  
+    Dirichlet_BC *bc_T__Hcurl,
     PetscReal rtol = 1e-10, PetscInt max_iters = PETSC_DEFAULT, bool enable_monitor = false);
 
 

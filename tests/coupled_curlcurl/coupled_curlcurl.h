@@ -1,6 +1,8 @@
 #pragma once
 
 #include "world/mesh/mesh.h"
+#include "world/mesh/mesh_parser.h"
+
 #include "world/structure/structure.h"
 
 #include "math/fem/fem_space.h"
@@ -18,7 +20,6 @@
 #include "utils/util_string.h"
 #include "utils/util_constant.h"
 
-#include "physics/electromagnetism/eddy_current/auxiliary_solver.h"
 
 
 
@@ -37,7 +38,7 @@ enum Domain
     CONDUCTOR_OUTER_LAYER = 5
 };
 
-class T_Omega
+class Coupled_CurlCurl
 {
 
 private:
@@ -74,27 +75,8 @@ private:
     H1_Space           global_H1;
     Block              pc_Q_;   //  Q = integral_{ μ grad u. grad v  dx }           H1   x   H1  in global mesh
 
-
-    H1_Space           H1_;
-    Block              pc_Q_T_;
-    Block              pc_Q_O_;
-    Block              pc_G_T_;
-    Block              pc_I_O_;
-
-    Block              pc_J_;       //  J = integral_{ μ u . grad v  dx }       (H1)^3   x    H1     in coupling region
-    //Block              pc_J_tp_;    //  J = integral_{ μ grad u . v  dx }        H1      x   (H1)^3  in coupling region
-
-    
-    Dirichlet_BC       pc_bc_T__H1_;
-    Dirichlet_BC       pc_bc_Oo_H1_;
-    Dirichlet_BC       pc_bc_Oi_H1_;
-    Dirichlet_BC       pc_bc_T_1_v_;
-
-    
-
-
-
     Dirichlet_BC pc_bc_O_s_;
+    Dirichlet_BC pc_bc_T_1_v_;
     Dirichlet_BC pc_bc_T_1_s_;
 
     //for test
@@ -103,7 +85,6 @@ private:
 
 
     Block_Rack br_system_;
-    //Block_Rack pc_br_system_;
 
 
     int dim_;
@@ -195,8 +176,8 @@ private:
 
 
 public:
-    T_Omega(Mesh& mesh, bool enable_preconditioner=false);
-    ~T_Omega();
+    Coupled_CurlCurl(Mesh& mesh, bool enable_preconditioner=false);
+    ~Coupled_CurlCurl();
 
     bool assemble_system();
 

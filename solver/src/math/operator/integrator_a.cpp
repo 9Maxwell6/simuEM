@@ -179,6 +179,45 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
 {
     constexpr int R = Mat_Type::RowsAtCompileTime;
     constexpr int C = Mat_Type::ColsAtCompileTime;
+    constexpr int CS = (C == Eigen::Dynamic) ? Eigen::Dynamic : C / phy_dim;
+
+    if constexpr  (phy_dim == ref_dim) 
+    {
+        std::call_once(e_data.check->integrator_check[INTEGRATOR_ID], [&]{ do_once(e_data.space_1, e_data.space_2); }); 
+        
+        const Element* e = e_data.e;
+        const FEM_Space* test__space = e_data.shape_space_1;
+        const FEM_Space* trial_space = e_data.shape_space_2;
+        int order = e->get_geometry_order() + trial_space->get_basis_order() + test__space->get_basis_order()-1;
+
+        const std::vector<Integration_Point>& i_p_list = Integration::get_rule(e_data.b_shape, order);
+
+        int sub_n_col = e_data.cols/phy_dim;
+        
+        Matrix<R, ref_dim> grad_basis(e_data.rows, ref_dim);
+        Matrix<R, phy_dim> phy_grad_basis(e_data.rows, phy_dim);
+        Vector<CS> basis(sub_n_col);        
+
+        for(const Integration_Point& i_p : i_p_list)
+        {
+            trial_space->get_basis_s(i_p.coord, basis);
+            test__space->get_ED_basis_v(i_p.coord, grad_basis);
+            
+            double abs_det_J = std::abs(e_data.get_det_J(i_p.coord));
+            const Matrix<ref_dim, phy_dim>& inv_J = e_data.get_inv_J(i_p.coord);
+
+            phy_grad_basis = grad_basis*inv_J;
+            double c = coeff * i_p.weight * abs_det_J;
+            for (int v = 0; v < phy_dim; ++v)
+            {
+                element_matrix.block(0, v * sub_n_col, e_data.rows, sub_n_col) += c * phy_grad_basis.col(v) * basis.transpose();
+            }
+        }
+    }
+
+    /*
+    constexpr int R = Mat_Type::RowsAtCompileTime;
+    constexpr int C = Mat_Type::ColsAtCompileTime;
 
     if constexpr  (phy_dim == ref_dim) 
     {
@@ -238,6 +277,7 @@ void Integrator_H1__s_V__grad_S::assemble_element_matrix(double coeff, Element_D
             exit(0);
         }
     }
+    */
 }
 INSTANTIATE_ELEMENT_MAT_TEMPLATE_ARGS(Integrator_H1__s_V__grad_S, assemble_element_matrix, double)
 

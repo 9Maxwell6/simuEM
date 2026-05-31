@@ -349,15 +349,17 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
         if (std::optional<size_t> id_o = bh_1.get_exist_id(args...)) {
             fe_shared_block_dof_1.push_back(offset + *id_o);
         } else {
+            fe_shared_block_dof_1.push_back(-1);
             error_dof_flag = true;
         }
     };
 
-    // for block hash 1
+    // for block hash 2
     auto get_id_handler_2 = [&](size_t offset, auto... args) {
         if (std::optional<size_t> id_o = bh_2.get_exist_id(args...)) {
             fe_shared_block_dof_2.push_back(offset + *id_o);
         } else {
+            fe_shared_block_dof_2.push_back(-1);
             error_dof_flag = true;
         }
     };
@@ -397,6 +399,7 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
             if (std::optional<size_t> id_o = bh_cell_1.get_exist_id(idx, n, j)){
                 fe_shared_block_dof_1.push_back(offset_cell_1 + *id_o);
             }else{
+                fe_shared_block_dof_1.push_back(-1);
                 error_dof_flag = true;
             }
         } 
@@ -406,6 +409,7 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
             if (std::optional<size_t> id_o = bh_cell_2.get_exist_id(idx, n, j)){
                 fe_shared_block_dof_2.push_back(offset_cell_2 + *id_o);
             }else{
+                fe_shared_block_dof_2.push_back(-1);
                 error_dof_flag = true;
             }
         }
@@ -418,8 +422,7 @@ bool FEM_System::generate_coupling_block_dof(Block& block)
 
     if(error_dof_flag)
     {
-        Logger::error("FEM_System::generate_coupling_block_dof - element group provided by the key contain elements not shared by both base blocks.");
-        return false;
+        Logger::warning("FEM_System::generate_coupling_block_dof - element group provided by the key contain elements not shared by both base blocks.");
     }
 
     if(!shape_found_flag)
@@ -583,11 +586,15 @@ Block FEM_System::register_dual_FE_space(FEM_Space& fe_space_1, FEM_Space& fe_sp
         new_block.col_size = block_2->row_size / get_block_space(*block_2, 0)->get_vdim() * fe_space_2.get_vdim();
         block_dof_pair[1] = get_block_dof(*block_2, 0);
 
+        block_hash_pair[1] = get_block_hash(*block_2, 0);  // for test!!!
+
     }else if(block_2 != nullptr && (fe_space_2.get_function_space() == get_block_space(*block_2, 1)->get_function_space())
                           && (fe_space_2.get_basis_order()    == get_block_space(*block_2, 1)->get_basis_order())
                           && (get_group_key(*block_2)   == group_key)){
         new_block.col_size = block_2->col_size / get_block_space(*block_2, 1)->get_vdim() * fe_space_2.get_vdim();
         block_dof_pair[1] = get_block_dof(*block_2, 1);
+
+        block_hash_pair[1] = get_block_hash(*block_2, 1);  // for test!!!
         
     }else if(
         generate_block_dof(new_block, fe_space_2, 1)){;

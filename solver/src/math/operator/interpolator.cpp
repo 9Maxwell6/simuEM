@@ -406,6 +406,7 @@ void Interpolator__grad_H1_to_Hcurl::interpolate_element(Element_Data<phy_dim, r
             );
         }
         
+        //Operator::dof_transformation_mat(e_data, element_matrix);
         
     }
 }

@@ -172,8 +172,8 @@ public:
 
 
 /**
- * domain: H_1
- * range:  H_1 
+ * domain: (H_1)^d   d=1,2,3
+ * range:   H_1 
  * 
  * @param coeff scalar coefficient value at each element.
  * @param e_data element data struct contains all information needed to assemble element matrix.
