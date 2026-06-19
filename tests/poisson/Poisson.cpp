@@ -575,9 +575,11 @@ int main(int argc, char** argv) {
         {"test_cube_4.geo", 0.125000000},
         {"test_cube_5.geo", 0.088388348},
         {"test_cube_6.geo", 0.062500000},
+        {"test_cube_7.geo", 0.044200000},
+        {"test_cube_8.geo", 0.031250000},
     };
 
-    std::string file_str = enable_preconditioner ? "/poisson_l2_pc.dat" : "/poisson_l2.dat";
+    std::string file_str = enable_preconditioner ? "/poisson_pc.dat" : "/poisson.dat";
 
     const std::string dat_path = TEST_DATA_OUTPUT_DIR + file_str;
     std::ofstream l2_convergence(dat_path);

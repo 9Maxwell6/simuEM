@@ -89,11 +89,11 @@ int main(int argc, char** argv)
         const std::vector<std::pair<std::string, double>> mesh_sweep = {
             //{"test_cc_0.geo", 0.500000000},
 
-            //{"test_cc_1.geo", 0.353553391},
-            //{"test_cc_2.geo", 0.250000000},
-            //{"test_cc_3.geo", 0.176776695},
-            //{"test_cc_4.geo", 0.125000000},
-            //{"test_cc_5.geo", 0.088388348},
+            {"test_cc_1.geo", 0.353553391},
+            {"test_cc_2.geo", 0.250000000},
+            {"test_cc_3.geo", 0.176776695},
+            {"test_cc_4.geo", 0.125000000},
+            {"test_cc_5.geo", 0.088388348},
             {"test_cc_6.geo", 0.062500000},
             {"test_cc_7.geo", 0.044200000},
             {"test_cc_8.geo", 0.031250000},
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
             //{"test_cc_10.geo", 0.01562500}
         };
 
-        std::string file_str = enable_preconditioner ? "/T_Omega_l2_pc.dat" : "/T_Omega_l2.dat";
+        std::string file_str = enable_preconditioner ? "/T_Omega_pc.dat" : "/T_Omega.dat";
 
         const std::string dat_path = DATA_OUTPUT_DIR + file_str;
         std::ofstream l2_convergence(dat_path);
@@ -148,35 +148,44 @@ int main(int argc, char** argv)
                     assemble_time += Logger::stop_timer("Assemble T-Omega preconditioner");
                 }
 
-                Logger::start_timer("Solve T-Omega matrix system");
-                T_O.solve_system();
-                solving_time = Logger::stop_timer("Solve T-Omega matrix system");
+                for(int i=0; i<1; ++i)
+                {
 
-                if(l2_test){
-                    Logger::start_timer("Compute L2 error.");
-                    l2_error = T_O.compute_L2_error();
-                    Logger::stop_timer("Compute L2 error.");
+                    Logger::start_timer("Solve T-Omega matrix system");
+                    T_O.solve_system();
+                    solving_time = Logger::stop_timer("Solve T-Omega matrix system");
+
+                    n_iteration = T_O.get_n_iteration();
+                    condition_numbder = T_O.get_system_condition();
+
+                    if(l2_test){
+                        Logger::start_timer("Compute L2 error.");
+                        l2_error = T_O.compute_L2_error();
+                        Logger::stop_timer("Compute L2 error.");
+                    }
+
+                    std::ostringstream ss;
+                    ss << std::scientific << std::setprecision(15) << l2_error;
+                    Logger::info("[T-Omega] h = " + std::to_string(h) + "  L2 error: " + ss.str());
+
+                    l2_convergence << h << "  " << n_element 
+                                        << "  " << l2_error 
+                                        << "  " << n_iteration
+                                        << "  " << condition_numbder
+                                        << "  " << assemble_time
+                                        << "  " << solving_time << "\n";
+                    l2_convergence.flush();  
+
                 }
-                
 
-                n_iteration = T_O.get_n_iteration();
-                condition_numbder = T_O.get_system_condition();
+                
+                
 
                 T_O.finalize();
             }
 
-            std::ostringstream ss;
-            ss << std::scientific << std::setprecision(15) << l2_error;
-            Logger::info("[T-Omega] h = " + std::to_string(h) + "  L2 error: " + ss.str());
+            
 
-            l2_convergence << h << "  " << n_element 
-                                << "  " << l2_error 
-                                << "  " << n_iteration
-                                << "  " << condition_numbder
-                                << "  " << assemble_time
-                                << "  " << solving_time << "\n";
-            l2_convergence.flush();   // persist after every run — a crash on the
-                                // finest mesh won't lose the earlier points
             petsc_util::petsc_print_memory_usage("iter N end");
             //PetscLogView(PETSC_VIEWER_STDOUT_WORLD);
         }

@@ -90,6 +90,9 @@ private:
     Dirichlet_BC       pc_bc_Oi_H1_;
     Dirichlet_BC       pc_bc_T_1_v_;
 
+    Dirichlet_BC       pc_bc_Ti_H1_;
+    Dirichlet_BC       pc_bc_Ot_H1_;
+
     
 
 

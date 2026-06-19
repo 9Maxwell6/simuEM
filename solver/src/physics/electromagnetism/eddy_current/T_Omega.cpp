@@ -261,15 +261,16 @@ T_Omega::T_Omega(Mesh& mesh, bool enable_preconditioner) : mesh_(mesh), enable_p
                        pc_J_tp_.col_size);
 
     */
+
+
     
     
     pc_bc_T__H1_ = fe_system_.register_Dirichlet_BC(pc_Q_T_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
     pc_bc_Oo_H1_ = fe_system_.register_Dirichlet_BC(pc_Q_O_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
     pc_bc_Oi_H1_ = fe_system_.register_Dirichlet_BC(pc_Q_O_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
 
-
-
-    
+    pc_bc_Ti_H1_ = fe_system_.register_Dirichlet_BC(pc_Q_T_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
+    pc_bc_Ot_H1_ = fe_system_.register_Dirichlet_BC(pc_Q_O_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
 
 
 
@@ -614,6 +615,8 @@ bool T_Omega::assemble_preconditioner()
         Integrator_H1__s_V__V::assemble_element_matrix(mu, e_data, mat);
     });
 
+
+    /*
     Logger::info("[T_Omega - preconditioner] - assemble preconditioner in H1 global field.");
     assemble_mat(fe_system_.assemble_mat_data(pc_Q_), [&](auto& e_data, auto& mat) {
         double mu = 1;
@@ -626,6 +629,7 @@ bool T_Omega::assemble_preconditioner()
         if(property_id == Domain::CONDUCTOR_OUTER_LAYER) Integrator__s_grad_S__grad_S::assemble_element_matrix(4*mu, e_data, mat);
         if(property_id == Domain::EMPTY) Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
     });
+    */
 
     Logger::info("[T_Omega - preconditioner] - assemble discrete gradient matrix.");
     assemble_mat(fe_system_.assemble_mat_data(pc_G_), [&](auto& e_data, auto& mat) {
@@ -781,24 +785,176 @@ bool T_Omega::solve_system()
 
         br_system_.extract_block_system();
 
-        //la_kernel::zero_row_mat(bc_T_1_.get_dof_idx(), 0, pc_G_.mat, NULL, NULL);
-        //la_kernel::zero_row_mat(bc_T_1_.get_dof_idx(), 0, pc_P_.mat, NULL, NULL);
-        //la_kernel::zero_row_mat(bc_Omega_in_.get_dof_idx(), 0, pc_I_.mat, NULL, NULL);
+        const Mat O_   = br_system_.get_block_lhs(0,0);
+        const Mat O_c_ = br_system_.get_block_lhs(0,1);
+        const Mat T_   = br_system_.get_block_lhs(1,1);
+        const Mat T_c_ = br_system_.get_block_lhs(1,0);
+
+        int algorithm_id = 4;  // 1=decoupled, 2=global, 3=coupled, 4=fully coupled
 
         T_Omega_AMS::AMS_Info ams_info;
 
-        PetscCall(T_Omega_AMS::solve_AMS(
-            ams_info,
-            pc_Q_T_.mat, pc_Q_O_.mat, pc_G_T_.mat, pc_I_O_.mat,
-            pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_L_.mat, pc_Q_.mat, 
-            //pc_br_system_.get_lhs(),
-            &br_system_,
-            &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, &pc_bc_O_s_in_,
-            &pc_bc_T__H1_,
-            &pc_bc_Oo_H1_,
-            &pc_bc_Oi_H1_,
-            &bc_T_1_,
-            1e-10, PETSC_DEFAULT, true));
+        if(algorithm_id == 1){
+
+            pc_bc_T__H1_.apply_to_mat(pc_Q_T_.mat);
+            pc_bc_Oo_H1_.apply_to_mat(pc_Q_O_.mat);
+            pc_bc_Oi_H1_.apply_to_mat(pc_Q_O_.mat);
+
+            PetscCall(T_Omega_AMS::solve_AMS(
+                ams_info,
+                algorithm_id,
+                pc_Q_T_.mat, pc_Q_O_.mat, pc_G_T_.mat, pc_I_O_.mat,
+                pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_L_.mat, pc_Q_.mat, 
+                //pc_br_system_.get_lhs(),
+                &br_system_,
+                &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, &pc_bc_O_s_in_,
+                &pc_bc_T__H1_,
+                &pc_bc_Oo_H1_,
+                &pc_bc_Oi_H1_,
+                &bc_T_1_,
+                &pc_bc_Ti_H1_,
+                &pc_bc_Ot_H1_,
+                1e-10, PETSC_DEFAULT, true
+            ));
+
+        }else if(algorithm_id == 2){
+            Mat M, M1, M2, M3, M4;
+            Mat tM, oM;
+            PetscCall(MatPtAP(T_,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
+            PetscCall(MatPtAP(O_,pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
+
+            PetscCall(MatTransposeMatMult(pc_G_.mat,T_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
+            PetscCall(MatTransposeMatMult(pc_I_.mat,O_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oM));
+            PetscCall(MatMatMult(tM, pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M3));
+            PetscCall(MatMatMult(oM, pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M4));
+
+            PetscCall(MatDuplicate(M1, MAT_COPY_VALUES,&M));
+            PetscCall(MatAXPY(M, 1.0, M2, DIFFERENT_NONZERO_PATTERN));
+            PetscCall(MatAXPY(M, 1.0, M3, DIFFERENT_NONZERO_PATTERN));
+            PetscCall(MatAXPY(M, 1.0, M4, DIFFERENT_NONZERO_PATTERN));
+
+            PetscCall(MatDestroy(&M1));
+            PetscCall(MatDestroy(&M2));
+            PetscCall(MatDestroy(&M3));
+            PetscCall(MatDestroy(&M4));
+
+
+            PetscCall(T_Omega_AMS::solve_AMS(
+                ams_info,
+                algorithm_id,
+                pc_Q_T_.mat, pc_Q_O_.mat, pc_G_T_.mat, pc_I_O_.mat,
+                pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_L_.mat, M, 
+                //pc_br_system_.get_lhs(),
+                &br_system_,
+                &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, &pc_bc_O_s_in_,
+                &pc_bc_T__H1_,
+                &pc_bc_Oo_H1_,
+                &pc_bc_Oi_H1_,
+                &bc_T_1_,
+                &pc_bc_Ti_H1_,
+                &pc_bc_Ot_H1_,
+                1e-10, PETSC_DEFAULT, true
+            ));
+
+            PetscCall(MatDestroy(&M));
+
+
+        }else if(algorithm_id == 3){
+            Mat M, M1, M2, M3, M4;
+            Mat tM, oM;
+            PetscCall(MatPtAP(T_,pc_G_T_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
+            PetscCall(MatPtAP(O_,pc_I_O_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
+
+            PetscCall(MatTransposeMatMult(pc_G_T_.mat,T_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
+            PetscCall(MatTransposeMatMult(pc_I_O_.mat,O_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oM));
+            PetscCall(MatMatMult(tM, pc_I_O_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M3));
+            PetscCall(MatMatMult(oM, pc_G_T_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M4));
+
+            std::vector<Mat> blocks = {M1, M3, M4, M2};
+
+            la_kernel::create_nest_mat(2, 2, blocks, M);
+
+            PetscCall(MatDestroy(&M1));
+            PetscCall(MatDestroy(&M2));
+            PetscCall(MatDestroy(&M3));
+            PetscCall(MatDestroy(&M4));
+
+            PetscCall(T_Omega_AMS::solve_AMS(
+                ams_info,
+                algorithm_id,
+                pc_Q_T_.mat, pc_Q_O_.mat, pc_G_T_.mat, pc_I_O_.mat,
+                pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_L_.mat, M, 
+                //pc_br_system_.get_lhs(),
+                &br_system_,
+                &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, &pc_bc_O_s_in_,
+                &pc_bc_T__H1_,
+                &pc_bc_Oo_H1_,
+                &pc_bc_Oi_H1_,
+                &bc_T_1_,
+                &pc_bc_Ti_H1_,
+                &pc_bc_Ot_H1_,
+                1e-10, PETSC_DEFAULT, true
+            ));
+
+            PetscCall(MatDestroy(&M));
+        }else if(algorithm_id == 4){
+            Mat M, M1, M2, M3, M4;
+            Mat tM, oM;
+            Mat H, H1,     H3, H4;
+            Mat tH, oH;
+            PetscCall(MatPtAP(T_,pc_G_T_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
+            PetscCall(MatPtAP(O_,pc_I_O_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
+
+            PetscCall(MatTransposeMatMult(pc_G_T_.mat,T_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
+            PetscCall(MatTransposeMatMult(pc_I_O_.mat,O_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oM));
+            PetscCall(MatMatMult(tM, pc_I_O_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M3));
+            PetscCall(MatMatMult(oM, pc_G_T_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M4));
+
+            std::vector<Mat> blocks_M = {M1, M3, M4, M2};
+
+
+            PetscCall(MatPtAP(T_,pc_P_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&H1));
+            PetscCall(MatTransposeMatMult(pc_P_.mat,T_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tH));
+            PetscCall(MatTransposeMatMult(pc_I_O_.mat,O_c_,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oH));
+            PetscCall(MatMatMult(tH, pc_I_O_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&H3));
+            PetscCall(MatMatMult(oH, pc_P_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&H4));
+
+            std::vector<Mat> blocks_H = {H1, H3, H4, M2};
+
+            la_kernel::create_nest_mat(2, 2, blocks_M, M);
+            la_kernel::create_nest_mat(2, 2, blocks_H, H);
+
+            PetscCall(MatDestroy(&M1));
+            PetscCall(MatDestroy(&M2));
+            PetscCall(MatDestroy(&M3));
+            PetscCall(MatDestroy(&M4));
+
+            PetscCall(MatDestroy(&H1));
+            PetscCall(MatDestroy(&H3));
+            PetscCall(MatDestroy(&H4));
+
+            PetscCall(T_Omega_AMS::solve_AMS(
+                ams_info,
+                algorithm_id,
+                pc_Q_T_.mat, pc_Q_O_.mat, pc_G_T_.mat, pc_I_O_.mat,
+                pc_P_.mat, pc_G_.mat, pc_I_.mat, H, M, 
+                //pc_br_system_.get_lhs(),
+                &br_system_,
+                &pc_bc_T_1_v_, &pc_bc_T_1_s_, &pc_bc_O_s_, &pc_bc_O_s_in_,
+                &pc_bc_T__H1_,
+                &pc_bc_Oo_H1_,
+                &pc_bc_Oi_H1_,
+                &bc_T_1_,
+                &pc_bc_Ti_H1_,
+                &pc_bc_Ot_H1_,
+                1e-10, PETSC_DEFAULT, true
+            ));
+
+            PetscCall(MatDestroy(&M));
+        }else{
+            Logger::error("T_Omega_AMS::solve_AMS: unknown AMS algorithm id: "+std::to_string(algorithm_id));
+        }
+
 
         n_iteration_ = ams_info.n_iteration;
         system_condition_ = ams_info.condition_number;

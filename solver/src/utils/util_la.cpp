@@ -229,6 +229,18 @@ void set_value_vec(const std::vector<dof_idx>& dofs, const std::vector<scalar_t>
 }
 
 
+
+void get_value_vec(G_Vector vec, const std::vector<dof_idx> &dofs, std::vector<scalar_t> &values)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_get_value_vec(vec, dofs, values);
+    #else
+        for (std::size_t i = 0; i < dofs.size(); ++i) values[i] = (*vec)(dofs[i]);
+    #endif
+}
+
+
+
 void extract_vec(G_Vector vec, std::vector<scalar_t> &out)
 {
     #ifdef LOAD_PETSC

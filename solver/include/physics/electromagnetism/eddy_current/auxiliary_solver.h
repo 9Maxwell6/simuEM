@@ -21,6 +21,9 @@ typedef struct AMS_Context
     Vec zeta_1,  kappa_1;                 // size   nV (Q-space RHS / sol)
     Vec zeta_2,  kappa_2;                 // size   nV (Q-space RHS / sol)
 
+    Vec rho_1, gamma_1;
+    Vec rho_2, gamma_2;
+
     //Vec x;
 
     Dirichlet_BC *bc_v;                   // for L (vector / 3D nodal space)
@@ -36,6 +39,10 @@ typedef struct AMS_Context
     Dirichlet_BC *bc_Oi_H1;   
     
     Dirichlet_BC *bc_T__Hcurl;   
+
+    Dirichlet_BC *bc_Ti_H1;
+    Dirichlet_BC *bc_Ot_H1;
+
 } AMS_Context;
 
 typedef struct AMS_Info 
@@ -46,7 +53,11 @@ typedef struct AMS_Info
 
 
 
-PetscErrorCode AMS_apply(PC pc, Vec r, Vec x);
+
+PetscErrorCode AMS_apply_decoupled(PC pc, Vec r, Vec x);
+PetscErrorCode AMS_apply_coupled(PC pc, Vec r, Vec x);
+PetscErrorCode AMS_apply_global(PC pc, Vec r, Vec x);
+PetscErrorCode AMS_apply_fully_coupled(PC pc, Vec r, Vec x);
 
 
 
@@ -57,6 +68,7 @@ PetscErrorCode AMS_destroy(PC pc);
 
 PetscErrorCode solve_AMS(
     AMS_Info& AMS_info,
+    int algorithm_id,
     Mat Q_T, Mat Q_O, Mat G_T, Mat I_O,
     Mat P, Mat G, Mat I, Mat L, Mat Q,
     //Mat X,
@@ -66,6 +78,8 @@ PetscErrorCode solve_AMS(
     Dirichlet_BC *bc_Oo_H1,                  
     Dirichlet_BC *bc_Oi_H1,  
     Dirichlet_BC *bc_T__Hcurl,
+    Dirichlet_BC *bc_Ti_H1,
+    Dirichlet_BC *bc_Ot_H1,
     PetscReal rtol = 1e-10, PetscInt max_iters = PETSC_DEFAULT, bool enable_monitor = false);
 
 

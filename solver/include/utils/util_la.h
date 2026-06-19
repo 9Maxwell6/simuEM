@@ -53,8 +53,12 @@ void zero_row_mat(const std::vector<dof_idx>& dofs, scalar_t diag_val, G_Matrix 
 
 
 void set_value_vec(const std::vector<dof_idx>& dofs, const std::vector<scalar_t>& values, G_Vector vec);
+void get_value_vec(G_Vector vec, const std::vector<dof_idx> &dofs, std::vector<scalar_t> &values);
+
 
 void extract_vec(G_Vector vec, std::vector<scalar_t> &out);
+
+void get_value_vec(Vec v, const std::vector<dof_idx> &idx, std::vector<scalar_t> &vals);
 
 void finalize_mat(G_Matrix mat);
 void finalize_vec(G_Vector vec);

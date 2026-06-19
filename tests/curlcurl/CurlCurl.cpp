@@ -304,7 +304,7 @@ static PetscErrorCode AMS_apply(PC pc, Vec r, Vec z)
 
     for(int n=0; n<1; ++n){
 
-    petsc_util::petsc_save_ascii_vec(z, "z.txt");
+    //petsc_util::petsc_save_ascii_vec(z, "z.txt");
  
     
 
@@ -723,11 +723,13 @@ int main(int argc, char** argv) {
         {"test_cube_4.geo", 0.125000000},
         {"test_cube_5.geo", 0.088388348},
         {"test_cube_6.geo", 0.062500000},
+        {"test_cube_7.geo", 0.044200000},
+        {"test_cube_8.geo", 0.031250000},
         
         //{"test_cube_3.msh", 0.176776695},
     };
 
-    std::string file_str = enable_preconditioner ? "/curlcurl_l2_pc.dat" : "/curlcurl_l2.dat";
+    std::string file_str = enable_preconditioner ? "/curlcurl_pc.dat" : "/curlcurl.dat";
 
     const std::string dat_path = TEST_DATA_OUTPUT_DIR + file_str;
     std::ofstream l2_convergence(dat_path);

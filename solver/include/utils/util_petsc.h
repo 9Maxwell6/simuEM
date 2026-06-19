@@ -45,6 +45,7 @@ PetscErrorCode petsc_zero_row_mat(const std::vector<PetscInt>& dofs, PetscScalar
 
 
 PetscErrorCode petsc_set_value_vec(const std::vector<PetscInt>& dofs, const std::vector<PetscScalar>& values, Vec vec);
+PetscErrorCode petsc_get_value_vec(Vec vec, const std::vector<PetscInt> &dofs, std::vector<PetscScalar>& values);
 
 PetscErrorCode petsc_extract_vec(Vec vec, std::vector<simu::scalar_t> &out);
 

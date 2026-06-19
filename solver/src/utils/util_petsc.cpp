@@ -407,6 +407,26 @@ PetscErrorCode petsc_set_value_vec(const std::vector<PetscInt>& dofs, const std:
 
 
 
+/**
+ * @brief Store specified entries of a PETSc Vec to given values.
+ *
+ * @param vec    PETSc vector.
+ * @param dofs   global indices of the entries to set.
+ * @param values the corresponding values to extracted from the PETSc vector.
+ *
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_get_value_vec(Vec vec, const std::vector<PetscInt>& dofs, std::vector<PetscScalar>& values)
+{
+    PetscFunctionBeginUser;
+    values.resize(dofs.size());
+    PetscCall(VecGetValues(vec, static_cast<PetscInt>(dofs.size()), dofs.data(), values.data()));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
 PetscErrorCode petsc_extract_vec(Vec vec, std::vector<simu::scalar_t> &out)
 {
     PetscFunctionBeginUser;
