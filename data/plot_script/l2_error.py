@@ -27,17 +27,31 @@ def main():
                     help="use linear axes instead of log-log (default: log-log)")
     args = ap.parse_args()
  
-    fig, ax = plt.subplots(figsize=(6, 5))
+    fig, ax = plt.subplots(figsize=(5, 4))
     ax.set_prop_cycle(color=plt.cm.Set1.colors)
-    for path in args.files:
+
+
+    color = ['palevioletred', 'royalblue']
+    color = ['red']
+    ax.set_prop_cycle(color=color)
+    labels = ["$\mathbf{T}$-$\Omega$ solver"]
+
+    '''
+    labels = ["$-\mathrm{div}\,\mathbf{grad}\, \mathrm{u} = \mathrm{f}$",
+              "$\mathbf{curl}\,\mathbf{curl}\, \mathrm{u} + \mathrm{u} = \mathrm{f}$"]
+    #'''
+
+
+    for n, path in enumerate(args.files):
         h, err = np.loadtxt(path, comments="#", usecols=(0, 2), unpack=True)
         order = np.argsort(h)
         h, err = h[order], err[order]
  
-        label = os.path.basename(path).replace("_", r"\_")
+        #label = os.path.basename(path).replace("_", r"\_")
+        label = labels[n]
  
         if args.no_fit:
-            ax.loglog(h, err, "+-", markersize=7, linewidth=0.7, label=label)
+            ax.loglog(h, err, "+-", markersize=7, markeredgewidth=0.4, linewidth=0.4, label=label)
         else:
             if args.last_n is not None and args.last_n < len(h):
                 h_fit, err_fit = h[:args.last_n], err[:args.last_n]
@@ -47,7 +61,7 @@ def main():
             slope, intercept = np.polyfit(np.log(h_fit), np.log(err_fit), 1)
             fit = np.exp(intercept) * h ** slope
  
-            line, = ax.loglog(h, err, "+-", markersize=7, linewidth=0.7,
+            line, = ax.loglog(h, err, "+-", markersize=7, markeredgewidth=0.4, linewidth=0.4,
                               label=f"{label}  ($\\sim h^{{{slope:.3f}}}$)")
             ax.loglog(h, fit, "--", linewidth=0.7, alpha=0.6, color=line.get_color())
  
@@ -55,9 +69,19 @@ def main():
  
     ax.set_xlabel(r"$h$")
     ax.set_ylabel(r"$\|u - u_h\|_{\text{\scriptsize 0}}$")
-    ax.grid(True, which="both", alpha=0.3)
-    ax.legend()
+    #ax.grid(True, which="both", alpha=0.3)
+    #ax.legend()
+
+    leg = ax.legend(loc='best', facecolor='white', edgecolor='none', framealpha=1, fancybox=False)
+    for line in leg.get_lines():
+        line.set_linewidth(2.5)
+
     ax.invert_xaxis()
+
+    ax.set_facecolor('#e6e6e6')
+    ax.grid(True, which="both",color='white', linestyle='-', linewidth=0.4)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
  
     if args.linear:
         ax.set_xscale("linear")
@@ -75,7 +99,7 @@ def main():
     fig.tight_layout()
  
     if args.output:
-        fig.savefig(args.output, dpi=150)
+        fig.savefig(args.output, dpi=1000, bbox_inches='tight', pad_inches=0)
         print(f"saved figure to {args.output}")
     else:
         plt.show()

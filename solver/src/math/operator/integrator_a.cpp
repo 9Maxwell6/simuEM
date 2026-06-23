@@ -310,10 +310,7 @@ void Integrator__s_curl_V__curl_V::assemble_element_matrix(double coeff, Element
             
             double det_J = e_data.get_det_J(i_p.coord);
             const Matrix<phy_dim, ref_dim>& J = e_data.get_J(i_p.coord);   
-            if(det_J<0){
-                std::cout<<"!!!!!!!!!!<0!!!!!!!!!!"<<std::endl;
-                exit(0);
-            }         
+      
 
             if constexpr  (phy_dim == 3){
                 phy_curl_basis = curl_basis * J.transpose()/det_J;

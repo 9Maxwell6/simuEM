@@ -192,7 +192,8 @@ int Poisson::solve_system()
 
     // Set solver type
     //KSPSetType(ksp, KSPMINRES);
-    KSPSetType(ksp, KSPGMRES);
+    //KSPSetType(ksp, KSPGMRES);
+    KSPSetType(ksp, KSPCG);
 
     // Optionally configure the preconditioner (e.g., Jacobi)
     PC pc;
@@ -269,7 +270,7 @@ static PetscErrorCode AMS_apply(PC pc, Vec r, Vec z)
     // single Gauss-Seidel
     PetscCall(MatSOR(ctx->A, r, 1.0, SOR_SYMMETRIC_SWEEP, 0.0, 1, 1, z));
 
-    for(int n=0; n<100; ++n){
+    for(int n=0; n<1; ++n){
  
     //    tmp = r - A z
     PetscCall(MatMult(ctx->A, z, ctx->tmp));

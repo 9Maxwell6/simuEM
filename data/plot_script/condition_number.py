@@ -64,7 +64,24 @@ def main():
     purple = ['#bcbddc', '#9e9ac8', '#756bb1', '#54278f', '#3f007d', '#1f003f']
     orange = ['#fdbf7a', '#fdae6b', '#fd8d3c', '#d94801', '#8c2d04', '#3f1202']
 
-    ax.set_prop_cycle(color=purple)
+    color = ['royalblue', 'navy']
+    #color = ['palevioletred', 'crimson']
+    color = ['royalblue', 'navy', colors[0], colors[3]]
+
+    ax.set_prop_cycle(color=color)
+
+
+    #'''
+    labels = ["test case 2",
+              "test case 2\_pc",
+              "$\mathbf{T}$-$\Omega$",
+              "$\mathbf{T}$-$\Omega$\_pc"]
+    #'''
+
+    '''
+    labels = ["CG",
+              "CG\_pc"]
+    #'''
 
     '''
     labels = ["CG",
@@ -74,7 +91,7 @@ def main():
               "CG\_pc\_4"]
     #'''
 
-    #'''
+    '''
     labels = ["CG\_pc\_3 ($N=1$)",
               "CG\_pc\_3 ($N=2$)",
               "CG\_pc\_3 ($N=5$)",
@@ -117,9 +134,9 @@ def main():
 
     ax.set_facecolor('#e6e6e6')
 
-    fmt = mticker.FuncFormatter(lambda y, _: rf'${y:g}^{{1}}$')
-    ax.yaxis.set_minor_formatter(fmt)
-    ax.yaxis.set_major_formatter(fmt)
+    #fmt = mticker.FuncFormatter(lambda y, _: rf'${y:g}^{{1}}$')
+    #ax.yaxis.set_minor_formatter(fmt)
+    #ax.yaxis.set_major_formatter(fmt)
 
     #ax.grid(True, which="both", color='black', linewidth=0.4, alpha=0.2)
     ax.grid(True, which="both",color='white', linestyle='-', linewidth=0.4)
@@ -142,12 +159,12 @@ def main():
         labels = [sci_label(t) for t in ticks]
         ax.set_xticks(ticks)
         ax.set_xticklabels(labels)
-        yticks = [2, 3, 4, 5]
-        ylabel = [rf"$\phantom{{0}}{v}^{{1}}$" for v in yticks]  
-        pad_yticks_by_digits(ax, n=1) 
+        #yticks = [2, 3, 4, 5]
+        #ylabel = [rf"$\phantom{{0}}{v}^{{1}}$" for v in yticks]  
+        #pad_yticks_by_digits(ax, n=1) 
         
-        ax.set_yticks(yticks)
-        ax.set_yticklabels(ylabel)
+        #ax.set_yticks(yticks)
+        #ax.set_yticklabels(ylabel)
         ax.yaxis.set_minor_locator(NullLocator())
         ax.yaxis.set_minor_formatter(NullFormatter())
     fig.tight_layout()

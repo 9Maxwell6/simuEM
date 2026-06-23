@@ -338,8 +338,8 @@ bool T_Omega::assemble_system()
 
         //Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
 
-        //Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        //Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
 
     });
 
@@ -352,8 +352,8 @@ bool T_Omega::assemble_system()
         if(property_id == Domain::CONDUCTOR) { mu = 1.; sigma = 1.; }
 
         Integrator__s_curl_V__curl_V::assemble_element_matrix(1/sigma, e_data, mat);
-        //Integrator__s_V__V::assemble_element_matrix(-mu, e_data, mat);
-        Integrator__s_V__V::assemble_element_matrix(mu, e_data, mat);
+        Integrator__s_V__V::assemble_element_matrix(-mu, e_data, mat);
+        //Integrator__s_V__V::assemble_element_matrix(mu, e_data, mat);
 
     });
 
@@ -368,8 +368,8 @@ bool T_Omega::assemble_system()
         if(property_id == Domain::CONDUCTOR) mu = 1.;
         else if(property_id == Domain::EMPTY) mu = 1.;
 
-        //Integrator__s_V__grad_S::assemble_element_matrix(mu, e_data, mat);
-        Integrator__s_V__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        Integrator__s_V__grad_S::assemble_element_matrix(mu, e_data, mat);
+        //Integrator__s_V__grad_S::assemble_element_matrix(-mu, e_data, mat);
 
     });
     
@@ -553,12 +553,12 @@ bool T_Omega::assemble_system()
     assemble_vec(fe_system_.assemble_vec_data(dof_Omega_), [&](auto& e_data, auto& vec) {
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
-            //Integrator__v__grad_S::assemble_element_vector(f_Omega_conductor_outer_layer, e_data, vec);   //  -Hs = T - ∇Ω 
+            Integrator__v__grad_S::assemble_element_vector(f_Omega_conductor_outer_layer, e_data, vec);   //  -Hs = T - ∇Ω 
             //Integrator__v__grad_S::assemble_element_vector(new_T_gradO, e_data, vec);   //  Hs = T - ∇Ω 
-            Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);  
+            //Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);  
         }else if(property_id == Domain::EMPTY){
-            //Integrator__v__grad_S::assemble_element_vector(f_empty, e_data, vec);                         //   -Hs = -∇Ω
-            Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);                         //   Hs = -∇Ω
+            Integrator__v__grad_S::assemble_element_vector(f_empty, e_data, vec);                         //   -Hs = -∇Ω
+            //Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);                         //   Hs = -∇Ω
         }       
     });
 
@@ -568,14 +568,14 @@ bool T_Omega::assemble_system()
     assemble_vec(fe_system_.assemble_vec_data(dof_T_1_), [&](auto& e_data, auto& vec) {
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR){
-            //Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
+            Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
         }else if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
-            //Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
+            Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
         }else if(property_id == Domain::EMPTY){
             Logger::error("[T_Omega] - T-field only defined inside conductor!");
         }  
 
-        Integrator__v__V::assemble_element_vector(new_f_T, e_data, vec);    //   -Hs = -∇×∇×T - T + ∇Ω
+        //Integrator__v__V::assemble_element_vector(new_f_T, e_data, vec);    //   -Hs = -∇×∇×T - T + ∇Ω
         
 
     });
@@ -611,8 +611,8 @@ bool T_Omega::assemble_preconditioner()
         double inv_sigma = 1;
         double mu = 1;
         Integrator__s_grad_V__grad_V::assemble_element_matrix(inv_sigma, e_data, mat);
-        //Integrator_H1__s_V__V::assemble_element_matrix(-mu, e_data, mat);
-        Integrator_H1__s_V__V::assemble_element_matrix(mu, e_data, mat);
+        Integrator_H1__s_V__V::assemble_element_matrix(-mu, e_data, mat);
+        //Integrator_H1__s_V__V::assemble_element_matrix(mu, e_data, mat);
     });
 
 
@@ -649,8 +649,8 @@ bool T_Omega::assemble_preconditioner()
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR) mu = 1.;
         else if(property_id == Domain::EMPTY) mu = 1.;
-        //Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        //Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
     });
 
 
@@ -658,8 +658,8 @@ bool T_Omega::assemble_preconditioner()
     assemble_mat(fe_system_.assemble_mat_data(pc_Q_O_), [&](auto& e_data, auto& mat) {
         double mu = 1;
         size_t property_id = e_data.e->get_property_id();
-        //Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        //Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
     });
 
     Logger::info("[T_Omega - preconditioner] - assemble discrete gradient matrix G.");
@@ -735,8 +735,8 @@ bool T_Omega::solve_system()
 
         // Set solver type
         //KSPSetType(ksp, KSPMINRES);
-        KSPSetType(ksp, KSPCG);
-        //KSPSetType(ksp, KSPGMRES);
+        //KSPSetType(ksp, KSPCG);
+        KSPSetType(ksp, KSPGMRES);
         //PetscCall(KSPGMRESSetRestart(ksp, 10000)); 
 
         // Configure the preconditioner (e.g., Jacobi)
@@ -1049,8 +1049,8 @@ scalar_t T_Omega::compute_L2_error()
                     space->get_ED_basis_v(i_p.coord, H1_grad_basis);
                     H1_phy_grad_basis = H1_grad_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
-                        //solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
-                        solved_field += dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                        solved_field -= dof_value[j] * H1_phy_grad_basis.row(j).transpose();
+                        //solved_field += dof_value[j] * H1_phy_grad_basis.row(j).transpose();
                     }
 
 
@@ -1059,8 +1059,8 @@ scalar_t T_Omega::compute_L2_error()
                     space->get_basis_v(i_p.coord, Hcurl_basis);
                     Hcurl_phy_basis = dof_transform*Hcurl_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
-                        //solved_field += dof_value[j] * Hcurl_phy_basis.row(j).transpose();
-                        solved_field -= dof_value[j] * Hcurl_phy_basis.row(j).transpose();
+                        solved_field += dof_value[j] * Hcurl_phy_basis.row(j).transpose();
+                        //solved_field -= dof_value[j] * Hcurl_phy_basis.row(j).transpose();
                     }
                 }
             }
