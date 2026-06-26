@@ -46,7 +46,10 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
 
         // map between element and the column index of the base block containing it. 
         // e.g. element is contained in base block 0, 1, 4.  {e*, {0,1,4}}
-        std::unordered_set<Element*> e_record;
+        //std::unordered_set<Element*> e_record;
+
+        // map between element and column index of the block containing the element.
+        std::unordered_map<Element*, std::vector<Element_DoF>> element_map;
 
 
         for(size_t i=0; i<n_row; ++i)
@@ -54,11 +57,14 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
             const FEM_Space* space_row;
 
             // map between element and column index of the block containing the element.
-            std::unordered_map<Element*, std::vector<Element_DoF>> element_map;
+            //std::unordered_map<Element*, std::vector<Element_DoF>> element_map;
 
-            for(size_t j=0; j<n_col; ++j)
-            {
-                const Block* block = rack[i*n_row+j];
+            //for(size_t j=0; j<n_col; ++j)
+            //{
+                //const Block* block = rack[i*n_row+j];
+                const Block* block = rack[i*n_row+i];
+
+                if(block == nullptr) continue;
 
                 const Key& group_key = fe_system.get_group_key(*block);
                 const std::vector<Element*>& elements = mesh.get_element_group(group_key);
@@ -73,7 +79,7 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
 
                     const std::vector<dof_idx>* col_dof_list = fe_system.get_block_col_dof(*block);
 
-                    if(e_record.count(e) == 0){
+                    //if(e_record.count(e) == 0){
                         // new element
                         std::vector<Element_DoF>& e_dof_list = element_map[e];
                         Element_DoF e_dof{.block = block, .dof_offset = col_dof_offset, .dof_size = col_size};
@@ -81,17 +87,21 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                         //e_dof.dof_offset = col_dof_offset;
                         //e_dof.dof_size = col_size;
                         e_dof_list.push_back(e_dof);
-                    }
+                    //}
                     col_dof_offset += col_size;
                 }
 
-            }
+            //}
 
-            for(size_t j=0; j<n_col; ++j)
-                for(Element* e : mesh.get_element_group(fe_system.get_group_key(*rack[i*n_row+j]))) e_record.insert(e);
-            
+            //for(size_t j=0; j<n_col; ++j){
+            //    const Block* block = rack[i*n_row+j];
+            //    if(block == nullptr) continue;
+            //    for(Element* e : mesh.get_element_group(fe_system.get_group_key(*block))) e_record.insert(e);
+            //}
 
-            int ccc = 0;
+        }
+
+
             for (const auto& [e, e_dof_list] : element_map) {
 
                 e_data.mesh = &mesh;
@@ -104,6 +114,7 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
 
                 std::vector<const FEM_Space*> space_list;
                 std::vector<std::vector<scalar_t>> dof_value_list;
+                std::vector<size_t> block_id_list;
 
                 for(const Element_DoF& e_dof : e_dof_list) if(e_dof.block)
                 {
@@ -121,15 +132,17 @@ scalar_t integrate_element(const Block_Rack& br_system, const FEM_System& fe_sys
                         block_dof_value.push_back(x[e_dof.block->col_offset + (*col_dof_list)[e_dof.dof_offset + idx]]);
                     }
                     dof_value_list.push_back(std::move(block_dof_value));
+                    block_id_list.push_back(e_dof.block->id);
                 }
 
                 e_data.space_list = &space_list;
                 e_data.dof_value_list = &dof_value_list;
+                e_data.block_id_list = &block_id_list;
                 
                 user_operation(e_data, result);
 
             }
-        }
+        
         return result;
 
     };

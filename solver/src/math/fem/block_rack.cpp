@@ -7,7 +7,8 @@ Block_Rack::Block_Rack(size_t n_row, size_t n_col) : n_row_(n_row), n_col_(n_col
     rack_.resize(n_row * n_col);
     unit_row_length_.resize(n_row);
     unit_col_length_.resize(n_col);
-    
+
+    vec_rack_.resize(n_row);
 }
 
 void Block_Rack::set_grid(size_t n_row, size_t n_col)
@@ -17,6 +18,8 @@ void Block_Rack::set_grid(size_t n_row, size_t n_col)
     rack_.resize(n_row * n_col);
     unit_row_length_.resize(n_row);
     unit_col_length_.resize(n_col);
+
+    vec_rack_.resize(n_row);
 
 }
 
@@ -33,10 +36,25 @@ bool Block_Rack::insert_block(Block& block, size_t row, size_t col)
 
     rack_[row*n_col_ +col] = &block;
 
-    
+    return true;
+}
+
+
+
+bool Block_Rack::insert_vec(Block& block, size_t row)
+{
+    if(row>=n_row_) {Logger::error("Block_Rack::insert_block - invalid rack slot. block.id = "+std::to_string(block.id)); return false; }
+    if(vec_rack_[row]!= nullptr) Logger::warning("Block_Rack::insert_block - slot already occupied, replaing with new block."); 
+
+    if(unit_row_length_[row]!=0 && block.row_size!=unit_row_length_[row]) {Logger::error("Block_Rack::insert_block - block row size mismatch. block.id = "+std::to_string(block.id)); return false; }
+
+    unit_row_length_[row] = block.row_size;
+
+    vec_rack_[row] = &block;
 
     return true;
 }
+
 
 bool Block_Rack::compute_block_offset()
 {
@@ -52,9 +70,17 @@ bool Block_Rack::compute_block_offset()
         col_offsets[j] = col_offsets[j - 1] + unit_col_length_[j - 1];
 
     for (int i = 0; i < n_row_; ++i) {
+        Block * v = vec_rack_[i];
+        if(v!=nullptr){
+            v->row_offset = row_offsets[i];
+        }else{
+            Logger::error("Block_Rack::compute_block_offset - vector rack has empty slot at row("+std::to_string(i)+")."); return false; 
+        }
+
         for (int j = 0; j < n_col_; ++j) {
             Block * b = rack_[i*n_col_+j];
-            if(b==nullptr) {Logger::error("Block_Rack::compute_block_offset - block rack has empty slot at ("+std::to_string(i)+", "+std::to_string(i)+")."); return false; }
+            //if(b==nullptr) {Logger::error("Block_Rack::compute_block_offset - block rack has empty slot at ("+std::to_string(i)+", "+std::to_string(i)+")."); return false; }
+            if(b==nullptr) continue;
             b->row_offset = row_offsets[i];
             b->col_offset = col_offsets[j];
         }
@@ -91,19 +117,38 @@ void Block_Rack::build_linear_system()
     std::vector<G_Vector> block_vec_list;
     size_t total_row_size = 0;
     size_t total_col_size = 0;
-    for(Block* block : rack_)
-    {
-        if(!is_block_ready(block)) { Logger::error("Block_Rack::build_linear_system: block_rack not ready - missing block data."); return; }
+    
+    for (int i = 0; i < n_row_; ++i) {
 
-        block_mat_list.push_back(block->mat);
+        for (int j = 0; j < n_col_; ++j) {
+            Block * b = rack_[i*n_col_+j];
+            if(b==nullptr){
+                block_mat_list.push_back(nullptr);
+            }else{
+                block_mat_list.push_back(b->mat);
+            }
 
-        if(block->is_base_block){ 
-            block_vec_list.push_back(block->vec); 
-            total_row_size += block->row_size;
-            total_col_size += block->col_size;
-            
+            // diagonal block cannot be empty
+            if(i==j){
+                total_row_size += b->row_size;
+                total_col_size += b->col_size;
+            }
+
         }
     }
+
+
+    for(Block* b_vec : vec_rack_)
+    {
+        if(b_vec==nullptr){
+            block_vec_list.push_back(nullptr);
+            continue;
+        } 
+
+        block_vec_list.push_back(b_vec->vec);
+    }
+
+
     
     la_kernel::create_nest_mat(n_row_, n_col_, block_mat_list, lhs_);
     la_kernel::create_nest_vec(block_vec_list, rhs_);

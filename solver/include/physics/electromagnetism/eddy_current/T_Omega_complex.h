@@ -1,6 +1,8 @@
 #pragma once
 
 #include "world/mesh/mesh.h"
+#include "world/mesh/mesh_parser.h"
+
 #include "world/structure/structure.h"
 
 #include "math/fem/fem_space.h"
@@ -41,7 +43,15 @@ class T_Omega_c
 {
 
 private:
-    bool enable_pc_ = false;  // preconditioner flag
+
+    // coefficient:
+    //coefficient:
+    double mu_conductor_ = 1.;
+    double mu_insulator_ = 1.;
+    double sigma_conductor_ = 1.;
+    double omega_ = 1.;
+
+    int pc_alg_ = 0;  // preconditioner flag
 
     int n_iteration_ = 0;
     double system_condition_ = 0.;
@@ -51,32 +61,75 @@ private:
 
     H1_Space           O_space_;
     Hcurl_Space        T_space_;
-    H1_Space        T_space_H1_;
+    H1_Space        T_space_1_H1_s_;
+    H1_Space        T_space_1_H1_v_;
 
-    Block              Kc_;
-    Block              Mc_;
-    Block              Ki_;
-    Block              X__;
-    Block              Xt_;
+    H1_Space           global_H1_;
+
+    // notice that block should be unique inside block_rack, because each block has their own row_offset and col_offset,
+    // using same block twice inside block_rack will destory the offset record.
+    // if the same matrix is appeared multiple times inside block rack, using multiple blocks with same matrix pointer instead!
+
+    // for real part
+    Block              Kc_r_;
+    Block              Mc_r_;    
+    Block              Ki_r_;    
+    Block              X__r_;   
+    Block              Xt_r_;    
+
+    // for imaginary part
+    Block              Kc_c_;
+    Block              Mc_c_;    
+    Block              Ki_c_;    
+    Block              X__c_;    
+    Block              Xt_c_;    
+
+    // rhs vector
+    Block              Sc_r_;    
+    Block              Si_r_;    
+    Block              Sc_c_;    
+    Block              Si_c_;  
 
 
+    // preconditioning operator
 
     Block              pc_P_;
-    Block              pc_G_;
-    Block              pc_I_;
+    Block              pc_LpM_; // -L + w*M
 
-    Block              pc_LpM_;
+
+    Block              pc_G_;  // alg1/3/4 use the same G, alg2 use a different one.
+    Block              pc_I_;  // alg1/3/4 use the same I, alg2 use a different one.
+
+    // global mapping (for alg2)
+    Block              tmp_global_;
+
+
+    
+    // preconditioning algorithm 1  (decoupled)
     Block              pc_Qc_;
     Block              pc_Qi_;
 
+    // preconditioning algorithm 2  (global)
+    Block              pc_H_;
+
+    // preconditioning algorithm 3  (coupled)
+    Block              pc_J_;
 
 
-    Dirichlet_BC bc_O_o_;
-    Dirichlet_BC bc_O_i_;
-    Dirichlet_BC bc_T_1_;
 
 
-    Dirichlet_BC bc_T_1_H1_;
+
+    Dirichlet_BC bc_O_o_r_;
+    Dirichlet_BC bc_O_i_r_;
+    Dirichlet_BC bc_T_1_r_;
+
+    Dirichlet_BC bc_O_o_c_;
+    Dirichlet_BC bc_O_i_c_;
+    Dirichlet_BC bc_T_1_c_;
+
+
+    Dirichlet_BC bc_T_1_H1_s_;
+    Dirichlet_BC bc_T_1_H1_v_;
 
 
 
@@ -174,12 +227,15 @@ private:
 
 
 public:
-    T_Omega_c(Mesh& mesh, bool enable_preconditioner=false);
+    T_Omega_c(Mesh& mesh, int pc_alg=0 );
     ~T_Omega_c();
+
+    bool initialize_system();
+    bool initialize_pc();
 
     bool assemble_system();
 
-    bool assemble_preconditioner();
+    bool assemble_pc();
 
     bool solve_system();
 

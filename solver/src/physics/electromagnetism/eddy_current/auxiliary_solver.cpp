@@ -53,7 +53,7 @@ PetscErrorCode T_Omega_AMS::AMS_apply_global(PC pc, Vec r, Vec x)
     const Vec ro = block_r[0];
     const Vec rt = block_r[1];
     
-    for(int n=0; n<2; ++n){
+    for(int n=0; n<1; ++n){
         //    tmp_1 = rt - [T]*xt - [coupling_t]*xo
         PetscCall(MatMult(T, xt, ctx->tmp_1));                    // tmp_1 = [T]*xt
         PetscCall(MatMultAdd(T_c, xo, ctx->tmp_1, ctx->tmp_1));   // tmp_1 = tmp_1 + [coupling_t]*xo
@@ -156,7 +156,7 @@ PetscErrorCode T_Omega_AMS::AMS_apply_decoupled(PC pc, Vec r, Vec x)
     const Vec ro = block_r[0];
     const Vec rt = block_r[1];
     
-    for(int n=0; n<2; ++n){
+    for(int n=0; n<1; ++n){
         //    tmp_1 = rt - [T]*xt - [coupling_t]*xo
         PetscCall(MatMult(T, xt, ctx->tmp_1));                    // tmp_1 = [T]*xt
         PetscCall(MatMultAdd(T_c, xo, ctx->tmp_1, ctx->tmp_1));   // tmp_1 = tmp_1 + [coupling_t]*xo
@@ -262,7 +262,7 @@ PetscErrorCode T_Omega_AMS::AMS_apply_coupled(PC pc, Vec r, Vec x)
     PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, NULL, kappa_l, &ctx->kappa));
 
     
-    for(int n=0; n<30; ++n){
+    for(int n=0; n<1; ++n){
         //    tmp_1 = rt - [T]*xt - [coupling_t]*xo
         PetscCall(MatMult(T, xt, ctx->tmp_1));                    // tmp_1 = [T]*xt
         PetscCall(MatMultAdd(T_c, xo, ctx->tmp_1, ctx->tmp_1));   // tmp_1 = tmp_1 + [coupling_t]*xo
@@ -302,7 +302,6 @@ PetscErrorCode T_Omega_AMS::AMS_apply_coupled(PC pc, Vec r, Vec x)
         ctx->bc_Oo_H1->apply_to_vec(ctx->zeta_2);
         //ctx->bc_Oi_H1->apply_to_vec(ctx->zeta_2);
 
-        
         PetscCall(KSPSolve(ctx->inner_Q_ksp, ctx->zeta, ctx->kappa));
 
         PetscCall(MatMultAdd(ctx->G_T, ctx->kappa_1, xt, xt));
@@ -375,7 +374,7 @@ PetscErrorCode T_Omega_AMS::AMS_apply_fully_coupled(PC pc, Vec r, Vec x)
     PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, NULL, kappa_l, &ctx->kappa));
 
     
-    for(int n=0; n<5; ++n){
+    for(int n=0; n<1; ++n){
         //    tmp_1 = rt - [T]*xt - [coupling_t]*xo
         PetscCall(MatMult(T, xt, ctx->tmp_1));                    // tmp_1 = [T]*xt
         PetscCall(MatMultAdd(T_c, xo, ctx->tmp_1, ctx->tmp_1));   // tmp_1 = tmp_1 + [coupling_t]*xo
@@ -542,8 +541,33 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     PetscCall(KSPSetUp(ctx->inner_L_ksp)); 
     
 
+    PetscInt N_Vcycles = 5;  // number of V-cycles for Q
     if(algorithm_id == 2 || algorithm_id == 3 || algorithm_id == 4)
     {
+                
+        /*
+
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q_ksp));
+        PetscCall(KSPSetType(ctx->inner_Q_ksp, KSPRICHARDSON));
+        PetscCall(KSPRichardsonSetScale(ctx->inner_Q_ksp, 1.0));
+        PetscCall(KSPSetOptionsPrefix(ctx->inner_Q_ksp, "inner_Q_"));
+        {
+            PC pc_in;
+            PetscCall(KSPGetPC(ctx->inner_Q_ksp, &pc_in));
+            PetscCall(PCSetType(pc_in, PCHYPRE));
+            PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
+        }
+        PetscCall(KSPSetTolerances(ctx->inner_Q_ksp, PETSC_DEFAULT, PETSC_DEFAULT,
+                                PETSC_DEFAULT, N_Vcycles));
+        PetscCall(KSPSetNormType(ctx->inner_Q_ksp, KSP_NORM_NONE));
+        PetscCall(KSPSetConvergenceTest(ctx->inner_Q_ksp, KSPConvergedSkip, NULL, NULL));
+        PetscCall(KSPSetOperators(ctx->inner_Q_ksp, Q, Q));
+        // do NOT call KSPSetFromOptions here, to keep skip/NORM_NONE from being overridden
+        PetscCall(KSPSetUp(ctx->inner_Q_ksp));
+        //*/
+
+        //*
+
         // ---------- Inner KSP for global Q ----------
         PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q_ksp));
         PetscCall(KSPSetType(ctx->inner_Q_ksp, KSPPREONLY));
@@ -553,13 +577,19 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
             PetscCall(PCSetType(pc_in, PCHYPRE));
             PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
         }
-
-
         PetscCall(KSPSetOptionsPrefix(ctx->inner_Q_ksp, "inner_Q_"));
+
+        // fixed number of V-cycles, done INSIDE hypre:
+        char buf[32];
+        PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
+        PetscCall(PetscOptionsSetValue(NULL, "-inner_Q_pc_hypre_boomeramg_max_iter", buf));
+        PetscCall(PetscOptionsSetValue(NULL, "-inner_Q_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
+
         PetscCall(KSPSetOperators(ctx->inner_Q_ksp, Q, Q));
         //PetscCall(KSPSetOperators(ctx->inner_Q_ksp, M, M));
-        //PetscCall(KSPSetFromOptions(ctx->inner_Q_ksp));
+        PetscCall(KSPSetFromOptions(ctx->inner_Q_ksp));
         PetscCall(KSPSetUp(ctx->inner_Q_ksp));
+        //*/
 
         // ---------- Initialize vectors ----------
         if(algorithm_id == 2){
@@ -587,7 +617,7 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     {
         // ---------- Inner KSP for Q_T ----------
         PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q_T_ksp));
-        PetscCall(KSPSetType(ctx->inner_Q_T_ksp, KSPCG));
+        PetscCall(KSPSetType(ctx->inner_Q_T_ksp, KSPPREONLY));
         {
             PC pc_in;
             PetscCall(KSPGetPC(ctx->inner_Q_T_ksp, &pc_in));
@@ -659,7 +689,100 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
         PetscCall(PCSetType(pc_in, PCHYPRE));
         PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
     }
+itialize vectors ----------
+    const Mat O   = ctx->br_system->get_block_lhs(0,0);
+    const Mat T   = ctx->br_system->get_block_lhs(1,1);
+    PetscCall(MatCreateVecs(T, NULL, &ctx->tmp_1));       // size #edge in T-field
+    PetscCall(MatCreateVecs(O, NULL, &ctx->tmp_2));       // size #node in Omega-field
+    
+    //PetscCall(MatCreateVecs(M, &ctx->kappa, &ctx->zeta)); // size     #node in global field
+    //PetscCall(MatCreateVecs(X, NULL, &ctx->x)); 
 
+    //petsc_util::petsc_save_ascii_vec(ctx->zeta, "zeta_initial.txt");
+ 
+    // ---------- Outer KSP + PCShell(AMS) ----------
+    const Mat A = ctx->br_system->get_lhs();
+    const Vec r = ctx->br_system->get_rhs();
+    const Vec x = ctx->br_system->get_x();
+
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &outer));
+    //PetscCall(KSPSetType(outer, KSPGMRES));   
+    //PetscCall(KSPGMRESSetRestart(outer, 1000));  
+
+    KSPSetType(outer, KSPCG);
+    //KSPSetType(outer, KSPCGS);
+
+    //PetscCall(KSPSetType(outer, KSPFGMRES));
+    //PetscCall(KSPSetPCSide(outer, PC_RIGHT));
+    //PetscCall(KSPSetNormType(outer, KSP_NORM_UNPRECONDITIONED));
+    //PetscCall(KSPGMRESSetRestart(outer, 200));
+
+    PetscCall(KSPSetOperators(outer, A, A));
+    PetscCall(KSPSetTolerances(outer, rtol, PETSC_DEFAULT, PETSC_DEFAULT, max_iters));
+
+    PetscCall(KSPSetNormType(outer, KSP_NORM_UNPRECONDITIONED));  // true residual
+    //PetscCall(KSPSetNormType(outer, KSP_NORM_DEFAULT));
+
+    if(enable_monitor)
+    {
+        {
+            PetscViewerAndFormat *vf;
+            PetscCall(PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
+                                                PETSC_VIEWER_DEFAULT, &vf));
+            PetscCall(KSPMonitorSet(outer,
+                (PetscErrorCode (*)(KSP, PetscInt, PetscReal, void*))KSPMonitorTrueResidual,
+                vf,
+                (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy)
+            );
+        }
+    }
+ 
+    PetscCall(KSPGetPC(outer, &outer_pc));
+    PetscCall(PCSetType(outer_pc, PCSHELL));
+    PetscCall(PCShellSetContext(outer_pc, ctx));
+    switch (algorithm_id)
+    {
+    case 1: PetscCall(PCShellSetApply  (outer_pc, AMS_apply_decoupled)); break;
+    case 2: PetscCall(PCShellSetApply  (outer_pc, AMS_apply_global)); break;
+    case 3: PetscCall(PCShellSetApply  (outer_pc, AMS_apply_coupled)); break;
+    case 4: PetscCall(PCShellSetApply  (outer_pc, AMS_apply_fully_coupled)); break;
+    default:
+        Logger::error("T_Omega_AMS::solve_AMS: unknown AMS algorithm id: "+std::to_string(algorithm_id));
+        break;
+    }
+    //PetscCall(PCShellSetApply  (outer_pc, AMS_apply));
+    PetscCall(PCShellSetDestroy(outer_pc, AMS_destroy));
+    PetscCall(PCShellSetName   (outer_pc, "AMS"));
+ 
+    PetscCall(KSPSetFromOptions(outer));
+
+    PetscCall(KSPSetComputeSingularValues(outer, PETSC_TRUE));  // for computing condition number
+ 
+    // ---------- Solve ----------
+    PetscCall(VecSet(x, 0.0));
+    PetscCall(KSPSolve(outer, r, x));
+ 
+    // ---------- Report ----------
+    KSPConvergedReason reason;
+    PetscInt           iters;
+    PetscReal          rnorm;
+    PetscReal          smax, smin;
+    PetscCall(KSPComputeExtremeSingularValues(outer, &smax, &smin));
+    PetscCall(KSPGetConvergedReason(outer, &reason));
+    PetscCall(KSPGetIterationNumber(outer, &iters));
+    PetscCall(KSPGetResidualNorm   (outer, &rnorm));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD,
+        "[AMS] outer GMRES: iters=%" PetscInt_FMT
+        ", final ||r||=%.3e, reason=%d\n",
+        iters, (double)rnorm, (int)reason));
+ 
+    PetscCall(KSPDestroy(&outer));   // also invokes AMS_destroy through PCShell
+
+    AMS_info.n_iteration = iters;
+    AMS_info.condition_number = smax / smin;
+
+    PetscFunctionReturn(0);
+}
     PetscCall(KSPSetOptionsPrefix(ctx->inner_X_ksp, "inner_X_"));
     PetscCall(KSPSetOperators(ctx->inner_X_ksp, X, X));
     PetscCall(KSPSetFromOptions(ctx->inner_X_ksp));

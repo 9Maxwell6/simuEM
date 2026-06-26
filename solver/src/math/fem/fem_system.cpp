@@ -499,7 +499,9 @@ Block FEM_System::register_FE_space(FEM_Space& fe_space, const Key group_key, co
                         && (get_group_key(*block)   == group_key)){
         new_block.row_size = block->row_size / get_block_space(*block, 0)->get_vdim() * fe_space.get_vdim();
         new_block.col_size = block->col_size / get_block_space(*block, 1)->get_vdim() * fe_space.get_vdim();
+
         fe_block_dof_[new_block] = get_block_dof(*block);
+        fe_block_hash_[new_block] = get_block_hash(*block);
         return new_block;
 
     }

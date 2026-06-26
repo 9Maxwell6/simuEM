@@ -82,6 +82,7 @@ Poisson::Poisson(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
     br_system_ = fe_system_.initialize_block_rack(1, 1);
     
     br_system_.insert_block(dof_field_,         0, 0);
+    br_system_.insert_vec(dof_field_, 0);
 
     br_system_.compute_block_offset();
     Logger::info("[Poisson] - initialize block rack: \n"+br_system_.print_block_rack());

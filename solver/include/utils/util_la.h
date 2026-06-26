@@ -30,6 +30,7 @@ void init_mat(size_t row_size, size_t col_size, std::vector<size_d> nnz, G_Matri
 void init_vec(size_t row_size, G_Vector& vec);
 
 void create_transpose(const G_Matrix mat_A, G_Matrix &mat_B);
+void copy_transpose(const G_Matrix mat_A, G_Matrix &mat_B);
 
 void create_nest_mat(size_d b_row_size, size_d b_col_size, const std::vector<G_Matrix> &block_mat, G_Matrix& mat);
 void create_nest_vec(const std::vector<G_Vector>& block_vec, G_Vector &vec);
@@ -47,6 +48,15 @@ void destroy_vec(G_Vector& vec);
 
 void add_to_mat(size_d row_size, const size_d rows[], size_d col_size, const size_d cols[], const scalar_t values[], G_Matrix mat);
 void add_to_vec(size_d row_size, const size_d rows[], const scalar_t values[], G_Vector vec);
+
+void scale_mat(scalar_t factor, G_Matrix mat);
+void scale_vec(scalar_t factor, G_Vector vec);
+
+void copy_mat(G_Matrix mat_from, G_Matrix mat_to);
+void copy_vec(G_Vector vec_form, G_Vector vec_to);
+
+void duplicate_mat(G_Matrix mat_from, G_Matrix &mat_to);
+void duplicate_vec(G_Vector vec_from, G_Vector &vec_to);
 
 void zero_row_col_mat(const std::vector<dof_idx>& dofs, scalar_t diag_val, G_Matrix mat, G_Vector x, G_Vector b);
 void zero_row_mat(const std::vector<dof_idx>& dofs, scalar_t diag_val, G_Matrix mat, G_Vector x, G_Vector b);

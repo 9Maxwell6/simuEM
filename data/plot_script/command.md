@@ -42,6 +42,19 @@ python3 ./plot_script/iterations.py  ./T_Omega_pc_CG_1_f.dat ./T_Omega_pc_CG_2_f
 
 
 
+python3 ./plot_script/condition_number.py  ./T_Omega_pc_CG_1_g.dat ./T_Omega_pc_CG_amg2_g.dat ./T_Omega_pc_CG_amg5_g.dat ./T_Omega_pc_CG_amg100_g.dat --no-fit -o ./T_Omega_condition_CG_pc_2_amg.pdf 
+
+python3 ./plot_script/iterations.py  ./T_Omega_pc_CG_1_g.dat ./T_Omega_pc_CG_amg2_g.dat ./T_Omega_pc_CG_amg5_g.dat ./T_Omega_pc_CG_amg100_g.dat --no-fit -o ./T_Omega_iterations_CG_pc_2_amg.pdf 
+
+
+python3 ./plot_script/condition_number.py  ./T_Omega_pc_CG_1_c.dat ./T_Omega_pc_CG_amg2_c.dat ./T_Omega_pc_CG_amg5_c.dat ./T_Omega_pc_CG_amg100_c.dat --no-fit -o ./T_Omega_condition_CG_pc_3_amg.pdf 
+
+python3 ./plot_script/iterations.py  ./T_Omega_pc_CG_1_c.dat ./T_Omega_pc_CG_amg2_c.dat ./T_Omega_pc_CG_amg5_c.dat ./T_Omega_pc_CG_amg100_c.dat --no-fit -o ./T_Omega_iterations_CG_pc_3_amg.pdf 
+
+
+
+
+
 
 
 

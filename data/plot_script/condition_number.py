@@ -68,10 +68,17 @@ def main():
     #color = ['palevioletred', 'crimson']
     color = ['royalblue', 'navy', colors[0], colors[3]]
 
-    ax.set_prop_cycle(color=color)
-
+    ax.set_prop_cycle(color=green)
 
     #'''
+    labels = ["CG\_pc\_2 ($1$ V-cycle)",
+              "CG\_pc\_2 ($2$ V-cycle)",
+              "CG\_pc\_2 ($5$ V-cycle)",
+              "CG\_pc\_2 ($100$ V-cycle)"]
+    #'''
+
+
+    '''
     labels = ["test case 2",
               "test case 2\_pc",
               "$\mathbf{T}$-$\Omega$",
@@ -134,9 +141,9 @@ def main():
 
     ax.set_facecolor('#e6e6e6')
 
-    #fmt = mticker.FuncFormatter(lambda y, _: rf'${y:g}^{{1}}$')
-    #ax.yaxis.set_minor_formatter(fmt)
-    #ax.yaxis.set_major_formatter(fmt)
+    fmt = mticker.FuncFormatter(lambda y, _: rf'${y:g}^{{1}}$')
+    ax.yaxis.set_minor_formatter(fmt)
+    ax.yaxis.set_major_formatter(fmt)
 
     #ax.grid(True, which="both", color='black', linewidth=0.4, alpha=0.2)
     ax.grid(True, which="both",color='white', linestyle='-', linewidth=0.4)
@@ -159,12 +166,12 @@ def main():
         labels = [sci_label(t) for t in ticks]
         ax.set_xticks(ticks)
         ax.set_xticklabels(labels)
-        #yticks = [2, 3, 4, 5]
-        #ylabel = [rf"$\phantom{{0}}{v}^{{1}}$" for v in yticks]  
-        #pad_yticks_by_digits(ax, n=1) 
+        yticks = [1,2, 3, 4, 5]
+        ylabel = [rf"$\phantom{{0}}{v}^{{1}}$" for v in yticks]  
+        pad_yticks_by_digits(ax, n=1) 
         
-        #ax.set_yticks(yticks)
-        #ax.set_yticklabels(ylabel)
+        ax.set_yticks(yticks)
+        ax.set_yticklabels(ylabel)
         ax.yaxis.set_minor_locator(NullLocator())
         ax.yaxis.set_minor_formatter(NullFormatter())
     fig.tight_layout()

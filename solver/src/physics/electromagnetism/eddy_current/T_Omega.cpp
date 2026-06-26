@@ -283,6 +283,10 @@ T_Omega::T_Omega(Mesh& mesh, bool enable_preconditioner) : mesh_(mesh), enable_p
     br_system_.insert_block(dof_T_1_,           1, 1);
     br_system_.insert_block(dof_coupling_1_,    0, 1);
     br_system_.insert_block(dof_coupling_tp_1_, 1, 0);
+    
+    br_system_.insert_vec(dof_Omega_, 0);
+    br_system_.insert_vec(dof_T_1_, 1);
+
     br_system_.compute_block_offset();
     Logger::info("[T_Omega] - initialize system block rack: \n"+br_system_.print_block_rack());
 
@@ -338,8 +342,8 @@ bool T_Omega::assemble_system()
 
         //Integrator__s_S__S::assemble_element_matrix(sigma, e_data, mat);
 
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        //Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
+        //Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
 
     });
 
@@ -352,8 +356,8 @@ bool T_Omega::assemble_system()
         if(property_id == Domain::CONDUCTOR) { mu = 1.; sigma = 1.; }
 
         Integrator__s_curl_V__curl_V::assemble_element_matrix(1/sigma, e_data, mat);
-        Integrator__s_V__V::assemble_element_matrix(-mu, e_data, mat);
-        //Integrator__s_V__V::assemble_element_matrix(mu, e_data, mat);
+        //Integrator__s_V__V::assemble_element_matrix(-mu, e_data, mat);
+        Integrator__s_V__V::assemble_element_matrix(mu, e_data, mat);
 
     });
 
@@ -368,8 +372,8 @@ bool T_Omega::assemble_system()
         if(property_id == Domain::CONDUCTOR) mu = 1.;
         else if(property_id == Domain::EMPTY) mu = 1.;
 
-        Integrator__s_V__grad_S::assemble_element_matrix(mu, e_data, mat);
-        //Integrator__s_V__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        //Integrator__s_V__grad_S::assemble_element_matrix(mu, e_data, mat);
+        Integrator__s_V__grad_S::assemble_element_matrix(-mu, e_data, mat);
 
     });
     
@@ -553,12 +557,12 @@ bool T_Omega::assemble_system()
     assemble_vec(fe_system_.assemble_vec_data(dof_Omega_), [&](auto& e_data, auto& vec) {
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
-            Integrator__v__grad_S::assemble_element_vector(f_Omega_conductor_outer_layer, e_data, vec);   //  -Hs = T - ∇Ω 
+            //Integrator__v__grad_S::assemble_element_vector(f_Omega_conductor_outer_layer, e_data, vec);   //  -Hs = T - ∇Ω 
             //Integrator__v__grad_S::assemble_element_vector(new_T_gradO, e_data, vec);   //  Hs = T - ∇Ω 
-            //Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);  
+            Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);  
         }else if(property_id == Domain::EMPTY){
-            Integrator__v__grad_S::assemble_element_vector(f_empty, e_data, vec);                         //   -Hs = -∇Ω
-            //Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);                         //   Hs = -∇Ω
+            //Integrator__v__grad_S::assemble_element_vector(f_empty, e_data, vec);                         //   -Hs = -∇Ω
+            Integrator__v__grad_S::assemble_element_vector(new_gradO, e_data, vec);                         //   Hs = -∇Ω
         }       
     });
 
@@ -568,14 +572,14 @@ bool T_Omega::assemble_system()
     assemble_vec(fe_system_.assemble_vec_data(dof_T_1_), [&](auto& e_data, auto& vec) {
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR){
-            Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
+            //Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
         }else if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
-            Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
+            //Integrator__v__V::assemble_element_vector(f_T, e_data, vec);    //   Hs = ∇×∇×T - T + ∇Ω
         }else if(property_id == Domain::EMPTY){
             Logger::error("[T_Omega] - T-field only defined inside conductor!");
         }  
 
-        //Integrator__v__V::assemble_element_vector(new_f_T, e_data, vec);    //   -Hs = -∇×∇×T - T + ∇Ω
+        Integrator__v__V::assemble_element_vector(new_f_T, e_data, vec);    //   -Hs = -∇×∇×T - T + ∇Ω
         
 
     });
@@ -611,8 +615,8 @@ bool T_Omega::assemble_preconditioner()
         double inv_sigma = 1;
         double mu = 1;
         Integrator__s_grad_V__grad_V::assemble_element_matrix(inv_sigma, e_data, mat);
-        Integrator_H1__s_V__V::assemble_element_matrix(-mu, e_data, mat);
-        //Integrator_H1__s_V__V::assemble_element_matrix(mu, e_data, mat);
+        //Integrator_H1__s_V__V::assemble_element_matrix(-mu, e_data, mat);
+        Integrator_H1__s_V__V::assemble_element_matrix(mu, e_data, mat);
     });
 
 
@@ -649,8 +653,8 @@ bool T_Omega::assemble_preconditioner()
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR) mu = 1.;
         else if(property_id == Domain::EMPTY) mu = 1.;
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        //Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
+        //Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
     });
 
 
@@ -658,8 +662,8 @@ bool T_Omega::assemble_preconditioner()
     assemble_mat(fe_system_.assemble_mat_data(pc_Q_O_), [&](auto& e_data, auto& mat) {
         double mu = 1;
         size_t property_id = e_data.e->get_property_id();
-        Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
-        //Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
+        //Integrator__s_grad_S__grad_S::assemble_element_matrix(-mu, e_data, mat);
+        Integrator__s_grad_S__grad_S::assemble_element_matrix(mu, e_data, mat);
     });
 
     Logger::info("[T_Omega - preconditioner] - assemble discrete gradient matrix G.");
@@ -790,7 +794,7 @@ bool T_Omega::solve_system()
         const Mat T_   = br_system_.get_block_lhs(1,1);
         const Mat T_c_ = br_system_.get_block_lhs(1,0);
 
-        int algorithm_id = 4;  // 1=decoupled, 2=global, 3=coupled, 4=fully coupled
+        int algorithm_id = 2;  // 1=decoupled, 2=global, 3=coupled, 4=fully coupled
 
         T_Omega_AMS::AMS_Info ams_info;
 

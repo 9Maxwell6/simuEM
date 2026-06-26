@@ -59,7 +59,7 @@ struct Element_Data
     // ---------- used for post process only ------------
     const std::vector<const FEM_Space*>* space_list; // function space each block belong to.
     const std::vector<std::vector<scalar_t>>* dof_value_list; // value of each dof on this element for each block.
-
+    const std::vector<size_t>* block_id_list;
     // --------------------------------------------------
 
 

@@ -97,6 +97,25 @@ PetscErrorCode petsc_create_transpose(const Mat mat_A, Mat &mat_B)
 
 
 /**
+ * @brief Create an actual transpose copy of a matrix.
+ *
+ * @param mat_A  source matrix.
+ * @param mat_B  transpose copy of mat_A.
+ * 
+ * @return PetscErrorCode  PETSC_SUCCESS on success.
+ */
+PetscErrorCode petsc_copy_transpose(const Mat mat_A, Mat &mat_B)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatTranspose(mat_A, MAT_INITIAL_MATRIX, &mat_B));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+/**
  * @brief Create a nested block matrix from an array of sub-matrices.
  *
  * @param comm        MPI communicator
@@ -332,6 +351,73 @@ PetscErrorCode petsc_add_to_vec(PetscInt row_size, const PetscInt rows[], const 
 {
     PetscFunctionBeginUser;
     PetscCall(VecSetValues(vec, row_size, rows, values, ADD_VALUES));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_scale_mat(PetscScalar factor, Mat mat)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatScale(mat, factor));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_scale_vec(PetscScalar factor, Vec vec)
+{
+    PetscFunctionBeginUser;
+    PetscCall(VecScale(vec, factor));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_copy_mat(Mat mat_from, Mat mat_to)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatCopy(mat_from, mat_to, DIFFERENT_NONZERO_PATTERN));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_copy_vec(Vec vec_from, Vec vec_to)
+{
+    PetscFunctionBeginUser;
+    PetscCall(VecCopy(vec_from, vec_to));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_duplicate_mat(Mat mat_from, Mat &mat_to)
+{
+    PetscFunctionBeginUser;
+    PetscCall(MatDuplicate(mat_from, MAT_COPY_VALUES, &mat_to));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+
+
+PetscErrorCode petsc_duplicate_vec(Vec vec_from, Vec &vec_to)
+{
+    PetscFunctionBeginUser;
+    PetscCall(VecDuplicate(vec_from, &vec_to));
+    PetscCall(VecCopy(vec_from, vec_to));
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 

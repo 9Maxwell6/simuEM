@@ -102,6 +102,9 @@ CurlCurl::CurlCurl(Mesh& mesh) : mesh_(mesh), fe_system_(mesh)
     
     br_system_.insert_block(dof_field_,         0, 0);
 
+    br_system_.insert_vec(dof_field_, 0);
+
+
     br_system_.compute_block_offset();
     Logger::info("[CurlCurl] - initialize block rack: \n"+br_system_.print_block_rack());
 

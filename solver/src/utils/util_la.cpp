@@ -57,6 +57,17 @@ void create_transpose(const G_Matrix mat_A, G_Matrix &mat_B)
 
 
 
+void copy_transpose(const G_Matrix mat_A, G_Matrix &mat_B)
+{
+    #ifdef LOAD_PETSC
+        petsc_util::petsc_copy_transpose(mat_A, mat_B);  // copy
+    #else
+        mat_B = std::make_shared<Eigen::SparseMatrix<scalar_t>>(mat_A->transpose());  // copy
+    #endif
+}
+
+
+
 void create_nest_mat(size_d b_row_size, size_d b_col_size, const std::vector<G_Matrix> &block_mat, G_Matrix& mat)
 {
     #ifdef LOAD_PETSC
@@ -185,6 +196,79 @@ void add_to_vec(size_d row_size, const size_d rows[], const scalar_t values[], G
     #else
         // G_Vector: using eigen VectorXd.
         for (int i = 0; i < row_size; ++i) (*vec)(rows[i]) += values[i];
+    #endif
+}
+
+
+
+void scale_mat(scalar_t factor, G_Matrix mat)
+{
+    #ifdef LOAD_PETSC
+        // G_Vector: using petsc Vec.
+        petsc_util::petsc_scale_mat(factor, mat);
+    #else
+        // TODO: 
+        Logger::error("la_kernel::scale_mat: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+void scale_vec(scalar_t factor, G_Vector vec)
+{
+    #ifdef LOAD_PETSC
+        // G_Vector: using petsc Vec.
+        petsc_util::petsc_scale_vec(factor, vec);
+    #else
+        // TODO: 
+        Logger::error("la_kernel::scale_vec: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+void copy_mat(G_Matrix mat_from, G_Matrix mat_to)
+{
+    #ifdef LOAD_PETSC
+        // G_Vector: using petsc Vec.
+        petsc_util::petsc_copy_mat(mat_from, mat_to);
+    #else
+        // TODO: 
+        Logger::error("la_kernel::copy_mat: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+void copy_vec(G_Vector vec_from, G_Vector vec_to)
+{
+    #ifdef LOAD_PETSC
+        // G_Vector: using petsc Vec.
+        petsc_util::petsc_copy_vec(vec_from, vec_to);
+    #else
+        // TODO: 
+        Logger::error("la_kernel::copy_vec: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+void duplicate_mat(G_Matrix mat_from, G_Matrix &mat_to)
+{
+    #ifdef LOAD_PETSC
+        // G_Vector: using petsc Vec.
+        petsc_util::petsc_duplicate_mat(mat_from, mat_to);
+    #else
+        // TODO: 
+        Logger::error("la_kernel::copy_mat: default implementation not ready, only petsc version available.");
+    #endif
+}
+
+
+
+void duplicate_vec(G_Vector vec_from, G_Vector &vec_to)
+{
+    #ifdef LOAD_PETSC
+        // G_Vector: using petsc Vec.
+        petsc_util::petsc_duplicate_vec(vec_from, vec_to);
+    #else
+        // TODO: 
+        Logger::error("la_kernel::copy_mat: default implementation not ready, only petsc version available.");
     #endif
 }
 

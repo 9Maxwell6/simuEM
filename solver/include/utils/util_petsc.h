@@ -20,6 +20,7 @@ PetscErrorCode petsc_init_mat(PetscInt row_size, PetscInt col_size, const std::v
 PetscErrorCode petsc_init_vec(PetscInt size, Vec& vec);
 
 PetscErrorCode petsc_create_transpose(const Mat mat_A, Mat &mat_B);
+PetscErrorCode petsc_copy_transpose(const Mat mat_A, Mat &mat_B);
 
 PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, const std::vector<Mat> &block_mat, Mat& mat);
 PetscErrorCode petsc_create_nest_vec(const std::vector<Vec> &block_vec, Vec &vec);
@@ -38,6 +39,16 @@ PetscErrorCode petsc_add_to_mat(PetscInt row_size, const PetscInt rows[],
                                 const PetscScalar values[], Mat mat);
 
 PetscErrorCode petsc_add_to_vec(PetscInt row_size, const PetscInt rows[], const PetscScalar values[], Vec vec);
+
+PetscErrorCode petsc_scale_mat(PetscScalar factor, Mat mat);
+PetscErrorCode petsc_scale_vec(PetscScalar factor, Vec vec);
+
+PetscErrorCode petsc_copy_mat(Mat mat_from, Mat mat_to);
+PetscErrorCode petsc_copy_vec(Vec vec_from, Vec vec_to);
+
+PetscErrorCode petsc_duplicate_mat(Mat vec_from, Mat &mat_to);
+PetscErrorCode petsc_duplicate_vec(Vec vec_from, Vec &vec_to);
+
 
 PetscErrorCode petsc_zero_row_col_mat(const std::vector<PetscInt>& dofs, PetscScalar diag_val, Mat mat, Vec x, Vec b);
 PetscErrorCode petsc_zero_row_mat(const std::vector<PetscInt>& dofs, PetscScalar diag_val, Mat mat, Vec x, Vec b);

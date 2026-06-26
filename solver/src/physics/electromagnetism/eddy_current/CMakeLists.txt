@@ -1,20 +1,15 @@
 
 target_sources(simu_core PRIVATE 
     auxiliary_solver.cpp
-    T_Omega.cpp
-    T_Omega_complex.cpp)
+    T_Omega.cpp)
 
 
-#add_executable(T_Omega T_Omega.cpp)
-#target_link_libraries(T_Omega PRIVATE simu_core)
 
-#add_executable(T_Omega_complex T_Omega_complex.cpp)
-#target_link_libraries(T_Omega_complex PRIVATE simu_core)
+add_executable(t_omega_c T_Omega_complex.cpp)
+target_sources(t_omega_c PRIVATE 
+    auxiliary_solver_complex.cpp)
+target_link_libraries(t_omega_c PRIVATE simu_core)
+#set_target_properties(t_omega_c PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set_target_properties(t_omega_c PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-#target_sources(T_Omega PRIVATE 
-#    auxiliary_solver.cpp
-#)
 
-#target_sources(T_Omega_complex PRIVATE 
-#    auxiliary_solver.cpp
-#)

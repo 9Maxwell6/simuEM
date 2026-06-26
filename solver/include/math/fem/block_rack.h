@@ -33,6 +33,7 @@ private:
     size_t n_col_; 
 
     std::vector<Block*>  rack_;
+    std::vector<Block*>  vec_rack_;
 
     std::vector<size_t> unit_row_length_;  // global rows in each block-row
     std::vector<size_t> unit_col_length_;  // global cols in each block-col
@@ -60,6 +61,7 @@ public:
     void set_grid(size_t n_row, size_t n_col);
 
     bool insert_block(Block& block, size_t row, size_t col);
+    bool insert_vec(Block& block, size_t row);
     bool compute_block_offset();
 
     bool is_block_ready(const Block* block) const;
