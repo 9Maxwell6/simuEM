@@ -1,4 +1,4 @@
-#include "physics/electromagnetism/eddy_current/T_Omega_complex.h"
+#include "physics/electromagnetism/eddy_current/T_Omega_c.h"
 
 using namespace simu;
 
@@ -189,20 +189,20 @@ bool T_Omega_c::initialize_system()
 
     br_system_ = fe_system_.initialize_block_rack(4, 4);
     
-    br_system_.insert_block(Mc_r_,         0, 0);
-    br_system_.insert_block(X__r_,         0, 1);
-    br_system_.insert_block(Kc_r_,         0, 2);
-    br_system_.insert_block(Xt_r_,         1, 0);
-    br_system_.insert_block(Ki_r_,         1, 1);
-    br_system_.insert_block(Kc_c_,         2, 0);
-    br_system_.insert_block(Mc_c_,         2, 2);
-    br_system_.insert_block(X__c_,         2, 3);
-    br_system_.insert_block(Xt_c_,         3, 2);
+    br_system_.insert_block(Kc_r_,         0, 0);
+    br_system_.insert_block(Mc_r_,         0, 1);
+    br_system_.insert_block(X__r_,         0, 3);
+    br_system_.insert_block(Mc_c_,         1, 0);
+    br_system_.insert_block(Kc_c_,         1, 1);
+    br_system_.insert_block(X__c_,         1, 2);
+    br_system_.insert_block(Xt_r_,         2, 0);
+    br_system_.insert_block(Ki_r_,         2, 2);
+    br_system_.insert_block(Xt_c_,         3, 1);
     br_system_.insert_block(Ki_c_,         3, 3);
 
-    br_system_.insert_vec(Sc_r_,         0);
-    br_system_.insert_vec(Si_r_,         1);
-    br_system_.insert_vec(Sc_c_,         2);
+    br_system_.insert_vec(Sc_c_,         0);
+    br_system_.insert_vec(Sc_r_,         1);
+    br_system_.insert_vec(Si_r_,         2);
     br_system_.insert_vec(Si_c_,         3);
 
     br_system_.compute_block_offset();
@@ -306,9 +306,9 @@ bool T_Omega_c::assemble_system()
         Integrator__s_curl_V__curl_V::assemble_element_matrix(1/sigma, e_data, mat);
     });
 
-    Logger::info("[T_Omega] - set [_Kc = -Kc].");
-    la_kernel::duplicate_mat(Kc_r_.mat, Kc_c_.mat);
-    la_kernel::scale_mat(-1.0, Kc_c_.mat);
+    Logger::info("[T_Omega] - set [Kc_c = Kc_r].");
+    Kc_c_.mat = Kc_r_.mat;
+    
 
     Logger::info("[T_Omega] - assemble [Mc].");
     assemble_mat(fe_system_.assemble_mat_data(Mc_r_), [&](auto& e_data, auto& mat) {
@@ -317,10 +317,12 @@ bool T_Omega_c::assemble_system()
         if(property_id == Domain::CONDUCTOR) mu = mu_conductor_;
         else if(property_id == Domain::CONDUCTOR_OUTER_LAYER) mu = mu_conductor_;
 
-        Integrator__s_V__V::assemble_element_matrix(mu, e_data, mat);
+        Integrator__s_V__V::assemble_element_matrix(-mu, e_data, mat);
     });
 
-    Mc_c_.mat = Mc_r_.mat;
+    la_kernel::duplicate_mat(Mc_r_.mat, Mc_c_.mat);
+    la_kernel::scale_mat(-1., Mc_c_.mat);
+    
 
     Logger::info("[T_Omega] - assemble [Ki].");
     assemble_mat(fe_system_.assemble_mat_data(Ki_r_), [&](auto& e_data, auto& mat) {
@@ -341,17 +343,18 @@ bool T_Omega_c::assemble_system()
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR_OUTER_LAYER) mu = mu_conductor_;
 
-        Integrator__s_grad_S__V::assemble_element_matrix(-mu, e_data, mat);
+        Integrator__s_grad_S__V::assemble_element_matrix(mu, e_data, mat);
     });
 
     Logger::info("[T_Omega] - assemble [X__c_].");
-    X__c_.mat = X__r_.mat;
+    la_kernel::duplicate_mat(X__r_.mat, X__c_.mat);
+    la_kernel::scale_mat(-1., X__c_.mat);
 
     Logger::info("[T_Omega] - assemble [Xt_r_].");
-    la_kernel::copy_transpose(X__r_.mat, Xt_r_.mat);
+    la_kernel::copy_transpose(X__c_.mat, Xt_c_.mat);
 
     Logger::info("[T_Omega] - assemble [Xt_c_].");
-    Xt_c_.mat = Xt_r_.mat;
+    Xt_r_.mat = Xt_c_.mat;
 
 
 
@@ -448,10 +451,10 @@ bool T_Omega_c::assemble_system()
     assemble_vec(fe_system_.assemble_vec_data(Sc_c_), [&](auto& e_data, auto& vec) {
         size_t property_id = e_data.e->get_property_id();
         if(property_id == Domain::CONDUCTOR){
-            Integrator__v__V::assemble_element_vector(ball_field_Sc_c_neg, e_data, vec);  
+            Integrator__v__V::assemble_element_vector(ball_field_Sc_c, e_data, vec);  
 
         }else if(property_id == Domain::CONDUCTOR_OUTER_LAYER){
-            Integrator__v__V::assemble_element_vector(ball_field_Sc_c_neg, e_data, vec);   
+            Integrator__v__V::assemble_element_vector(ball_field_Sc_c, e_data, vec);   
         }       
     });
 
@@ -471,12 +474,15 @@ bool T_Omega_c::assemble_system()
 
     // scale with frequency  (Mc_r_ and Mc_c_ share the same matrix, same for other _r and _c)
     la_kernel::scale_mat(omega_, Mc_r_.mat);
+    la_kernel::scale_mat(omega_, Mc_c_.mat);
     la_kernel::scale_mat(omega_, X__r_.mat);
-    la_kernel::scale_mat(omega_, Ki_r_.mat);
+    la_kernel::scale_mat(omega_, X__c_.mat);
     la_kernel::scale_mat(omega_, Xt_r_.mat);
+    la_kernel::scale_mat(omega_, Ki_r_.mat);
 
-    la_kernel::scale_vec(omega_, Sc_r_.vec);
+
     la_kernel::scale_vec(omega_, Sc_c_.vec);
+    la_kernel::scale_vec(omega_, Sc_r_.vec);
     la_kernel::scale_vec(omega_, Si_r_.vec);
     la_kernel::scale_vec(omega_, Si_c_.vec);
 
@@ -643,13 +649,16 @@ bool T_Omega_c::solve_system()
         //KSPSetType(ksp, KSPMINRES);
         KSPSetType(ksp, KSPGMRES);
         
-        //PetscCall(KSPGMRESSetRestart(ksp, 10000)); 
+        PetscCall(KSPGMRESSetRestart(ksp, 300)); 
 
         // Configure the preconditioner (e.g., Jacobi)
         PC pc;
         KSPGetPC(ksp, &pc); 
-        PCSetType(pc, PCILU);  
-        PCFactorSetLevels(pc, 3); 
+        //PCSetType(pc, PCILU);  
+        //PCFactorSetLevels(pc, 5); 
+
+        PCSetType(pc, PCHYPRE);
+        PCHYPRESetType(pc, "boomeramg");
  
         // Optionally set tolerances
         KSPSetTolerances(ksp, 1e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
@@ -866,13 +875,23 @@ scalar_t T_Omega_c::compute_L2_error()
                 int block_id = block_id_list[i];
                 const FEM_Space* space = space_list[i];
                 const std::vector<scalar_t>& dof_value = dof_value_list[i];
-                if(block_id == Mc_r_.id){
+                if(block_id == Kc_r_.id){
                     // real part of T field
                     space->dof_transformation(e_data.e->get_node_idx(), dof_transform);
                     space->get_basis_v(i_p.coord, Hcurl_basis);
                     Hcurl_phy_basis = dof_transform*Hcurl_basis * J_inv;
                     for (int j = 0; j < dof_value.size(); ++j) {
                         solved_field_r += dof_value[j] * Hcurl_phy_basis.row(j).transpose();
+                    }
+                }
+
+                if(block_id == Kc_c_.id){
+                    // real part of T field
+                    space->dof_transformation(e_data.e->get_node_idx(), dof_transform);
+                    space->get_basis_v(i_p.coord, Hcurl_basis);
+                    Hcurl_phy_basis = dof_transform*Hcurl_basis * J_inv;
+                    for (int j = 0; j < dof_value.size(); ++j) {
+                        solved_field_c += dof_value[j] * Hcurl_phy_basis.row(j).transpose();
                     }
                 }
 
@@ -885,15 +904,6 @@ scalar_t T_Omega_c::compute_L2_error()
                     }
                 }
 
-                if(block_id == Mc_c_.id){
-                    // complex part of T field
-                    space->dof_transformation(e_data.e->get_node_idx(), dof_transform);
-                    space->get_basis_v(i_p.coord, Hcurl_basis);
-                    Hcurl_phy_basis = dof_transform*Hcurl_basis * J_inv;
-                    for (int j = 0; j < dof_value.size(); ++j) {
-                        solved_field_c += dof_value[j] * Hcurl_phy_basis.row(j).transpose();
-                    }
-                }
 
                 if(block_id == Ki_c_.id){
                     // complex part of Omega field
@@ -971,7 +981,7 @@ void T_Omega_c::finalize()
     la_kernel::destroy_mat(X__r_.mat);  
     la_kernel::destroy_mat(Xt_r_.mat);  
 
-    la_kernel::destroy_mat(Kc_c_.mat);  
+    Kc_c_.mat = nullptr;
     Mc_c_.mat = nullptr;
     Ki_c_.mat = nullptr;
     X__c_.mat = nullptr;

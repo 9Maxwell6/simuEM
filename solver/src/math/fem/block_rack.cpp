@@ -29,7 +29,7 @@ bool Block_Rack::insert_block(Block& block, size_t row, size_t col)
     if(rack_[row*n_col_ +col]!= nullptr) Logger::warning("Block_Rack::insert_block - slot already occupied, replaing with new block."); 
 
     if(unit_row_length_[row]!=0 && block.row_size!=unit_row_length_[row]) {Logger::error("Block_Rack::insert_block - block row size mismatch. block.id = "+std::to_string(block.id)); return false; }
-    if(unit_col_length_[col]!=0 && block.col_size!=unit_row_length_[col]) {Logger::error("Block_Rack::insert_block - block column size mismatch. block.id = "+std::to_string(block.id)); return false; }
+    if(unit_col_length_[col]!=0 && block.col_size!=unit_col_length_[col]) {Logger::error("Block_Rack::insert_block - block column size mismatch. block.id = "+std::to_string(block.id)); return false; }
 
     unit_row_length_[row] = block.row_size;
     unit_col_length_[col] = block.col_size;
@@ -174,10 +174,10 @@ void Block_Rack::extract_block_system()
     block_x_.resize(n_row_);
 
     for (size_d i = 0; i < n_row_; ++i)
-        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + i]->mat, &local_row_size_[i], nullptr);
 
     for (size_d j = 0; j < n_col_; ++j)
-        la_kernel::get_local_size_mat(rack_[0 * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
+        la_kernel::get_local_size_mat(rack_[j * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
 
     la_kernel::extract_block_mat(local_row_size_, local_col_size_, lhs_, block_lhs_);
     la_kernel::extract_block_vec(local_row_size_, rhs_, block_rhs_);
@@ -221,10 +221,10 @@ void Block_Rack::extract_block_rhs()
     block_lhs_.resize(n_row_*n_col_);
 
     for (size_d i = 0; i < n_row_; ++i)
-        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + i]->mat, &local_row_size_[i], nullptr);
 
     for (size_d j = 0; j < n_col_; ++j)
-        la_kernel::get_local_size_mat(rack_[0 * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
+        la_kernel::get_local_size_mat(rack_[j * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
 
     la_kernel::extract_block_mat(local_row_size_, local_col_size_, lhs_, block_lhs_);
 }
@@ -235,7 +235,7 @@ std::vector<size_d>& Block_Rack::get_local_row_size()
     if(local_row_size_.size()>0) return local_row_size_;
     local_row_size_.resize(n_row_);
     for (size_d i = 0; i < n_row_; ++i)
-        la_kernel::get_local_size_mat(rack_[i * n_col_ + 0]->mat, &local_row_size_[i], nullptr);
+        la_kernel::get_local_size_mat(rack_[i * n_col_ + i]->mat, &local_row_size_[i], nullptr);
 
     return local_row_size_;
 }
@@ -245,7 +245,7 @@ std::vector<size_d>& Block_Rack::get_local_col_size()
     if(local_col_size_.size()>0) return local_col_size_;
     local_col_size_.resize(n_col_);
     for (size_d j = 0; j < n_col_; ++j)
-        la_kernel::get_local_size_mat(rack_[0 * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
+        la_kernel::get_local_size_mat(rack_[j * n_col_ + j]->mat, nullptr, &local_col_size_[j]);
 
     return local_col_size_;
 }
