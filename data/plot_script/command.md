@@ -74,3 +74,6 @@ python3 ./plot_script/iterations.py  ./data_test/curlcurl_first_6.dat ./T_Omega_
 python3 ./plot_script/condition_number.py  ./data_test/curlcurl_first_6.dat ./T_Omega_CG.dat ./data_test/curlcurl_pc_first_6.dat  ./T_Omega_pc_CG_1_d.dat -n=4  -o ./compare_condition_CG.pdf 
 
 
+python3 ./plot_script/l2_error.py ./T_Omega_Kc_pcAlg1.dat -o ./l2_test_TOc.pdf
+
+

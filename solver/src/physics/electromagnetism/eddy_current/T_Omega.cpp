@@ -842,6 +842,8 @@ bool T_Omega::solve_system()
             PetscCall(MatDestroy(&M3));
             PetscCall(MatDestroy(&M4));
 
+            pc_bc_O_s_.apply_to_mat(M);
+
 
             PetscCall(T_Omega_AMS::solve_AMS(
                 ams_info,

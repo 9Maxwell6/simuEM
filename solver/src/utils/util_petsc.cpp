@@ -129,10 +129,16 @@ PetscErrorCode petsc_copy_transpose(const Mat mat_A, Mat &mat_B)
 PetscErrorCode petsc_create_nest_mat(PetscInt b_row_size, PetscInt b_col_size, const std::vector<Mat>& block_mat, Mat& mat)
 {
     PetscFunctionBeginUser;
-    PetscCall(MatCreateNest(PETSC_COMM_WORLD, b_row_size, NULL, b_col_size, NULL, const_cast<Mat*>(block_mat.data()), &mat));
+    Mat nest;
+    PetscCall(MatCreateNest(PETSC_COMM_WORLD, b_row_size, NULL, b_col_size, NULL,
+                            const_cast<Mat*>(block_mat.data()), &nest));
+    PetscCall(MatConvert(nest, MATAIJ, MAT_INITIAL_MATRIX, &mat));  
+    PetscCall(MatDestroy(&nest));
+
+    //PetscCall(MatCreateNest(PETSC_COMM_WORLD, b_row_size, NULL, b_col_size, NULL, const_cast<Mat*>(block_mat.data()), &mat));
     // MATNEST does not support MatZeroRowsColumns(), which is essential to applying Dirichlet BC.
     //   -> convert from MATNEST to MATAIJ
-    PetscCall(MatConvert(mat, MATAIJ, MAT_INPLACE_MATRIX, &mat));  
+    //PetscCall(MatConvert(mat, MATAIJ, MAT_INPLACE_MATRIX, &mat));  
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 

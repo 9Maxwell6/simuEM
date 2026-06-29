@@ -34,7 +34,7 @@ def main():
     color = ['palevioletred', 'royalblue']
     color = ['red']
     ax.set_prop_cycle(color=color)
-    labels = ["$\mathbf{T}$-$\Omega$ solver"]
+    labels = ["$\mathbf{T}$-$\Omega$\_c solver"]
 
     '''
     labels = ["$-\mathrm{div}\,\mathbf{grad}\, \mathrm{u} = \mathrm{f}$",

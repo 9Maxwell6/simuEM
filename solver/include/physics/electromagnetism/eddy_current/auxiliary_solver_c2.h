@@ -9,7 +9,7 @@ namespace simu::T_Omega_AMS_c {
 typedef struct AMS_Context 
 {
     Mat P, G, I, LpM;
-    Mat H1, H2, J1, J2;
+    Mat H1, H2, J;
     Mat Qc, Qi;
     //Mat X;
 
@@ -76,7 +76,7 @@ PetscErrorCode solve_AMS(
     Mat P, Mat G, Mat I, Mat LpM, 
     Mat Qc, Mat Qi,
     Mat H1, Mat H2,
-    Mat J1, Mat J2,
+    Mat J,
     //Mat X,
     Block_Rack* br_system,
     Dirichlet_BC* bc_T_1_H1_s,

@@ -1,4 +1,4 @@
-#include "physics/electromagnetism/eddy_current/auxiliary_solver_c.h"
+#include "physics/electromagnetism/eddy_current/auxiliary_solver_c2.h"
 
 
 using namespace simu;
@@ -71,12 +71,6 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_decoupled(PC pc, Vec r, Vec x)
         PetscCall(VecAYPX(ctx->tmp_1, -1., r1));                  
         PetscCall(MatMultTranspose(ctx->P, ctx->tmp_1, ctx->rho_1));
 
-        ctx->bc_T_1_H1_v->apply_to_vec(ctx->rho_1);  
-        PetscCall(VecSet(ctx->gamma_1, 0.));
-        PetscCall(KSPSolve(ctx->inner_LpM_ksp, ctx->rho_1,  ctx->gamma_1));
-        PetscCall(MatMultAdd(ctx->P, ctx->gamma_1, x1, x1));
-
-
         //  rho_2 = Pt * (r2 - Mc_c*x1 - Kc_c*x2 - Xc_c*x3)
         PetscCall(MatMult(Mc_c, x1, ctx->tmp_2));                   
         PetscCall(MatMultAdd(Kc_c, x2, ctx->tmp_2, ctx->tmp_2));   
@@ -84,18 +78,22 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_decoupled(PC pc, Vec r, Vec x)
         PetscCall(VecAYPX(ctx->tmp_2, -1., r2));                  
         PetscCall(MatMultTranspose(ctx->P, ctx->tmp_2, ctx->rho_2));
 
-        //ctx->bc_T_1_H1_v->apply_to_vec(ctx->rho_1);  
+        ctx->bc_T_1_H1_v->apply_to_vec(ctx->rho_1);  
         ctx->bc_T_1_H1_v->apply_to_vec(ctx->rho_2);  
 
-        //PetscCall(VecSet(ctx->gamma_1, 0.));
+        PetscCall(VecSet(ctx->gamma_1, 0.));
         PetscCall(VecSet(ctx->gamma_2, 0.));
         //PetscCall(KSPSolve(ctx->inner_LpM_ksp, ctx->rho_1,  ctx->gamma_1));
-        PetscCall(KSPSolve(ctx->inner_LpM_ksp, ctx->rho_2,  ctx->gamma_2));
-        //PetscCall(KSPSolve(ctx->inner_LpM_ksp, rho_c, gamma_c));
+        //PetscCall(KSPSolve(ctx->inner_LpM_ksp, ctx->rho_2,  ctx->gamma_2));
+        PetscCall(KSPSolve(ctx->inner_LpM_ksp, rho_c, gamma_c));
 
+        KSPConvergedReason reason;
+        PetscCall(KSPGetConvergedReason(ctx->inner_LpM_ksp, &reason));
+        PetscCheck(reason > 0, PETSC_COMM_SELF, PETSC_ERR_CONV_FAILED,
+                "inner_LpM_ksp failed, reason %d", (int)reason);
 
         //    xt = xt + P*gamma_1
-        //PetscCall(MatMultAdd(ctx->P, ctx->gamma_1, x1, x1));
+        PetscCall(MatMultAdd(ctx->P, ctx->gamma_1, x1, x1));
         PetscCall(MatMultAdd(ctx->P, ctx->gamma_2, x2, x2));
 
         //  zeta_1 = Gt * (r1 - Kc_r*x1 - Mc_r*x2 - Xc_r*x4)
@@ -105,11 +103,6 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_decoupled(PC pc, Vec r, Vec x)
         PetscCall(VecAYPX(ctx->tmp_1, -1., r1));                  
         PetscCall(MatMultTranspose(ctx->G, ctx->tmp_1, ctx->zeta_1));
 
-        PetscCall(VecSet(ctx->kappa_1, 0.));
-        ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_1);
-        PetscCall(KSPSolve(ctx->inner_Qc_ksp, ctx->zeta_1, ctx->kappa_1));
-        PetscCall(MatMultAdd(ctx->G, ctx->kappa_1, x1, x1));
-
         //  zeta_2 = Gt * (r2 - Mc_c*x1 - Kc_c*x2 - Xc_c*x3)
         PetscCall(MatMult(Mc_c, x1, ctx->tmp_2));                   
         PetscCall(MatMultAdd(Kc_c, x2, ctx->tmp_2, ctx->tmp_2));   
@@ -117,23 +110,11 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_decoupled(PC pc, Vec r, Vec x)
         PetscCall(VecAYPX(ctx->tmp_2, -1., r2));                  
         PetscCall(MatMultTranspose(ctx->G, ctx->tmp_2, ctx->zeta_2));
 
-        PetscCall(VecSet(ctx->kappa_2, 0.));
-        ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_2);
-        PetscCall(KSPSolve(ctx->inner_Qc_ksp, ctx->zeta_2, ctx->kappa_2));
-        PetscCall(MatMultAdd(ctx->G, ctx->kappa_2, x2, x2));
-
-
         //  zeta_3 = It * (r3 - Xi_r*x1 - Ki_r*x3)
         PetscCall(MatMult(Xi_r, x1, ctx->tmp_3));                   
         PetscCall(MatMultAdd(Ki_r, x3, ctx->tmp_3, ctx->tmp_3));   
         PetscCall(VecAYPX(ctx->tmp_3, -1., r3));                  
         PetscCall(MatMultTranspose(ctx->I, ctx->tmp_3, ctx->zeta_3));
-
-        PetscCall(VecSet(ctx->kappa_3, 0.));
-        ctx->bc_O_o->apply_to_vec(ctx->zeta_3);
-        ctx->bc_O_i->apply_to_vec(ctx->zeta_3);
-        PetscCall(KSPSolve(ctx->inner_Qi_ksp, ctx->zeta_3, ctx->kappa_3));
-        PetscCall(MatMultAdd(ctx->I, ctx->kappa_3, x3, x3));
 
         //  zeta_4 = It * (r3 - Xi_c*x2 - Ki_c*x4)
         PetscCall(MatMult(Xi_c, x2, ctx->tmp_4));                   
@@ -142,29 +123,29 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_decoupled(PC pc, Vec r, Vec x)
         PetscCall(MatMultTranspose(ctx->I, ctx->tmp_4, ctx->zeta_4));
 
 
-        //PetscCall(VecSet(ctx->kappa_1, 0.));
-        //PetscCall(VecSet(ctx->kappa_2, 0.));
-        //PetscCall(VecSet(ctx->kappa_3, 0.));
+        PetscCall(VecSet(ctx->kappa_1, 0.));
+        PetscCall(VecSet(ctx->kappa_2, 0.));
+        PetscCall(VecSet(ctx->kappa_3, 0.));
         PetscCall(VecSet(ctx->kappa_4, 0.));
 
 
-        //ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_1);
-        //ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_2);
+        ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_1);
+        ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_2);
 
-        //ctx->bc_O_o->apply_to_vec(ctx->zeta_3);
-        //ctx->bc_O_i->apply_to_vec(ctx->zeta_3);
+        ctx->bc_O_o->apply_to_vec(ctx->zeta_3);
+        ctx->bc_O_i->apply_to_vec(ctx->zeta_3);
         ctx->bc_O_o->apply_to_vec(ctx->zeta_4);
         ctx->bc_O_i->apply_to_vec(ctx->zeta_4);
         
-        //PetscCall(KSPSolve(ctx->inner_Qc_ksp, ctx->zeta_1, ctx->kappa_1));
-        //PetscCall(KSPSolve(ctx->inner_Qc_ksp, ctx->zeta_2, ctx->kappa_2));
+        PetscCall(KSPSolve(ctx->inner_Qc_ksp, ctx->zeta_1, ctx->kappa_1));
+        PetscCall(KSPSolve(ctx->inner_Qc_ksp, ctx->zeta_2, ctx->kappa_2));
 
-        //PetscCall(KSPSolve(ctx->inner_Qi_ksp, ctx->zeta_3, ctx->kappa_3));
+        PetscCall(KSPSolve(ctx->inner_Qi_ksp, ctx->zeta_3, ctx->kappa_3));
         PetscCall(KSPSolve(ctx->inner_Qi_ksp, ctx->zeta_4, ctx->kappa_4));
 
-        //PetscCall(MatMultAdd(ctx->G, ctx->kappa_1, x1, x1));
-        //PetscCall(MatMultAdd(ctx->G, ctx->kappa_2, x2, x2));
-        //PetscCall(MatMultAdd(ctx->I, ctx->kappa_3, x3, x3));
+        PetscCall(MatMultAdd(ctx->G, ctx->kappa_1, x1, x1));
+        PetscCall(MatMultAdd(ctx->G, ctx->kappa_2, x2, x2));
+        PetscCall(MatMultAdd(ctx->I, ctx->kappa_3, x3, x3));
         PetscCall(MatMultAdd(ctx->I, ctx->kappa_4, x4, x4));
     }
 
@@ -182,6 +163,12 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_decoupled(PC pc, Vec r, Vec x)
     PetscFunctionReturn(0);
 }
 
+PetscErrorCode T_Omega_AMS_c::AMS_apply_coupled(PC pc, Vec r, Vec x)
+{
+    PetscFunctionBeginUser;
+
+    PetscFunctionReturn(0);
+}
 
 PetscErrorCode T_Omega_AMS_c::AMS_apply_global(PC pc, Vec r, Vec x)
 {
@@ -270,19 +257,21 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_global(PC pc, Vec r, Vec x)
         PetscCall(MatMultAdd(ctx->P, ctx->gamma_1, x1, x1));
         PetscCall(MatMultAdd(ctx->P, ctx->gamma_2, x2, x2));
 
-        //  zeta_1 = Gt * (r1 - Kc_r*x1 - Mc_r*x2 - Xc_r*x4)
-        PetscCall(MatMult(Kc_r, x1, ctx->tmp_1));                   
-        PetscCall(MatMultAdd(Mc_r, x2, ctx->tmp_1, ctx->tmp_1));   
-        PetscCall(MatMultAdd(Xc_r, x4, ctx->tmp_1, ctx->tmp_1));   
+        
+
+        //  zeta_1 = Gt * (r2 - Mc_c*x1 - Kc_c*x2 - Xc_c*x3)
+        PetscCall(MatMult(Mc_c, x1, ctx->tmp_1));                   
+        PetscCall(MatMultAdd(Kc_c, x2, ctx->tmp_1, ctx->tmp_1));   
+        PetscCall(MatMultAdd(Xc_c, x3, ctx->tmp_1, ctx->tmp_1));   
         PetscCall(VecAYPX(ctx->tmp_1, -1., r1));                  
         PetscCall(MatMultTranspose(ctx->G, ctx->tmp_1, ctx->zeta));
 
+        //  zeta_3 = It * (r3 - Xi_r*x1 - Ki_r*x3)
+        PetscCall(MatMult(Xi_r, x1, ctx->tmp_3));                   
+        PetscCall(MatMultAdd(Ki_r, x3, ctx->tmp_3, ctx->tmp_3));   
+        PetscCall(VecAYPX(ctx->tmp_3, -1., r3));                  
+        PetscCall(MatMultTransposeAdd(ctx->I, ctx->tmp_3, ctx->zeta, ctx->zeta));
 
-        //  zeta_4 = It * (r4 - Xi_c*x2 - Ki_c*x4)
-        PetscCall(MatMult(Xi_c, x2, ctx->tmp_4));                   
-        PetscCall(MatMultAdd(Ki_c, x4, ctx->tmp_4, ctx->tmp_4));   
-        PetscCall(VecAYPX(ctx->tmp_4, -1., r4));                  
-        PetscCall(MatMultTransposeAdd(ctx->I, ctx->tmp_4, ctx->zeta, ctx->zeta));
 
 
 
@@ -291,30 +280,31 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_global(PC pc, Vec r, Vec x)
 
 
         PetscCall(KSPSolve(ctx->inner_Q2_ksp, ctx->zeta, ctx->kappa));
-        PetscCall(MatMultAdd(ctx->G, ctx->kappa, x2, x2));
-        PetscCall(MatMultAdd(ctx->I, ctx->kappa, x4, x4));
+        PetscCall(MatMultAdd(ctx->G, ctx->kappa, x1, x1));
+        PetscCall(MatMultAdd(ctx->I, ctx->kappa, x3, x3));
 
 
-        //  zeta_2 = Gt * (r2 - Mc_c*x1 - Kc_c*x2 - Xc_c*x3)
-        PetscCall(MatMult(Mc_c, x1, ctx->tmp_2));                   
-        PetscCall(MatMultAdd(Kc_c, x2, ctx->tmp_2, ctx->tmp_2));   
-        PetscCall(MatMultAdd(Xc_c, x3, ctx->tmp_2, ctx->tmp_2));   
+        //  zeta_2 = Gt * (r1 - Kc_r*x1 - Mc_r*x2 - Xc_r*x4)
+        PetscCall(MatMult(Kc_r, x1, ctx->tmp_2));                   
+        PetscCall(MatMultAdd(Mc_r, x2, ctx->tmp_2, ctx->tmp_2));   
+        PetscCall(MatMultAdd(Xc_r, x4, ctx->tmp_2, ctx->tmp_2));   
         PetscCall(VecAYPX(ctx->tmp_2, -1., r2));                  
         PetscCall(MatMultTranspose(ctx->G, ctx->tmp_2, ctx->zeta));
 
-        //  zeta_3 = It * (r3 - Xi_r*x1 - Ki_r*x3)
-        PetscCall(MatMult(Xi_r, x1, ctx->tmp_3));                   
-        PetscCall(MatMultAdd(Ki_r, x3, ctx->tmp_3, ctx->tmp_3));   
-        PetscCall(VecAYPX(ctx->tmp_3, -1., r3));                  
-        PetscCall(MatMultTransposeAdd(ctx->I, ctx->tmp_3, ctx->zeta, ctx->zeta));
+        //  zeta_4 = It * (r3 - Xi_c*x2 - Ki_c*x4)
+        PetscCall(MatMult(Xi_c, x2, ctx->tmp_4));                   
+        PetscCall(MatMultAdd(Ki_c, x4, ctx->tmp_4, ctx->tmp_4));   
+        PetscCall(VecAYPX(ctx->tmp_4, -1., r4));                  
+        PetscCall(MatMultTransposeAdd(ctx->I, ctx->tmp_4, ctx->zeta, ctx->zeta));
+
 
         PetscCall(VecSet(ctx->kappa, 0.));
         ctx->bc_O_o->apply_to_vec(ctx->zeta);
 
         PetscCall(KSPSolve(ctx->inner_Q1_ksp, ctx->zeta, ctx->kappa));
         
-        PetscCall(MatMultAdd(ctx->G, ctx->kappa, x1, x1));
-        PetscCall(MatMultAdd(ctx->I, ctx->kappa, x3, x3));
+        PetscCall(MatMultAdd(ctx->G, ctx->kappa, x2, x2));
+        PetscCall(MatMultAdd(ctx->I, ctx->kappa, x4, x4));
 
 
     }
@@ -327,171 +317,6 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_global(PC pc, Vec r, Vec x)
     for (auto& b : ctx->block_r) PetscCall(VecDestroy(&b));
     PetscFunctionReturn(0);
 }
-
-
-PetscErrorCode T_Omega_AMS_c::AMS_apply_coupled(PC pc, Vec r, Vec x)
-{
-    PetscFunctionBeginUser;
-
-    AMS_Context *ctx;
-    PetscCall(PCShellGetContext(pc, (void**)&ctx));
-
-    const Mat A = ctx->br_system->get_lhs();
-
-
-    // all the matrices are already encode the sign
-    const Mat Kc_r  = ctx->br_system->get_block_lhs(0,0); 
-    const Mat Mc_r  = ctx->br_system->get_block_lhs(0,1);
-    const Mat Xc_r  = ctx->br_system->get_block_lhs(0,3);
-    const Mat Mc_c  = ctx->br_system->get_block_lhs(1,0);
-    const Mat Kc_c  = ctx->br_system->get_block_lhs(1,1); 
-    const Mat Xc_c  = ctx->br_system->get_block_lhs(1,2);
-    const Mat Xi_r  = ctx->br_system->get_block_lhs(2,0);
-    const Mat Ki_r  = ctx->br_system->get_block_lhs(2,2);
-    const Mat Xi_c  = ctx->br_system->get_block_lhs(3,1);
-    const Mat Ki_c  = ctx->br_system->get_block_lhs(3,3);
-
-
-
-
- 
-    PetscCall(VecZeroEntries(x));
-
-    // pre-smoother.  single Gauss-Seidel sweep
-    PetscCall(MatSOR(A, r, 1., SOR_SYMMETRIC_SWEEP, 0., 1, 1, x));
-    
-
-    la_kernel::extract_block_vec(ctx->br_system->get_local_row_size(), x, ctx->block_x);
-    la_kernel::extract_block_vec(ctx->br_system->get_local_row_size(), r, ctx->block_r);
-
-
-    const Vec x1 = ctx->block_x[0];
-    const Vec x2 = ctx->block_x[1];
-    const Vec x3 = ctx->block_x[2];
-    const Vec x4 = ctx->block_x[3];
-
-    const Vec r1 = ctx->block_r[0];
-    const Vec r2 = ctx->block_r[1];
-    const Vec r3 = ctx->block_r[2];
-    const Vec r4 = ctx->block_r[3];
-
-    Vec zeta_a, kappa_a;
-    Vec zeta_b, kappa_b;
-
-
-    Vec zeta_la[2] = {ctx->zeta_1, ctx->zeta_4};
-    Vec kappa_la[2] = {ctx->kappa_2, ctx->kappa_4};
-
-    Vec zeta_lb[2] = {ctx->zeta_2, ctx->zeta_3};
-    Vec kappa_lb[2] = {ctx->kappa_1, ctx->kappa_3};
-
-    PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, NULL, zeta_la,  &zeta_a));
-    PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, NULL, kappa_la, &kappa_a));
-    PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, NULL, zeta_lb,  &zeta_b));
-    PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, NULL, kappa_lb, &kappa_b));
-
-    //std::vector<Vec> rho_c_l = {ctx->rho_1, ctx->rho_2};
-    //PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, nullptr, rho_c_l.data(), &rho_c));
-
-    //std::vector<Vec> gamma_c_l = {ctx->gamma_1, ctx->gamma_2};
-    //PetscCall(VecCreateNest(PETSC_COMM_WORLD, 2, nullptr, gamma_c_l.data(), &gamma_c));
-
-    
-    for(int n=0; n<1; ++n){
-        //  rho_1 = Pt * (r1 - Kc_r*x1 - Mc_r*x2 - Xc_r*x4)
-        PetscCall(MatMult(Kc_r, x1, ctx->tmp_1));                   
-        PetscCall(MatMultAdd(Mc_r, x2, ctx->tmp_1, ctx->tmp_1));   
-        PetscCall(MatMultAdd(Xc_r, x4, ctx->tmp_1, ctx->tmp_1));   
-        PetscCall(VecAYPX(ctx->tmp_1, -1., r1));                  
-        PetscCall(MatMultTranspose(ctx->P, ctx->tmp_1, ctx->rho_1));
-
-        //  rho_2 = Pt * (r2 - Mc_c*x1 - Kc_c*x2 - Xc_c*x3)
-        PetscCall(MatMult(Mc_c, x1, ctx->tmp_2));                   
-        PetscCall(MatMultAdd(Kc_c, x2, ctx->tmp_2, ctx->tmp_2));   
-        PetscCall(MatMultAdd(Xc_c, x3, ctx->tmp_2, ctx->tmp_2));   
-        PetscCall(VecAYPX(ctx->tmp_2, -1., r2));                  
-        PetscCall(MatMultTranspose(ctx->P, ctx->tmp_2, ctx->rho_2));
-
-        ctx->bc_T_1_H1_v->apply_to_vec(ctx->rho_1);  
-        ctx->bc_T_1_H1_v->apply_to_vec(ctx->rho_2);  
-
-        PetscCall(VecSet(ctx->gamma_1, 0.));
-        PetscCall(VecSet(ctx->gamma_2, 0.));
-        PetscCall(KSPSolve(ctx->inner_LpM_ksp, ctx->rho_1,  ctx->gamma_1));
-        PetscCall(KSPSolve(ctx->inner_LpM_ksp, ctx->rho_2,  ctx->gamma_2));
-        //PetscCall(KSPSolve(ctx->inner_LpM_ksp, rho_c, gamma_c));
-
-        KSPConvergedReason reason;
-        PetscCall(KSPGetConvergedReason(ctx->inner_LpM_ksp, &reason));
-        PetscCheck(reason > 0, PETSC_COMM_SELF, PETSC_ERR_CONV_FAILED,
-                "inner_LpM_ksp failed, reason %d", (int)reason);
-
-        //    xt = xt + P*gamma_1
-        PetscCall(MatMultAdd(ctx->P, ctx->gamma_1, x1, x1));
-        PetscCall(MatMultAdd(ctx->P, ctx->gamma_2, x2, x2));
-
-        //  zeta_1 = Gt * (r1 - Kc_r*x1 - Mc_r*x2 - Xc_r*x4)
-        PetscCall(MatMult(Kc_r, x1, ctx->tmp_1));                   
-        PetscCall(MatMultAdd(Mc_r, x2, ctx->tmp_1, ctx->tmp_1));   
-        PetscCall(MatMultAdd(Xc_r, x4, ctx->tmp_1, ctx->tmp_1));   
-        PetscCall(VecAYPX(ctx->tmp_1, -1., r1));                  
-        PetscCall(MatMultTranspose(ctx->G, ctx->tmp_1, ctx->zeta_1));
-
-        // if inner_Q1_ksp using J2, need to flip the sign of zeta_2
-        //PetscCall(VecScale(ctx->zeta_1, -1.));
-
-
-        //  zeta_4 = It * (r4 - Xi_c*x2 - Ki_c*x4)
-        PetscCall(MatMult(Xi_c, x2, ctx->tmp_4));                   
-        PetscCall(MatMultAdd(Ki_c, x4, ctx->tmp_4, ctx->tmp_4));   
-        PetscCall(VecAYPX(ctx->tmp_4, -1., r4));                  
-        PetscCall(MatMultTranspose(ctx->I, ctx->tmp_4, ctx->zeta_4));
-
-
-
-        PetscCall(VecSet(kappa_a, 0.));
-        ctx->bc_O_o->apply_to_vec(ctx->zeta_4);
-
-
-        PetscCall(KSPSolve(ctx->inner_Q1_ksp, zeta_a, kappa_a));
-        PetscCall(MatMultAdd(ctx->G, ctx->kappa_2, x2, x2));
-        PetscCall(MatMultAdd(ctx->I, ctx->kappa_4, x4, x4));
-
-
-        //  zeta_2 = Gt * (r2 - Mc_c*x1 - Kc_c*x2 - Xc_c*x3)
-        PetscCall(MatMult(Mc_c, x1, ctx->tmp_2));                   
-        PetscCall(MatMultAdd(Kc_c, x2, ctx->tmp_2, ctx->tmp_2));   
-        PetscCall(MatMultAdd(Xc_c, x3, ctx->tmp_2, ctx->tmp_2));   
-        PetscCall(VecAYPX(ctx->tmp_2, -1., r2));                  
-        PetscCall(MatMultTranspose(ctx->G, ctx->tmp_2, ctx->zeta_2));
-
-        //  zeta_3 = It * (r3 - Xi_r*x1 - Ki_r*x3)
-        PetscCall(MatMult(Xi_r, x1, ctx->tmp_3));                   
-        PetscCall(MatMultAdd(Ki_r, x3, ctx->tmp_3, ctx->tmp_3));   
-        PetscCall(VecAYPX(ctx->tmp_3, -1., r3));                  
-        PetscCall(MatMultTranspose(ctx->I, ctx->tmp_3, ctx->zeta_3));
-
-        PetscCall(VecSet(kappa_b, 0.));
-        ctx->bc_O_o->apply_to_vec(ctx->zeta_3);
-
-        PetscCall(KSPSolve(ctx->inner_Q2_ksp, zeta_b, kappa_b));
-        
-        PetscCall(MatMultAdd(ctx->G, ctx->kappa_1, x1, x1));
-        PetscCall(MatMultAdd(ctx->I, ctx->kappa_3, x3, x3));
-
-
-    }
-
-    la_kernel::write_to_vec(ctx->block_x, x);
-    // post-smoother (continues from updated z)
-    PetscCall(MatSOR(A, r, 1., SOR_SYMMETRIC_SWEEP, 0., 1, 1, x));
-
-    for (auto& b : ctx->block_x) PetscCall(VecDestroy(&b));
-    for (auto& b : ctx->block_r) PetscCall(VecDestroy(&b));
-    PetscFunctionReturn(0);
-}
-
-
 
 PetscErrorCode T_Omega_AMS_c::AMS_apply_fully_coupled(PC pc, Vec r, Vec x)
 {
@@ -533,7 +358,7 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
     Mat P, Mat G, Mat I, Mat LpM, 
     Mat Qc, Mat Qi, 
     Mat H1, Mat H2,
-    Mat J1, Mat J2,
+    Mat J,
     //Mat X,
     Block_Rack* br_system,
     Dirichlet_BC* bc_T_1_H1_s,
@@ -560,8 +385,7 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
     ctx->Qi = Qi;
     ctx->H1 = H1;
     ctx->H2 = H2;
-    ctx->J1 = J1;
-    ctx->J2 = J2;
+    ctx->J = J;
     ctx->br_system = br_system;
     ctx->bc_T_1_H1_s = bc_T_1_H1_s;
     ctx->bc_T_1_H1_v = bc_T_1_H1_v;
@@ -680,6 +504,7 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
 
     }else if(algorithm_id == 3){
         // ---------- Inner KSP for [J] ----------
+        // ---------- Inner KSP for [H] ----------
         PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q1_ksp));
         PetscCall(KSPSetType(ctx->inner_Q1_ksp, KSPPREONLY));
         {
@@ -695,29 +520,9 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
         PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_max_iter", buf));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
-        PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, J1, J1));
-        //PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, J2, J2));
+        PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, J, J));
         PetscCall(KSPSetFromOptions(ctx->inner_Q1_ksp));
         PetscCall(KSPSetUp(ctx->inner_Q1_ksp));
-
-
-        PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q2_ksp));
-        PetscCall(KSPSetType(ctx->inner_Q2_ksp, KSPPREONLY));
-        {
-            PC pc_in;
-            PetscCall(KSPGetPC(ctx->inner_Q2_ksp, &pc_in));
-            PetscCall(PCSetType(pc_in, PCHYPRE));
-            PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
-        }
-        PetscCall(KSPSetOptionsPrefix(ctx->inner_Q2_ksp, "inner_Q1_"));
-
-        // fixed number of V-cycles, done INSIDE hypre:
-        PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
-        PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_hypre_boomeramg_max_iter", buf));
-        PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
-        PetscCall(KSPSetOperators(ctx->inner_Q2_ksp, J2, J2));
-        PetscCall(KSPSetFromOptions(ctx->inner_Q2_ksp));
-        PetscCall(KSPSetUp(ctx->inner_Q2_ksp));
 
         // ---------- Initialize vectors ----------
         PetscCall(MatCreateVecs(P, &ctx->gamma_1, NULL));  // size 3 * #node in T-field
@@ -727,13 +532,9 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
 
         PetscCall(MatCreateVecs(G, &ctx->kappa_1, NULL)); 
         PetscCall(MatCreateVecs(G, &ctx->zeta_1, NULL)); 
-        PetscCall(MatCreateVecs(G, &ctx->kappa_2, NULL)); 
-        PetscCall(MatCreateVecs(G, &ctx->zeta_2, NULL)); 
 
         PetscCall(MatCreateVecs(I, &ctx->kappa_3, NULL)); 
         PetscCall(MatCreateVecs(I, &ctx->zeta_3, NULL)); 
-        PetscCall(MatCreateVecs(I, &ctx->kappa_4, NULL)); 
-        PetscCall(MatCreateVecs(I, &ctx->zeta_4, NULL)); 
 
 
         

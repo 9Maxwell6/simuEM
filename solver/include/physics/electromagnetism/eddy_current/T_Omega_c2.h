@@ -20,7 +20,7 @@
 #include "utils/util_string.h"
 #include "utils/util_constant.h"
 
-#include "physics/electromagnetism/eddy_current/auxiliary_solver_c.h"
+#include "physics/electromagnetism/eddy_current/auxiliary_solver_c2.h"
 
 
 
@@ -116,8 +116,7 @@ private:
     Block              pc_H2_;
 
     // preconditioning algorithm 3  (coupled)
-    Block              pc_J1_;
-    Block              pc_J2_;
+    Block              pc_J_;
 
 
 

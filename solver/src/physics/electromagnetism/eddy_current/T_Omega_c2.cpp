@@ -1,4 +1,4 @@
-#include "physics/electromagnetism/eddy_current/T_Omega_c.h"
+#include "physics/electromagnetism/eddy_current/T_Omega_c2.h"
 
 using namespace simu;
 
@@ -189,19 +189,19 @@ bool T_Omega_c::initialize_system()
 
     br_system_ = fe_system_.initialize_block_rack(4, 4);
     
-    br_system_.insert_block(Kc_r_,         0, 0);
-    br_system_.insert_block(Mc_r_,         0, 1);
-    br_system_.insert_block(X__r_,         0, 3);
-    br_system_.insert_block(Mc_c_,         1, 0);
-    br_system_.insert_block(Kc_c_,         1, 1);
-    br_system_.insert_block(X__c_,         1, 2);
+    br_system_.insert_block(Mc_c_,         0, 0);
+    br_system_.insert_block(Kc_c_,         0, 1);
+    br_system_.insert_block(X__c_,         0, 2);
+    br_system_.insert_block(Kc_r_,         1, 0);
+    br_system_.insert_block(Mc_r_,         1, 1);
+    br_system_.insert_block(X__r_,         1, 3);
     br_system_.insert_block(Xt_r_,         2, 0);
     br_system_.insert_block(Ki_r_,         2, 2);
     br_system_.insert_block(Xt_c_,         3, 1);
     br_system_.insert_block(Ki_c_,         3, 3);
 
-    br_system_.insert_vec(Sc_c_,         0);
-    br_system_.insert_vec(Sc_r_,         1);
+    br_system_.insert_vec(Sc_r_,         0);
+    br_system_.insert_vec(Sc_c_,         1);
     br_system_.insert_vec(Si_r_,         2);
     br_system_.insert_vec(Si_c_,         3);
 
@@ -231,16 +231,16 @@ bool T_Omega_c::initialize_pc()
     pc_LpM_ = fe_system_.register_dual_FE_space(T_space_1_H1_v_, T_space_1_H1_v_, key_conductor_1_, &pc_P_, &pc_P_);
     Logger::block_info(pc_LpM_.id, pc_LpM_.row_offset, pc_LpM_.col_offset, pc_LpM_.row_size,  pc_LpM_.col_size);
 
-    //if(pc_alg_==1){
+    if(pc_alg_==1){
         // decoupled pc
         Logger::info("[T_Omega preconditioner - alg1] - register [Qc] ");
         pc_Qc_ = fe_system_.register_dual_FE_space(T_space_1_H1_s_, T_space_1_H1_s_, key_conductor_1_, nullptr, nullptr);
         Logger::block_info(pc_Qc_.id, pc_Qc_.row_offset, pc_Qc_.col_offset, pc_Qc_.row_size, pc_Qc_.col_size);
 
-        Logger::info("[T_Omega preconditioner - alg1] - register [Qi] ");
+        Logger::info("[T_Omega preconditioner - alg1] - register [Qc] ");
         pc_Qi_ = fe_system_.register_dual_FE_space(O_space_, O_space_, key_Omega_, nullptr, nullptr);
-        Logger::block_info(pc_Qi_.id, pc_Qi_.row_offset, pc_Qi_.col_offset, pc_Qi_.row_size, pc_Qi_.col_size);
-    //}
+        Logger::block_info(pc_Qc_.id, pc_Qc_.row_offset, pc_Qc_.col_offset, pc_Qc_.row_size, pc_Qc_.col_size);
+    }
 
     if(pc_alg_==2){
         // global gradient pc
@@ -538,7 +538,7 @@ bool T_Omega_c::assemble_pc()
     });
 
 
-    
+
     Mat P11, P12, P21, P22;
     PetscCall(MatPtAP(Kc_r_.mat,pc_P_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT, &P11));
     PetscCall(MatPtAP(Mc_r_.mat,pc_P_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT, &P12));
@@ -577,10 +577,10 @@ bool T_Omega_c::assemble_pc()
 
         Mat M1, M2, M3, M4;
         Mat tM, oM;
-        PetscCall(MatPtAP(Mc_c_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
+        PetscCall(MatPtAP(Mc_r_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
         PetscCall(MatPtAP(Ki_r_.mat,pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
 
-        PetscCall(MatTransposeMatMult(pc_G_.mat,X__c_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
+        PetscCall(MatTransposeMatMult(pc_G_.mat,X__r_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
         PetscCall(MatTransposeMatMult(pc_I_.mat,Xt_r_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oM));
         PetscCall(MatMatMult(tM, pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M3));
         PetscCall(MatMatMult(oM, pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M4));
@@ -590,18 +590,17 @@ bool T_Omega_c::assemble_pc()
         PetscCall(MatAXPY(pc_H1_.mat, 1.0, M3, DIFFERENT_NONZERO_PATTERN));
         PetscCall(MatAXPY(pc_H1_.mat, 1.0, M4, DIFFERENT_NONZERO_PATTERN));
 
-        la_kernel::destroy_mat(M1);
-        la_kernel::destroy_mat(M2);
-        la_kernel::destroy_mat(M3);
-        la_kernel::destroy_mat(M4);
-        la_kernel::destroy_mat(tM);
-        la_kernel::destroy_mat(oM);
+        PetscCall(MatDestroy(&M1));
+        PetscCall(MatDestroy(&M2));
+        PetscCall(MatDestroy(&M3));
+        PetscCall(MatDestroy(&M4));
+        PetscCall(MatDestroy(&tM));
+        PetscCall(MatDestroy(&oM));
 
-
-        PetscCall(MatPtAP(Mc_r_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
+        PetscCall(MatPtAP(Mc_c_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
         PetscCall(MatPtAP(Ki_c_.mat,pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
 
-        PetscCall(MatTransposeMatMult(pc_G_.mat,X__r_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
+        PetscCall(MatTransposeMatMult(pc_G_.mat,X__c_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
         PetscCall(MatTransposeMatMult(pc_I_.mat,Xt_c_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oM));
         PetscCall(MatMatMult(tM, pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M3));
         PetscCall(MatMatMult(oM, pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M4));
@@ -611,55 +610,34 @@ bool T_Omega_c::assemble_pc()
         PetscCall(MatAXPY(pc_H2_.mat, 1.0, M3, DIFFERENT_NONZERO_PATTERN));
         PetscCall(MatAXPY(pc_H2_.mat, 1.0, M4, DIFFERENT_NONZERO_PATTERN));
 
-        la_kernel::destroy_mat(M1);
-        la_kernel::destroy_mat(M2);
-        la_kernel::destroy_mat(M3);
-        la_kernel::destroy_mat(M4);
-        la_kernel::destroy_mat(tM);
-        la_kernel::destroy_mat(oM);
+        PetscCall(MatDestroy(&M1));
+        PetscCall(MatDestroy(&M2));
+        PetscCall(MatDestroy(&M3));
+        PetscCall(MatDestroy(&M4));
+        PetscCall(MatDestroy(&tM));
+        PetscCall(MatDestroy(&oM));
 
     }else if(pc_alg_==3){
-
-        
         Mat M1, M2, M3, M4;
         Mat tM, oM;
-
-        PetscCall(MatPtAP(Mc_r_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
+        PetscCall(MatPtAP(Mc_c_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
         PetscCall(MatPtAP(Ki_c_.mat,pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
 
-        PetscCall(MatTransposeMatMult(pc_G_.mat,X__r_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
+        PetscCall(MatTransposeMatMult(pc_G_.mat,X__c_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
         PetscCall(MatTransposeMatMult(pc_I_.mat,Xt_c_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oM));
         PetscCall(MatMatMult(tM, pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M3));
         PetscCall(MatMatMult(oM, pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M4));
 
+        std::vector<Mat> blocks = {M1, M3, M4, M2};
 
-        la_kernel::create_nest_mat(2, 2, {M1, M3, M4, M2}, pc_J1_.mat);
+        la_kernel::create_nest_mat(2, 2, blocks, pc_J_.mat);
 
-
-        la_kernel::destroy_mat(M1);
-        la_kernel::destroy_mat(M2);
-        la_kernel::destroy_mat(M3);
-        la_kernel::destroy_mat(M4);
-        la_kernel::destroy_mat(tM);
-        la_kernel::destroy_mat(oM);
-
-
-        PetscCall(MatPtAP(Mc_c_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
-        PetscCall(MatPtAP(Ki_r_.mat,pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
-
-        PetscCall(MatTransposeMatMult(pc_G_.mat,X__c_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&tM));
-        PetscCall(MatTransposeMatMult(pc_I_.mat,Xt_r_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&oM));
-        PetscCall(MatMatMult(tM, pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M3));
-        PetscCall(MatMatMult(oM, pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M4));
-
-        la_kernel::create_nest_mat(2, 2, {M1, M3, M4, M2}, pc_J2_.mat);
-        
-        la_kernel::destroy_mat(M1);
-        la_kernel::destroy_mat(M2);
-        la_kernel::destroy_mat(M3);
-        la_kernel::destroy_mat(M4);
-        la_kernel::destroy_mat(tM);
-        la_kernel::destroy_mat(oM);
+        PetscCall(MatDestroy(&M1));
+        PetscCall(MatDestroy(&M2));
+        PetscCall(MatDestroy(&M3));
+        PetscCall(MatDestroy(&M4));
+        PetscCall(MatDestroy(&tM));
+        PetscCall(MatDestroy(&oM));
     }
 
 
@@ -674,6 +652,7 @@ bool T_Omega_c::solve_system()
     const G_Matrix lhs = br_system_.get_lhs();
     const G_Vector rhs = br_system_.get_rhs();
     const G_Vector x   = br_system_.get_x();
+
 
 
     bool successful_flag = false;
@@ -699,10 +678,8 @@ bool T_Omega_c::solve_system()
         //PCSetType(pc, PCILU);  
         //PCFactorSetLevels(pc, 5); 
 
-        PCSetType(pc, PCICC);  
-
-        //PCSetType(pc, PCHYPRE);
-        //PCHYPRESetType(pc, "boomeramg");
+        PCSetType(pc, PCHYPRE);
+        PCHYPRESetType(pc, "boomeramg");
  
         // Optionally set tolerances
         KSPSetTolerances(ksp, 1e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
@@ -792,9 +769,9 @@ bool T_Omega_c::solve_pc_system()
         PetscCall(T_Omega_AMS_c::solve_AMS(
             ams_info,
             pc_alg_,
-            pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_LpM_.mat,
-            //pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_PtP_.mat,
-            pc_Qc_.mat, pc_Qi_.mat, NULL, NULL, NULL, NULL,
+            //pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_LpM_.mat,
+            pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_PtP_.mat,
+            pc_Qc_.mat, pc_Qi_.mat, NULL, NULL, NULL,
             //pc_br_system_.get_lhs(),
             &br_system_,
             &bc_T_1_H1_s_,
@@ -819,7 +796,7 @@ bool T_Omega_c::solve_pc_system()
             pc_alg_,
             pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_LpM_.mat,
             //pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_PtP_.mat,
-            NULL, NULL, pc_H1_.mat, pc_H2_.mat, NULL, NULL,
+            NULL, NULL, pc_H1_.mat, pc_H2_.mat, NULL,
             //pc_br_system_.get_lhs(),
             &br_system_,
             &bc_T_1_H1_s_,
@@ -830,27 +807,6 @@ bool T_Omega_c::solve_pc_system()
             1e-10, PETSC_DEFAULT, true
         ));
 
-    }else if(pc_alg_ == 3){
-        bc_T_1_H1_v_.apply_to_mat(pc_LpM_.mat);
-        bc_T_1_H1_v_.apply_to_mat(pc_PtP_.mat);
-        bc_T_1_H1_v2_.apply_to_mat(pc_PtP_.mat);
-
-
-        PetscCall(T_Omega_AMS_c::solve_AMS(
-            ams_info,
-            pc_alg_,
-            pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_LpM_.mat,
-            //pc_P_.mat, pc_G_.mat, pc_I_.mat, pc_PtP_.mat,
-            NULL, NULL, NULL, NULL, pc_J1_.mat, pc_J2_.mat,
-            //pc_br_system_.get_lhs(),
-            &br_system_,
-            &bc_T_1_H1_s_,
-            &bc_T_1_H1_v_,
-            &bc_O_o_c_,
-            &bc_O_i_c_,
-            nullptr,
-            1e-10, PETSC_DEFAULT, true
-        ));
     }
 
 
@@ -967,7 +923,7 @@ scalar_t T_Omega_c::compute_L2_error()
                 int block_id = block_id_list[i];
                 const FEM_Space* space = space_list[i];
                 const std::vector<scalar_t>& dof_value = dof_value_list[i];
-                if(block_id == Kc_r_.id){
+                if(block_id == Mc_r_.id){
                     // real part of T field
                     space->dof_transformation(e_data.e->get_node_idx(), dof_transform);
                     space->get_basis_v(i_p.coord, Hcurl_basis);
@@ -977,7 +933,7 @@ scalar_t T_Omega_c::compute_L2_error()
                     }
                 }
 
-                if(block_id == Kc_c_.id){
+                if(block_id == Mc_c_.id){
                     // real part of T field
                     space->dof_transformation(e_data.e->get_node_idx(), dof_transform);
                     space->get_basis_v(i_p.coord, Hcurl_basis);
@@ -1089,8 +1045,7 @@ void T_Omega_c::finalize()
     la_kernel::destroy_mat(pc_Qi_.mat);  
     la_kernel::destroy_mat(pc_H1_.mat);  
     la_kernel::destroy_mat(pc_H2_.mat);  
-    la_kernel::destroy_mat(pc_J1_.mat); 
-    la_kernel::destroy_mat(pc_J2_.mat); 
+    la_kernel::destroy_mat(pc_J_.mat); 
 
 }
 
@@ -1182,7 +1137,7 @@ int main(int argc, char** argv)
 
         };
 
-        std::string file_str = (pc_alg!=0) ? "/T_Omega_Kc_pcAlg"+std::to_string(pc_alg)+".dat" : "/T_Omega_Kc.dat";
+        std::string file_str = (pc_alg!=0) ? "/T_Omega_Mc_pcAlg"+std::to_string(pc_alg)+".dat" : "/T_Omega_Mc.dat";
 
         const std::string dat_path = DATA_OUTPUT_DIR + file_str;
         std::ofstream l2_convergence(dat_path);

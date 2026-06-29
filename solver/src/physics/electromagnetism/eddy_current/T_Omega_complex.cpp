@@ -755,6 +755,9 @@ bool T_Omega_c::solve_pc_system()
     }else if(pc_alg_ == 2){
 
     }
+
+    n_iteration_ = ams_info.n_iteration;
+    system_condition_ = ams_info.condition_number;
     return true;
 }
 
