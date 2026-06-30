@@ -256,6 +256,9 @@ public:
 
     void finalize();
 
+
+    void set_omega(double omega) {omega_ = omega; }
+
 };
 
 

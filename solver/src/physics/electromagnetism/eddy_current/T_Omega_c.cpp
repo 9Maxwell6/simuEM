@@ -251,7 +251,7 @@ bool T_Omega_c::initialize_pc()
         Logger::block_info(pc_G_.id, pc_G_.row_offset, pc_G_.col_offset, pc_G_.row_size, pc_G_.col_size);
 
         Logger::info("[T_Omega preconditioner - alg2] - register [I].");
-        pc_I_ = fe_system_.register_FE_space_coupling(Ki_r_, tmp_global_, key_insulator_);
+        pc_I_ = fe_system_.register_FE_space_coupling(Ki_r_, tmp_global_, key_Omega_);
         Logger::block_info(pc_I_.id, pc_I_.row_offset, pc_I_.col_offset, pc_I_.row_size, pc_I_.col_size);
 
         Logger::info("[T_Omega preconditioner - alg2] - register global H1 boundary dof.");
@@ -266,7 +266,7 @@ bool T_Omega_c::initialize_pc()
         Logger::block_info(pc_G_.id, pc_G_.row_offset, pc_G_.col_offset, pc_G_.row_size, pc_G_.col_size);
 
         Logger::info("[T_Omega preconditioner - alg1/3/4] - register [I].");
-        pc_I_ = fe_system_.register_FE_space_coupling(Ki_r_, pc_Qi_, key_insulator_);
+        pc_I_ = fe_system_.register_FE_space_coupling(Ki_r_, pc_Qi_, key_Omega_);
         Logger::block_info(pc_I_.id, pc_I_.row_offset, pc_I_.col_offset, pc_I_.row_size, pc_I_.col_size);
 
         Logger::info("[T_Omega] - register boundary T in H1.");
@@ -369,18 +369,18 @@ bool T_Omega_c::assemble_system()
         double rr = x(0)*x(0) + x(1)*x(1) + x(2)*x(2);
         double q = 0.25 - 2*rr;
         double phi = (0.25-rr)*(0.25-rr);
-        v(0) = -8*(( -2*x(0)+x(1)+x(2) )*x(0) - 2*q) - phi - 2*x(0);
-        v(1) = -8*(( -2*x(0)+x(1)+x(2) )*x(1) + q) - 2*phi - 2*x(1);
-        v(2) = -8*(( -2*x(0)+x(1)+x(2) )*x(2) + q) + phi - 2*x(2);
+        v(0) = -8/omega_*(( -2*x(0)+x(1)+x(2) )*x(0) - 2*q) - phi - 2*x(0);
+        v(1) = -8/omega_*(( -2*x(0)+x(1)+x(2) )*x(1) + q) - 2*phi - 2*x(1);
+        v(2) = -8/omega_*(( -2*x(0)+x(1)+x(2) )*x(2) + q) + phi - 2*x(2);
     });
 
     V_Field_function ball_field_Sc_r_neg(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         double rr = x(0)*x(0) + x(1)*x(1) + x(2)*x(2);
         double q = 0.25 - 2*rr;
         double phi = (0.25-rr)*(0.25-rr);
-        v(0) = -8*(( -2*x(0)+x(1)+x(2) )*x(0) - 2*q) - phi - 2*x(0);
-        v(1) = -8*(( -2*x(0)+x(1)+x(2) )*x(1) + q) - 2*phi - 2*x(1);
-        v(2) = -8*(( -2*x(0)+x(1)+x(2) )*x(2) + q) + phi - 2*x(2);
+        v(0) = -8/omega_*(( -2*x(0)+x(1)+x(2) )*x(0) - 2*q) - phi - 2*x(0);
+        v(1) = -8/omega_*(( -2*x(0)+x(1)+x(2) )*x(1) + q) - 2*phi - 2*x(1);
+        v(2) = -8/omega_*(( -2*x(0)+x(1)+x(2) )*x(2) + q) + phi - 2*x(2);
 
         v(0) = -v(0);
         v(1) = -v(1);
@@ -391,18 +391,18 @@ bool T_Omega_c::assemble_system()
         double rr = x(0)*x(0) + x(1)*x(1) + x(2)*x(2);
         double q = 0.25 - 2*rr;
         double phi = (0.25-rr)*(0.25-rr);
-        v(0) = 8*((x(0)+2*x(1)-x(2))*x(0) + q) + 2*phi + 9./4. - rr - 2*x(0)*x(0);
-        v(1) = 8*((x(0)+2*x(1)-x(2))*x(1) + 2*q) - phi - 2*x(0)*x(1);
-        v(2) = 8*((x(0)+2*x(1)-x(2))*x(2) - q) - phi - 2*x(0)*x(2);
+        v(0) = 8/omega_*((x(0)+2*x(1)-x(2))*x(0) + q) + 2*phi + 9./4. - rr - 2*x(0)*x(0);
+        v(1) = 8/omega_*((x(0)+2*x(1)-x(2))*x(1) + 2*q) - phi - 2*x(0)*x(1);
+        v(2) = 8/omega_*((x(0)+2*x(1)-x(2))*x(2) - q) - phi - 2*x(0)*x(2);
     });
 
     V_Field_function ball_field_Sc_c_neg(mesh_, [&](Eigen::Ref<const VectorXd> x, const Field_Data& fd, Eigen::Ref<VectorXd> v) {
         double rr = x(0)*x(0) + x(1)*x(1) + x(2)*x(2);
         double q = 0.25 - 2*rr;
         double phi = (0.25-rr)*(0.25-rr);
-        v(0) = 8*((x(0)+2*x(1)-x(2))*x(0) + q) + 2*phi + 9./4. - rr - 2*x(0)*x(0);
-        v(1) = 8*((x(0)+2*x(1)-x(2))*x(1) + 2*q) - phi - 2*x(0)*x(1);
-        v(2) = 8*((x(0)+2*x(1)-x(2))*x(2) - q) - phi - 2*x(0)*x(2);
+        v(0) = 8/omega_*((x(0)+2*x(1)-x(2))*x(0) + q) + 2*phi + 9./4. - rr - 2*x(0)*x(0);
+        v(1) = 8/omega_*((x(0)+2*x(1)-x(2))*x(1) + 2*q) - phi - 2*x(0)*x(1);
+        v(2) = 8/omega_*((x(0)+2*x(1)-x(2))*x(2) - q) - phi - 2*x(0)*x(2);
 
         v(0) = -v(0);
         v(1) = -v(1);
@@ -623,6 +623,7 @@ bool T_Omega_c::assemble_pc()
         
         Mat M1, M2, M3, M4;
         Mat tM, oM;
+        //*
 
         PetscCall(MatPtAP(Mc_r_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
         PetscCall(MatPtAP(Ki_c_.mat,pc_I_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M2));
@@ -642,6 +643,7 @@ bool T_Omega_c::assemble_pc()
         la_kernel::destroy_mat(M4);
         la_kernel::destroy_mat(tM);
         la_kernel::destroy_mat(oM);
+        //*/
 
 
         PetscCall(MatPtAP(Mc_c_.mat,pc_G_.mat,MAT_INITIAL_MATRIX, PETSC_DEFAULT,&M1));
@@ -835,6 +837,29 @@ bool T_Omega_c::solve_pc_system()
         bc_T_1_H1_v_.apply_to_mat(pc_PtP_.mat);
         bc_T_1_H1_v2_.apply_to_mat(pc_PtP_.mat);
 
+        const Mat Kc  = br_system_.get_block_lhs(0,0);
+        const Mat Mc  = br_system_.get_block_lhs(1,0);
+        const Mat X_  = br_system_.get_block_lhs(0,3);
+        const Mat Ki  = br_system_.get_block_lhs(2,2);
+
+        
+        petsc_util::petsc_save_ascii_mat(Kc, "mat_Kc.txt");
+        petsc_util::petsc_save_ascii_mat(Mc, "mat_Mc.txt");
+        petsc_util::petsc_save_ascii_mat(X_, "mat_X_.txt");
+        petsc_util::petsc_save_ascii_mat(Ki, "mat_Ki.txt");
+
+        petsc_util::petsc_save_ascii_mat(pc_LpM_.mat, "pc_LpM.txt");
+        petsc_util::petsc_save_ascii_mat(pc_J2_.mat, "pc_J2.txt");
+        petsc_util::petsc_save_ascii_mat(pc_P_.mat, "pc_P.txt");
+        petsc_util::petsc_save_ascii_mat(pc_G_.mat, "pc_G.txt");
+        petsc_util::petsc_save_ascii_mat(pc_I_.mat, "pc_I.txt");
+
+        const G_Matrix lhs = br_system_.get_lhs();
+        const G_Vector rhs = br_system_.get_rhs();
+        const G_Vector x   = br_system_.get_x();
+        petsc_util::petsc_save_ascii_mat(lhs, "lhs_A.txt");
+        petsc_util::petsc_save_ascii_vec(rhs, "rhs_A.txt");
+        //exit(0);
 
         PetscCall(T_Omega_AMS_c::solve_AMS(
             ams_info,
@@ -1119,13 +1144,15 @@ int main(int argc, char** argv)
     bool h_refine = false;
     bool l2_test = false;
     int pc_alg = 0;  // 0: no pc,  1: decouped_pc,  2: global_pc,  3: coupled_pc
+    double omega = 1;
 
 
     const std::vector<Option> options = {
         {"mesh",     'm',   true,  [&](std::string_view v) { mesh_file = std::string(v);          }},
         {"h-refine", 'h',   false, [&](std::string_view)   { h_refine = true;                     }},
         {"l2-test",  '\0',  false, [&](std::string_view)   { l2_test = true;                      }},
-        {"pc",       '\0',  true,  [&](std::string_view v) { pc_alg = std::stoi(std::string(v));  }}
+        {"pc",       '\0',  true,  [&](std::string_view v) { pc_alg = std::stoi(std::string(v));  }},
+        {"omega",    'f',   true,  [&](std::string_view v) { omega = std::stod(std::string(v));   }}
     };
 
     std::vector<char*> petsc_argv_list{ argv[0] };
@@ -1161,6 +1188,7 @@ int main(int argc, char** argv)
     }
 
     int    petsc_argc = static_cast<int>(petsc_argv_list.size());
+    petsc_argv_list.push_back(nullptr);
     char** petsc_argv = petsc_argv_list.data();
     la_kernel::initialize(&petsc_argc, &petsc_argv);
 
@@ -1207,6 +1235,7 @@ int main(int argc, char** argv)
 
                 Logger::start_timer("Initialize T-Omega solver");
                 T_Omega_c T_O(mesh, pc_alg);
+                T_O.set_omega(omega);
                 T_O.initialize_system();
                 Logger::stop_timer("Initialize T-Omega solver");
 
@@ -1278,6 +1307,7 @@ int main(int argc, char** argv)
 
         Logger::start_timer("Initialize T-Omega solver");
         T_Omega_c T_O(mesh, pc_alg);
+        T_O.set_omega(omega);
         T_O.initialize_system();
         Logger::stop_timer("Initialize T-Omega solver");
 

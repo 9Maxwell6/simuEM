@@ -79,6 +79,7 @@ int main(int argc, char** argv)
     }
 
     int    petsc_argc = static_cast<int>(petsc_argv_list.size());
+    petsc_argv_list.push_back(nullptr);
     char** petsc_argv = petsc_argv_list.data();
     la_kernel::initialize(&petsc_argc, &petsc_argv);
 

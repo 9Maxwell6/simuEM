@@ -261,10 +261,6 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_global(PC pc, Vec r, Vec x)
         PetscCall(KSPSolve(ctx->inner_LpM_ksp, ctx->rho_2,  ctx->gamma_2));
         //PetscCall(KSPSolve(ctx->inner_LpM_ksp, rho_c, gamma_c));
 
-        KSPConvergedReason reason;
-        PetscCall(KSPGetConvergedReason(ctx->inner_LpM_ksp, &reason));
-        PetscCheck(reason > 0, PETSC_COMM_SELF, PETSC_ERR_CONV_FAILED,
-                "inner_LpM_ksp failed, reason %d", (int)reason);
 
         //    xt = xt + P*gamma_1
         PetscCall(MatMultAdd(ctx->P, ctx->gamma_1, x1, x1));
@@ -437,8 +433,8 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_coupled(PC pc, Vec r, Vec x)
         PetscCall(VecAYPX(ctx->tmp_1, -1., r1));                  
         PetscCall(MatMultTranspose(ctx->G, ctx->tmp_1, ctx->zeta_1));
 
-        // if inner_Q1_ksp using J2, need to flip the sign of zeta_2
-        //PetscCall(VecScale(ctx->zeta_1, -1.));
+        // if inner_Q1_ksp using J2, need to flip the sign of zeta_1
+        PetscCall(VecScale(ctx->zeta_1, -1.));
 
 
         //  zeta_4 = It * (r4 - Xi_c*x2 - Ki_c*x4)
@@ -450,10 +446,13 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_coupled(PC pc, Vec r, Vec x)
 
 
         PetscCall(VecSet(kappa_a, 0.));
+        //ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_1);
         ctx->bc_O_o->apply_to_vec(ctx->zeta_4);
+        //ctx->bc_O_i->apply_to_vec(ctx->zeta_4);
 
 
-        PetscCall(KSPSolve(ctx->inner_Q1_ksp, zeta_a, kappa_a));
+        //PetscCall(KSPSolve(ctx->inner_Q1_ksp, zeta_a, kappa_a));
+        PetscCall(KSPSolve(ctx->inner_Q2_ksp, zeta_a, kappa_a));
         PetscCall(MatMultAdd(ctx->G, ctx->kappa_2, x2, x2));
         PetscCall(MatMultAdd(ctx->I, ctx->kappa_4, x4, x4));
 
@@ -472,7 +471,9 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_coupled(PC pc, Vec r, Vec x)
         PetscCall(MatMultTranspose(ctx->I, ctx->tmp_3, ctx->zeta_3));
 
         PetscCall(VecSet(kappa_b, 0.));
+        //ctx->bc_T_1_H1_s->apply_to_vec(ctx->zeta_2);
         ctx->bc_O_o->apply_to_vec(ctx->zeta_3);
+        //ctx->bc_O_i->apply_to_vec(ctx->zeta_3);
 
         PetscCall(KSPSolve(ctx->inner_Q2_ksp, zeta_b, kappa_b));
         
@@ -568,10 +569,6 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
     ctx->bc_O_o = bc_O_o;
     ctx->bc_O_i = bc_O_i;
 
-
-
-
- 
     // ---------- Inner KSP for L: PREONLY + BoomerAMG (single V-cycle) ----------
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_LpM_ksp));
     PetscCall(KSPSetType(ctx->inner_LpM_ksp, KSPPREONLY));  
@@ -580,8 +577,13 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
         PetscCall(KSPGetPC(ctx->inner_LpM_ksp, &pc_in));
         PetscCall(PCSetType(pc_in, PCHYPRE));
         PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
+        //PetscCall(PCSetType(pc_in, PCGAMG));
+        //PetscCall(PCGAMGSetType(pc_in, PCGAMGAGG));
     }
     PetscCall(KSPSetOptionsPrefix(ctx->inner_LpM_ksp, "inner_LpM_"));
+    //PetscCall(PetscOptionsSetValue(NULL, "-inner_LpM_pc_mg_cycle_type", "v"));
+    //PetscCall(PetscOptionsSetValue(NULL, "-inner_LpM_pc_mg_type", "multiplicative"));
+
     PetscCall(KSPSetOperators(ctx->inner_LpM_ksp, LpM, LpM));
     PetscCall(KSPSetFromOptions(ctx->inner_LpM_ksp));
     PetscCall(KSPSetUp(ctx->inner_LpM_ksp)); 
@@ -679,6 +681,8 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
         PetscCall(MatCreateVecs(H1, &ctx->kappa, &ctx->zeta)); // size     #node in global field
 
     }else if(algorithm_id == 3){
+        char buf[32];
+        /*
         // ---------- Inner KSP for [J] ----------
         PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q1_ksp));
         PetscCall(KSPSetType(ctx->inner_Q1_ksp, KSPPREONLY));
@@ -687,18 +691,27 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
             PetscCall(KSPGetPC(ctx->inner_Q1_ksp, &pc_in));
             PetscCall(PCSetType(pc_in, PCHYPRE));
             PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
+            //PetscCall(PCSetType(pc_in, PCGAMG));
+            //PetscCall(PCGAMGSetType(pc_in, PCGAMGAGG));
         }
         PetscCall(KSPSetOptionsPrefix(ctx->inner_Q1_ksp, "inner_Q1_"));
 
         // fixed number of V-cycles, done INSIDE hypre:
-        char buf[32];
         PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_max_iter", buf));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
-        PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, J1, J1));
-        //PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, J2, J2));
+    
+
+        //PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_mg_cycle_type", "v"));
+        //PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_mg_type", "multiplicative"));
+
+
+        //PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, J1, J1));
+        PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, J2, J2));
         PetscCall(KSPSetFromOptions(ctx->inner_Q1_ksp));
         PetscCall(KSPSetUp(ctx->inner_Q1_ksp));
+
+        */
 
 
         PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q2_ksp));
@@ -708,13 +721,19 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
             PetscCall(KSPGetPC(ctx->inner_Q2_ksp, &pc_in));
             PetscCall(PCSetType(pc_in, PCHYPRE));
             PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
+            //PetscCall(PCSetType(pc_in, PCGAMG));
+            //PetscCall(PCGAMGSetType(pc_in, PCGAMGAGG));
         }
-        PetscCall(KSPSetOptionsPrefix(ctx->inner_Q2_ksp, "inner_Q1_"));
+        PetscCall(KSPSetOptionsPrefix(ctx->inner_Q2_ksp, "inner_Q2_"));
 
         // fixed number of V-cycles, done INSIDE hypre:
         PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_hypre_boomeramg_max_iter", buf));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
+
+        //PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_mg_cycle_type", "v"));
+        //PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_mg_type", "multiplicative"));
+
         PetscCall(KSPSetOperators(ctx->inner_Q2_ksp, J2, J2));
         PetscCall(KSPSetFromOptions(ctx->inner_Q2_ksp));
         PetscCall(KSPSetUp(ctx->inner_Q2_ksp));
