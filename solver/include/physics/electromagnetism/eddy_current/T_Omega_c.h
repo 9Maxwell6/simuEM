@@ -130,7 +130,11 @@ private:
     Dirichlet_BC bc_O_o_c_;
     Dirichlet_BC bc_O_i_c_;
     Dirichlet_BC bc_T_1_c_;
+    
+    Dirichlet_BC bc_O_o2_;
+    Dirichlet_BC bc_O_i2_;
 
+    Dirichlet_BC bc_T_o2_;
 
     Dirichlet_BC bc_T_1_H1_s_;
     Dirichlet_BC bc_T_1_H1_v_;

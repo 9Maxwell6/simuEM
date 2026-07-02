@@ -256,6 +256,9 @@ bool T_Omega_c::initialize_pc()
 
         Logger::info("[T_Omega preconditioner - alg2] - register global H1 boundary dof.");
         bc_global_H1_ = fe_system_.register_Dirichlet_BC(tmp_global_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
+        bc_O_o2_ = fe_system_.register_Dirichlet_BC(tmp_global_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
+        bc_O_i2_ = fe_system_.register_Dirichlet_BC(tmp_global_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
+        bc_T_o2_ =fe_system_.register_Dirichlet_BC(tmp_global_, key_conductor_interface_1_, Dirichlet_Type::HOMOGENEOUS);
     }
 
     
@@ -282,6 +285,13 @@ bool T_Omega_c::initialize_pc()
     std::vector<dof_idx>& temp_dof =  bc_T_1_H1_v2_.get_dof_idx();
     for(dof_idx& idx : temp_dof) idx += pc_LpM_.col_size;
 
+    if(pc_alg_==3){
+        bc_O_o2_ = fe_system_.register_Dirichlet_BC(Ki_r_, key_true_boundary_, Dirichlet_Type::HOMOGENEOUS);
+        bc_O_i2_ = fe_system_.register_Dirichlet_BC(Ki_r_, key_Omega_inner_boundary_1_, Dirichlet_Type::HOMOGENEOUS);
+        // accumulate the vector H1 dof by the column size
+        for(dof_idx& idx : bc_O_o2_.get_dof_idx()) idx += pc_G_.col_size;
+        for(dof_idx& idx : bc_O_i2_.get_dof_idx()) idx += pc_G_.col_size;
+    }
 
     return true;
 }
@@ -619,7 +629,6 @@ bool T_Omega_c::assemble_pc()
         la_kernel::destroy_mat(oM);
 
     }else if(pc_alg_==3){
-
         
         Mat M1, M2, M3, M4;
         Mat tM, oM;
@@ -662,6 +671,10 @@ bool T_Omega_c::assemble_pc()
         la_kernel::destroy_mat(M4);
         la_kernel::destroy_mat(tM);
         la_kernel::destroy_mat(oM);
+
+        bc_T_1_H1_s_.apply_to_mat(pc_J2_.mat);
+        bc_O_o2_.apply_to_mat(pc_J2_.mat);
+        bc_O_i2_.apply_to_mat(pc_J2_.mat);
     }
 
 
@@ -813,8 +826,13 @@ bool T_Omega_c::solve_pc_system()
         bc_T_1_H1_v_.apply_to_mat(pc_PtP_.mat);
         bc_T_1_H1_v2_.apply_to_mat(pc_PtP_.mat);
 
-        bc_global_H1_.apply_to_mat(pc_H1_.mat);
-        bc_global_H1_.apply_to_mat(pc_H2_.mat);
+        //bc_global_H1_.apply_to_mat(pc_H1_.mat);
+        //bc_global_H1_.apply_to_mat(pc_H2_.mat);
+
+        bc_O_o2_.apply_to_mat(pc_H1_.mat);
+        bc_O_i2_.apply_to_mat(pc_H1_.mat);
+        bc_T_o2_.apply_to_mat(pc_H1_.mat);
+
 
         PetscCall(T_Omega_AMS_c::solve_AMS(
             ams_info,
