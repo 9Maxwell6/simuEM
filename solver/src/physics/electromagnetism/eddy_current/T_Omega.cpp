@@ -794,7 +794,7 @@ bool T_Omega::solve_system()
         const Mat T_   = br_system_.get_block_lhs(1,1);
         const Mat T_c_ = br_system_.get_block_lhs(1,0);
 
-        int algorithm_id = 2;  // 1=decoupled, 2=global, 3=coupled, 4=fully coupled
+        int algorithm_id = 3;  // 1=decoupled, 2=global, 3=coupled, 4=fully coupled
 
         T_Omega_AMS::AMS_Info ams_info;
 

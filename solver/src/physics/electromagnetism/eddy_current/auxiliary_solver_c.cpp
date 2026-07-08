@@ -4,6 +4,104 @@
 using namespace simu;
 
 
+static inline void solve_2x2(const PetscScalar a, const PetscScalar b,
+                             const PetscScalar c, const PetscScalar d,
+                             const PetscScalar sp, const PetscScalar sq,
+                             PetscScalar &xp, PetscScalar &xq)
+{
+    const PetscScalar det = a * d - b * c;
+    if (PetscAbsScalar(det) > PETSC_SMALL * (PetscAbsScalar(a * d) + PetscAbsScalar(b * c)) ||
+        PetscAbsScalar(det) > 1e-300)
+    {
+        const PetscScalar inv = 1.0 / det;
+        xp = ( d * sp - b * sq) * inv;
+        xq = (-c * sp + a * sq) * inv;
+    }
+    else
+    {
+        xp = (a != 0.0) ? sp / a : 0.0;
+        xq = (d != 0.0) ? sq / d : 0.0;
+    }
+}
+ 
+// One or more symmetric (forward + backward) 2x2-block Gauss-Seidel sweeps
+// on A x = b, x updated in place.
+//
+//   nT : size of one T field (Re(T) and Im(T) each have nT dofs)
+//   nO : size of one O field
+//
+// Block k pairs the dofs
+//   k < nT :  ( k,            nT + k )            = ( ReT_i, ImT_i )
+//   k >= nT:  ( 2nT + j,      2nT + nO + j )      = ( ReO_j, ImO_j ),  j = k - nT
+inline PetscErrorCode block_ssgs_sweep(Mat A, Vec b, Vec x,
+                                       PetscInt nT, PetscInt nO,
+                                       PetscInt nsweeps = 1)
+{
+    PetscFunctionBeginUser;
+ 
+    PetscInt        n;
+    const PetscInt *ia, *ja;
+    PetscBool       done;
+    PetscCall(MatGetRowIJ(A, 0, PETSC_FALSE, PETSC_FALSE, &n, &ia, &ja, &done));
+    PetscCheck(done, PETSC_COMM_SELF, PETSC_ERR_SUP,
+               "block_ssgs_sweep: MatGetRowIJ not supported; A must be MATSEQAIJ");
+    PetscCheck(n == 2 * (nT + nO), PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ,
+               "block_ssgs_sweep: matrix size %" PetscInt_FMT
+               " != 2*(nT+nO) = %" PetscInt_FMT, n, 2 * (nT + nO));
+ 
+    const PetscScalar *aa;
+    PetscCall(MatSeqAIJGetArrayRead(A, &aa));
+ 
+    const PetscScalar *bb;
+    PetscScalar       *xx;
+    PetscCall(VecGetArrayRead(b, &bb));
+    PetscCall(VecGetArray(x, &xx));
+ 
+    const PetscInt nb = nT + nO;
+ 
+    // Relax one 2x2 block (p, q): Gauss-Seidel, uses current xx for all
+    // off-block columns, then solves the block exactly.
+    const auto relax = [&](const PetscInt p, const PetscInt q)
+    {
+        PetscScalar sp = bb[p], sq = bb[q];
+        PetscScalar app = 0.0, apq = 0.0, aqp = 0.0, aqq = 0.0;
+ 
+        for (PetscInt t = ia[p]; t < ia[p + 1]; ++t) {
+            const PetscInt j = ja[t];
+            if      (j == p) app = aa[t];
+            else if (j == q) apq = aa[t];
+            else             sp -= aa[t] * xx[j];
+        }
+        for (PetscInt t = ia[q]; t < ia[q + 1]; ++t) {
+            const PetscInt j = ja[t];
+            if      (j == q) aqq = aa[t];
+            else if (j == p) aqp = aa[t];
+            else             sq -= aa[t] * xx[j];
+        }
+        solve_2x2(app, apq, aqp, aqq, sp, sq, xx[p], xx[q]);
+    };
+ 
+    const auto pair = [&](const PetscInt k, PetscInt &p, PetscInt &q)
+    {
+        if (k < nT) { p = k;                  q = nT + k; }
+        else        { const PetscInt j = k - nT;
+                      p = 2 * nT + j;         q = 2 * nT + nO + j; }
+    };
+ 
+    for (PetscInt s = 0; s < nsweeps; ++s) {
+        PetscInt p, q;
+        for (PetscInt k = 0; k < nb; ++k)       { pair(k, p, q); relax(p, q); }  // forward
+        for (PetscInt k = nb - 1; k >= 0; --k)  { pair(k, p, q); relax(p, q); }  // backward
+    }
+ 
+    PetscCall(VecRestoreArray(x, &xx));
+    PetscCall(VecRestoreArrayRead(b, &bb));
+    PetscCall(MatSeqAIJRestoreArrayRead(A, &aa));
+    PetscCall(MatRestoreRowIJ(A, 0, PETSC_FALSE, PETSC_FALSE, &n, &ia, &ja, &done));
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
 PetscErrorCode T_Omega_AMS_c::AMS_apply_decoupled(PC pc, Vec r, Vec x)
 {
     PetscFunctionBeginUser;
@@ -349,13 +447,17 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_coupled(PC pc, Vec r, Vec x)
     const Mat Ki_c  = ctx->br_system->get_block_lhs(3,3);
 
 
-
+    const auto&    row_sizes = ctx->br_system->get_local_row_size();
+    const PetscInt nT = row_sizes[0];   // = row_sizes[1]
+    const PetscInt nO = row_sizes[2];   // = row_sizes[3]
 
  
     PetscCall(VecZeroEntries(x));
 
     // pre-smoother.  single Gauss-Seidel sweep
-    PetscCall(MatSOR(A, r, 1., SOR_SYMMETRIC_SWEEP, 0., 1, 1, x));
+    //PetscCall(MatSOR(A, r, 1., SOR_SYMMETRIC_SWEEP, 0., 1, 1, x));
+    PetscCall(block_ssgs_sweep(A, r, x, nT, nO, 1));
+    
     
 
     la_kernel::extract_block_vec(ctx->br_system->get_local_row_size(), x, ctx->block_x);
@@ -488,7 +590,10 @@ PetscErrorCode T_Omega_AMS_c::AMS_apply_coupled(PC pc, Vec r, Vec x)
 
     la_kernel::write_to_vec(ctx->block_x, x);
     // post-smoother (continues from updated z)
-    PetscCall(MatSOR(A, r, 1., SOR_SYMMETRIC_SWEEP, 0., 1, 1, x));
+    //PetscCall(MatSOR(A, r, 1., SOR_SYMMETRIC_SWEEP, 0., 1, 1, x));
+    PetscCall(block_ssgs_sweep(A, r, x, nT, nO, /*nsweeps=*/1));
+
+    
 
     for (auto& b : ctx->block_x) PetscCall(VecDestroy(&b));
     for (auto& b : ctx->block_r) PetscCall(VecDestroy(&b));
@@ -572,6 +677,8 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
     ctx->bc_O_o = bc_O_o;
     ctx->bc_O_i = bc_O_i;
 
+    PetscInt N_Vcycles = 1;  // number of V-cycles for Q
+
     // ---------- Inner KSP for L: PREONLY + BoomerAMG (single V-cycle) ----------
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_LpM_ksp));
     PetscCall(KSPSetType(ctx->inner_LpM_ksp, KSPPREONLY));  
@@ -587,12 +694,17 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
     //PetscCall(PetscOptionsSetValue(NULL, "-inner_LpM_pc_mg_cycle_type", "v"));
     //PetscCall(PetscOptionsSetValue(NULL, "-inner_LpM_pc_mg_type", "multiplicative"));
 
+    char buf[32];
+    PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
+    //PetscCall(PetscOptionsSetValue(NULL, "-inner_LpM_pc_hypre_boomeramg_max_iter", buf));
+    //PetscCall(PetscOptionsSetValue(NULL, "-inner_LpM_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
+
+
     PetscCall(KSPSetOperators(ctx->inner_LpM_ksp, LpM, LpM));
     PetscCall(KSPSetFromOptions(ctx->inner_LpM_ksp));
     PetscCall(KSPSetUp(ctx->inner_LpM_ksp)); 
     
 
-    PetscInt N_Vcycles = 10;  // number of V-cycles for Q
 
 
     if(algorithm_id == 1){
@@ -606,6 +718,13 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
             PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
         }
         PetscCall(KSPSetOptionsPrefix(ctx->inner_Qc_ksp, "inner_Qc_"));
+
+        // fixed number of V-cycles, done INSIDE hypre:
+        //char buf[32];
+        //PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
+        PetscCall(PetscOptionsSetValue(NULL, "-inner_Qc_pc_hypre_boomeramg_max_iter", buf));
+        PetscCall(PetscOptionsSetValue(NULL, "-inner_Qc_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
+
         PetscCall(KSPSetOperators(ctx->inner_Qc_ksp, Qc, Qc));
         PetscCall(KSPSetFromOptions(ctx->inner_Qc_ksp));
         PetscCall(KSPSetUp(ctx->inner_Qc_ksp));
@@ -621,6 +740,10 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
             PetscCall(PCHYPRESetType(pc_in, "boomeramg"));
         }
         PetscCall(KSPSetOptionsPrefix(ctx->inner_Qi_ksp, "inner_Qi_"));
+
+        PetscCall(PetscOptionsSetValue(NULL, "-inner_Qi_pc_hypre_boomeramg_max_iter", buf));
+        PetscCall(PetscOptionsSetValue(NULL, "-inner_Qi_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
+
         PetscCall(KSPSetOperators(ctx->inner_Qi_ksp, Qi, Qi));
         PetscCall(KSPSetFromOptions(ctx->inner_Qi_ksp));
         PetscCall(KSPSetUp(ctx->inner_Qi_ksp));
@@ -649,8 +772,8 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
         PetscCall(KSPSetOptionsPrefix(ctx->inner_Q1_ksp, "inner_Q1_"));
 
         // fixed number of V-cycles, done INSIDE hypre:
-        char buf[32];
-        PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
+        //char buf[32];
+        //PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_max_iter", buf));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
         PetscCall(KSPSetOperators(ctx->inner_Q1_ksp, H1, H1));
@@ -669,7 +792,7 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
         PetscCall(KSPSetOptionsPrefix(ctx->inner_Q2_ksp, "inner_Q2_"));
 
         // fixed number of V-cycles, done INSIDE hypre:
-        PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
+        //PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_max_iter", buf));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q1_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
         PetscCall(KSPSetOperators(ctx->inner_Q2_ksp, H2, H2));
@@ -684,7 +807,6 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
         PetscCall(MatCreateVecs(H1, &ctx->kappa, &ctx->zeta)); // size     #node in global field
 
     }else if(algorithm_id == 3){
-        char buf[32];
         /*
         // ---------- Inner KSP for [J] ----------
         PetscCall(KSPCreate(PETSC_COMM_WORLD, &ctx->inner_Q1_ksp));
@@ -730,7 +852,7 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
         PetscCall(KSPSetOptionsPrefix(ctx->inner_Q2_ksp, "inner_Q2_"));
 
         // fixed number of V-cycles, done INSIDE hypre:
-        PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
+        //PetscCall(PetscSNPrintf(buf, sizeof(buf), "%d", (int)N_Vcycles));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_hypre_boomeramg_max_iter", buf));
         PetscCall(PetscOptionsSetValue(NULL, "-inner_Q2_pc_hypre_boomeramg_tol", "0.0")); // 0 = never stop early
 

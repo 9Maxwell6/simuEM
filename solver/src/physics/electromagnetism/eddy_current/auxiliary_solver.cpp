@@ -541,7 +541,7 @@ PetscErrorCode T_Omega_AMS::solve_AMS(
     PetscCall(KSPSetUp(ctx->inner_L_ksp)); 
     
 
-    PetscInt N_Vcycles = 5;  // number of V-cycles for Q
+    PetscInt N_Vcycles = 15;  // number of V-cycles for Q
     if(algorithm_id == 2 || algorithm_id == 3 || algorithm_id == 4)
     {
                 
