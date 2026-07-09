@@ -365,10 +365,11 @@ PetscErrorCode solve_AMS(PetscInt& n_iter, double& system_condition,
         PetscViewerAndFormat *vf;
         PetscCall(PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
                                              PETSC_VIEWER_DEFAULT, &vf));
+ 
         PetscCall(KSPMonitorSet(outer,
-            (PetscErrorCode (*)(KSP, PetscInt, PetscReal, void*))KSPMonitorTrueResidual,
-            vf,
-            (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy));
+                            (KSPMonitorFn *)KSPMonitorTrueResidual,
+                            vf,
+                            (PetscCtxDestroyFn *)PetscViewerAndFormatDestroy));
     }
     */
  

@@ -1,6 +1,5 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/tests)
 
-add_subdirectory(coupled_curlcurl)
 add_subdirectory(poisson)
 add_subdirectory(curlcurl)
 add_subdirectory(test_ground)

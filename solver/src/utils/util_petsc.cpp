@@ -775,11 +775,12 @@ PetscErrorCode petsc_estimate_condition_number(Mat mat, PetscReal *cond)
     PetscViewerAndFormat *vf;
     PetscCall(PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
                                          PETSC_VIEWER_DEFAULT, &vf));
-    PetscCall(KSPMonitorSet(
-        ksp,
-        (PetscErrorCode(*)(KSP, PetscInt, PetscReal, void *))KSPMonitorSingularValue,
-        vf,
-        (PetscErrorCode(*)(void **))PetscViewerAndFormatDestroy));
+
+    PetscCall(KSPMonitorSet(ksp,
+                            (KSPMonitorFn *)KSPMonitorSingularValue,
+                            vf,
+                            (PetscCtxDestroyFn *)PetscViewerAndFormatDestroy));
+
 
     // Let users override anything from the command line if they want.
     PetscCall(KSPSetFromOptions(ksp));

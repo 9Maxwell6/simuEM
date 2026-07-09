@@ -910,18 +910,16 @@ PetscErrorCode T_Omega_AMS_c::solve_AMS(
 
     PetscCall(KSPSetNormType(outer, KSP_NORM_UNPRECONDITIONED));  // true residual
 
-    if(enable_monitor)
+
+    if (enable_monitor) 
     {
-        {
-            PetscViewerAndFormat *vf;
-            PetscCall(PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
-                                                PETSC_VIEWER_DEFAULT, &vf));
-            PetscCall(KSPMonitorSet(outer,
-                (PetscErrorCode (*)(KSP, PetscInt, PetscReal, void*))KSPMonitorTrueResidual,
-                vf,
-                (PetscErrorCode (*)(void**))PetscViewerAndFormatDestroy)
-            );
-        }
+        PetscViewerAndFormat *vf;
+        PetscCall(PetscViewerAndFormatCreate(PETSC_VIEWER_STDOUT_WORLD,
+                                            PETSC_VIEWER_DEFAULT, &vf));
+        PetscCall(KSPMonitorSet(outer,
+                                (KSPMonitorFn *)KSPMonitorTrueResidual,
+                                vf,
+                                (PetscCtxDestroyFn *)PetscViewerAndFormatDestroy));
     }
  
     PetscCall(KSPGetPC(outer, &outer_pc));
